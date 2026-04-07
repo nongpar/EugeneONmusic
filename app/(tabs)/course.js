@@ -1,0 +1,428 @@
+import { useState, useCallback } from 'react';
+import {
+  View, Text, StyleSheet, ScrollView, TouchableOpacity, Image, Linking,
+  RefreshControl,
+} from 'react-native';
+import Svg, { Path, Circle } from 'react-native-svg';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useRouter } from 'expo-router';
+
+// ── 실제 강좌 데이터 (eon-music.com/수강신청 기준) ──
+const COURSES = [
+  {
+    id: '1',
+    title: 'Franz Liszt – La Campanella',
+    composer: 'Franz Liszt',
+    category: '피아노',
+    instructor: '최유진',
+    thumbnail: 'https://eon-music.com/wp-content/uploads/2025/12/KakaoTalk_20260106_105143263-scaled.png',
+    link: 'https://eon-music.com/courses/franz-liszt-la-campanella/',
+    detailUrl: 'https://eugeneonmusic.com/franz-liszt-la-campanella/',
+    status: 'new',
+  },
+  {
+    id: '2',
+    title: 'Franz Liszt — Transcendental Étude No.4 "Mazeppa", S.139/4',
+    composer: 'Franz Liszt',
+    category: '피아노',
+    instructor: '최유진',
+    thumbnail: 'https://eon-music.com/wp-content/uploads/2025/09/KakaoTalk_20260102_174818213_02-scaled.png',
+    link: 'https://eon-music.com/courses/%eb%a7%88%ec%a0%9c%ed%8c%8c/',
+    detailUrl: 'https://eugeneonmusic.com/franz-liszt-transcendental-etude-no-4-mazeppa/',
+    status: 'none',
+  },
+  {
+    id: '3',
+    title: 'Frédéric Chopin — Ballade No.1 in G minor, Op.23',
+    composer: 'Frédéric Chopin',
+    category: '피아노',
+    instructor: '최유진',
+    thumbnail: 'https://eon-music.com/wp-content/uploads/2025/04/KakaoTalk_20260102_174818213-scaled.png',
+    link: 'https://eon-music.com/courses/f-chopin-ballade-no-1-in-g-minor-op-23-1%eb%b6%80/',
+    detailUrl: 'https://eon-music.com/chopin_ballade_no_1',
+    status: 'popular',
+  },
+  {
+    id: '4',
+    title: 'Frédéric Chopin — Étude in A minor, Op.25 No.4',
+    composer: 'Frédéric Chopin',
+    category: '피아노',
+    instructor: '최유진',
+    thumbnail: 'https://eon-music.com/wp-content/uploads/2025/12/KakaoTalk_20260102_174818213_06-scaled.png',
+    link: 'https://eon-music.com/courses/frederic-chopin-etude-in-a-minor-op-25-no-4/',
+    detailUrl: 'https://eugeneonmusic.com/frederic-chopin-etude-in-a-minor-op-25-no-4/',
+    status: 'none',
+  },
+  {
+    id: '5',
+    title: 'Frédéric Chopin — Étude in C-sharp minor, Op.10 No.4',
+    composer: 'Frédéric Chopin',
+    category: '피아노',
+    instructor: '최유진',
+    thumbnail: 'https://eon-music.com/wp-content/uploads/2025/12/KakaoTalk_20260102_174818213_09-scaled.png',
+    link: 'https://eon-music.com/courses/frederic-chopin-etude-in-c-sharp-minor-op-10-no-4/',
+    detailUrl: 'https://eugeneonmusic.com/frederic-chopin-etude-in-c-sharp-minor-op-10-no-4/',
+    status: 'none',
+  },
+  {
+    id: '6',
+    title: 'Frédéric Chopin — Étude in G-flat major, Op.10 No.5',
+    composer: 'Frédéric Chopin',
+    category: '피아노',
+    instructor: '최유진',
+    thumbnail: 'https://eon-music.com/wp-content/uploads/2025/12/KakaoTalk_20260102_174818213_10-scaled.png',
+    link: 'https://eon-music.com/courses/frederic-chopin-etude-in-g-flat-major-op-10-no-5/',
+    detailUrl: 'https://eugeneonmusic.com/frederic-chopin-etude-in-g-flat-major-op-10-no-5/',
+    status: 'new',
+  },
+  {
+    id: '7',
+    title: 'Frédéric Chopin — Étude in G-sharp minor, Op.25 No.6',
+    composer: 'Frédéric Chopin',
+    category: '피아노',
+    instructor: '최유진',
+    thumbnail: 'https://eon-music.com/wp-content/uploads/2025/04/KakaoTalk_20260102_174818213_07-scaled.png',
+    link: 'https://eon-music.com/courses/frederic-chopin-etude-in-g-sharp-minor-op-25-no-6/',
+    detailUrl: 'https://eugeneonmusic.com/frederic-chopin-etude-in-g-sharp-minor-op-25-no-6/',
+    status: 'none',
+  },
+  {
+    id: '8',
+    title: 'Mastering the Twelve-Tone Technique',
+    composer: '',
+    category: '작곡·음악이론',
+    instructor: '최유진',
+    thumbnail: 'https://eon-music.com/wp-content/uploads/2025/09/KakaoTalk_20260106_105143263_01-scaled.png',
+    link: 'https://eon-music.com/courses/12%ec%9d%8c%ea%b8%b0%eb%b2%95/',
+    detailUrl: 'https://eugeneonmusic.com/mastering-the-twelve-tone-technique/',
+    status: 'popular',
+  },
+];
+
+const CATEGORIES = ['전체', '피아노', '작곡·음악이론'];
+
+// ── SVG 아이콘 ──
+function PlayIcon({ size = 16, color = '#C9A96E' }) {
+  return (
+    <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+      <Path d="M8 5v14l11-7L8 5z" fill={color} />
+    </Svg>
+  );
+}
+
+function BookIcon({ size = 14, color = '#6b7b8d' }) {
+  return (
+    <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+      <Path d="M4 19.5A2.5 2.5 0 016.5 17H20" stroke={color} strokeWidth={2} strokeLinecap="round" />
+      <Path d="M4 4.5A2.5 2.5 0 016.5 2H20v20H6.5A2.5 2.5 0 014 19.5v-15z" stroke={color} strokeWidth={2} />
+    </Svg>
+  );
+}
+
+function ExternalIcon({ size = 16, color = '#C9A96E' }) {
+  return (
+    <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+      <Path d="M7 17L17 7M17 7H7M17 7v10" stroke={color} strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" />
+    </Svg>
+  );
+}
+
+function MusicNoteIcon({ size = 14, color = '#6b7b8d' }) {
+  return (
+    <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+      <Path d="M9 18V5l12-2v13" stroke={color} strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" />
+      <Circle cx="6" cy="18" r="3" stroke={color} strokeWidth={2} />
+      <Circle cx="18" cy="16" r="3" stroke={color} strokeWidth={2} />
+    </Svg>
+  );
+}
+
+function UserIcon({ size = 14, color = '#6b7b8d' }) {
+  return (
+    <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+      <Path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2" stroke={color} strokeWidth={2} strokeLinecap="round" />
+      <Circle cx="12" cy="7" r="4" stroke={color} strokeWidth={2} />
+    </Svg>
+  );
+}
+
+// ── 배지 컴포넌트 ──
+function CategoryBadge({ category }) {
+  const colors = {
+    '피아노': { bg: '#1a2a3a', text: '#60a5fa' },
+    '작곡·음악이론': { bg: '#2a2a1a', text: '#C9A96E' },
+  };
+  const c = colors[category] || colors['피아노'];
+  return (
+    <View style={[styles.categoryBadge, { backgroundColor: c.bg }]}>
+      <Text style={[styles.categoryBadgeText, { color: c.text }]}>{category}</Text>
+    </View>
+  );
+}
+
+function StatusBadge({ status }) {
+  if (status === 'none') return null;
+  const config = {
+    new: { bg: '#C9A96E', text: '#0f1923', label: 'NEW' },
+    popular: { bg: '#2C5F8A', text: '#ffffff', label: 'BEST' },
+  };
+  const c = config[status];
+  if (!c) return null;
+  return (
+    <View style={[styles.statusBadge, { backgroundColor: c.bg }]}>
+      <Text style={[styles.statusText, { color: c.text }]}>{c.label}</Text>
+    </View>
+  );
+}
+
+// ── 강좌 카드 ──
+function CourseCard({ course, onPress }) {
+  return (
+    <TouchableOpacity style={styles.courseCard} activeOpacity={0.7} onPress={onPress} accessibilityRole="button">
+      {/* 썸네일 */}
+      <View style={styles.cardThumbnail}>
+        {course.thumbnail ? (
+          <Image
+            source={{ uri: course.thumbnail }}
+            style={styles.cardImage}
+            resizeMode="cover"
+          />
+        ) : (
+          <View style={styles.cardPlaceholder}>
+            <PlayIcon size={32} color="rgba(201,169,110,0.6)" />
+          </View>
+        )}
+        {/* 상태 배지 */}
+        {course.status !== 'none' && (
+          <View style={styles.statusOverlay}>
+            <StatusBadge status={course.status} />
+          </View>
+        )}
+        {/* 재생 오버레이 */}
+        <View style={styles.playOverlay}>
+          <View style={styles.playCircle}>
+            <PlayIcon size={20} color="#ffffff" />
+          </View>
+        </View>
+      </View>
+
+      {/* 정보 */}
+      <View style={styles.cardBody}>
+        <View style={styles.cardTopRow}>
+          <CategoryBadge category={course.category} />
+        </View>
+        <Text style={styles.cardTitle} numberOfLines={2}>{course.title}</Text>
+        {course.composer ? (
+          <View style={styles.metaRow}>
+            <MusicNoteIcon size={13} />
+            <Text style={styles.metaText}>{course.composer}</Text>
+          </View>
+        ) : null}
+        <View style={styles.metaRow}>
+          <UserIcon size={13} />
+          <Text style={styles.metaText}>강사: {course.instructor}</Text>
+        </View>
+      </View>
+    </TouchableOpacity>
+  );
+}
+
+// ── 메인 화면 ──
+export default function CourseScreen() {
+  const insets = useSafeAreaInsets();
+  const router = useRouter();
+  const [activeCategory, setActiveCategory] = useState('전체');
+  const [refreshing, setRefreshing] = useState(false);
+
+  const filtered =
+    activeCategory === '전체'
+      ? COURSES
+      : COURSES.filter((c) => c.category === activeCategory);
+
+  const handleCoursePress = (course) => {
+    router.push({
+      pathname: '/course/[id]',
+      params: {
+        id: course.id,
+        title: course.title,
+        url: course.link,
+        detailUrl: course.detailUrl || '',
+        courseUrl: course.link,
+      },
+    });
+  };
+
+  const onRefresh = useCallback(() => {
+    setRefreshing(true);
+    setTimeout(() => setRefreshing(false), 1000);
+  }, []);
+
+  return (
+    <View style={[styles.container, { paddingTop: insets.top }]}>
+      {/* Header */}
+      <View style={styles.header}>
+        <View>
+          <Text style={styles.headerTitle}>강좌</Text>
+          <Text style={styles.headerSub}>원격평생교육원</Text>
+        </View>
+      </View>
+
+      {/* 카테고리 필터 */}
+      <View style={styles.categoryWrap}>
+        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.categoryRow}>
+          {CATEGORIES.map((cat) => (
+            <TouchableOpacity
+              key={cat}
+              style={[styles.categoryBtn, activeCategory === cat && styles.categoryBtnActive]}
+              onPress={() => setActiveCategory(cat)}
+            >
+              <Text style={[styles.categoryLabel, activeCategory === cat && styles.categoryLabelActive]}>
+                {cat}
+              </Text>
+            </TouchableOpacity>
+          ))}
+        </ScrollView>
+      </View>
+
+      {/* 강좌 목록 */}
+      <ScrollView
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={styles.listContent}
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={onRefresh}
+            tintColor="#C9A96E"
+            colors={['#C9A96E']}
+          />
+        }
+      >
+        {/* 상태 바 */}
+        <View style={styles.statsBar}>
+          <Text style={styles.statsText}>총 {filtered.length}개 강좌</Text>
+          <View style={styles.sourceIndicator}>
+            <View style={styles.sourceDot} />
+            <Text style={styles.sourceText}>eon-music.com</Text>
+          </View>
+        </View>
+
+        {filtered.map((course) => (
+          <CourseCard
+            key={course.id}
+            course={course}
+            onPress={() => handleCoursePress(course)}
+          />
+        ))}
+
+        {filtered.length === 0 && (
+          <View style={styles.emptyWrap}>
+            <BookIcon size={40} color="#3a4a5a" />
+            <Text style={styles.emptyText}>해당 카테고리의 강좌가 없습니다</Text>
+          </View>
+        )}
+
+        {/* 수강신청 바로가기 */}
+        <TouchableOpacity
+          style={styles.cta}
+          onPress={() => {
+            router.push({
+              pathname: '/course/[id]',
+              params: {
+                id: 'enroll',
+                title: '수강신청',
+                url: 'https://eon-music.com/%ec%88%98%ea%b0%95%ec%8b%a0%ec%b2%ad/',
+              },
+            });
+          }}
+          accessibilityRole="button"
+        >
+          <Text style={styles.ctaText}>수강신청 페이지 바로가기</Text>
+          <ExternalIcon size={16} />
+        </TouchableOpacity>
+
+        <View style={{ height: 20 }} />
+      </ScrollView>
+    </View>
+  );
+}
+
+const styles = StyleSheet.create({
+  container: { flex: 1, backgroundColor: '#0f1923' },
+
+  /* 헤더 */
+  header: {
+    flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center',
+    paddingHorizontal: 24, paddingTop: 16, paddingBottom: 12,
+    borderBottomWidth: 1, borderBottomColor: '#1a2530',
+  },
+  headerTitle: { fontSize: 22, fontWeight: '700', color: '#ffffff', letterSpacing: -0.5 },
+  headerSub: { fontSize: 12, color: '#C9A96E', marginTop: 2, fontWeight: '500', letterSpacing: 0.5 },
+
+  /* 카테고리 */
+  categoryWrap: { borderBottomWidth: 1, borderBottomColor: '#1a2530' },
+  categoryRow: { paddingHorizontal: 20, paddingVertical: 12, gap: 8 },
+  categoryBtn: {
+    paddingHorizontal: 16, paddingVertical: 8,
+    borderRadius: 20, backgroundColor: '#1a2530',
+    borderWidth: 1, borderColor: '#1a2530',
+  },
+  categoryBtnActive: { backgroundColor: 'transparent', borderColor: '#C9A96E' },
+  categoryLabel: { fontSize: 13, fontWeight: '600', color: '#5a6a7a' },
+  categoryLabelActive: { color: '#C9A96E' },
+
+  /* 리스트 */
+  listContent: { paddingHorizontal: 20, paddingTop: 8 },
+  statsBar: {
+    flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center',
+    paddingVertical: 10,
+  },
+  statsText: { fontSize: 12, color: '#4a5a6a', fontWeight: '500' },
+  sourceIndicator: { flexDirection: 'row', alignItems: 'center', gap: 5 },
+  sourceDot: { width: 6, height: 6, borderRadius: 3, backgroundColor: '#4ade80' },
+  sourceText: { fontSize: 11, color: '#4a5a6a' },
+
+  /* 강좌 카드 */
+  courseCard: {
+    backgroundColor: '#1a2530', borderRadius: 14,
+    marginBottom: 14, overflow: 'hidden',
+    borderWidth: 1, borderColor: '#222f3a',
+  },
+  cardThumbnail: { height: 190, backgroundColor: '#0d1520', position: 'relative' },
+  cardImage: { width: '100%', height: '100%' },
+  cardPlaceholder: {
+    flex: 1, alignItems: 'center', justifyContent: 'center',
+    backgroundColor: '#141f2b',
+  },
+  statusOverlay: { position: 'absolute', top: 10, left: 10 },
+  statusBadge: { paddingHorizontal: 8, paddingVertical: 3, borderRadius: 4 },
+  statusText: { fontSize: 10, fontWeight: '800', letterSpacing: 0.5 },
+  playOverlay: {
+    position: 'absolute', right: 12, bottom: 12,
+  },
+  playCircle: {
+    width: 40, height: 40, borderRadius: 20,
+    backgroundColor: 'rgba(201,169,110,0.85)',
+    alignItems: 'center', justifyContent: 'center',
+  },
+
+  cardBody: { padding: 16, gap: 6 },
+  cardTopRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
+  categoryBadge: { paddingHorizontal: 8, paddingVertical: 3, borderRadius: 4 },
+  categoryBadgeText: { fontSize: 11, fontWeight: '700' },
+  cardTitle: { fontSize: 16, fontWeight: '700', color: '#ffffff', lineHeight: 23, letterSpacing: -0.3, marginTop: 2 },
+  metaRow: { flexDirection: 'row', alignItems: 'center', gap: 5 },
+  metaText: { fontSize: 13, color: '#6b7b8d', fontWeight: '500' },
+
+  /* 빈 상태 */
+  emptyWrap: { alignItems: 'center', paddingVertical: 60, gap: 12 },
+  emptyText: { fontSize: 14, color: '#4a5a6a' },
+
+  /* CTA */
+  cta: {
+    flexDirection: 'row', alignItems: 'center', justifyContent: 'center',
+    gap: 8, paddingVertical: 16, marginTop: 8,
+    borderWidth: 1, borderColor: '#C9A96E30', borderRadius: 12,
+    backgroundColor: '#C9A96E08',
+  },
+  ctaText: { fontSize: 14, fontWeight: '600', color: '#C9A96E' },
+});
