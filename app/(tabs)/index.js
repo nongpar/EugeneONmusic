@@ -5,6 +5,7 @@ import {
 } from 'react-native';
 import Svg, { Path, Circle, Line } from 'react-native-svg';
 import { LinearGradient } from 'expo-linear-gradient';
+import { router } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { collection, query, orderBy, getDocs } from 'firebase/firestore';
 import { db } from '../../config/firebase';
@@ -217,21 +218,21 @@ export default function HomeScreen() {
 
         {/* ── 퀵 액션 ── */}
         <View style={styles.quickRow}>
-          <TouchableOpacity style={styles.quickCard}>
-            <Image source={require('../../assets/images/lesson.jpg')} style={styles.quickImage} resizeMode="cover" />
+          <TouchableOpacity style={styles.quickCard} onPress={() => router.push('/(tabs)/course')} activeOpacity={0.85}>
+            <Image source={{ uri: 'https://eugeneonmusic.com/wp-content/uploads/2026/02/KakaoTalk_20260214_162600793_01.jpg' }} style={styles.quickImage} resizeMode="cover" />
             <LinearGradient
-              colors={['transparent', 'rgba(15,25,35,0.7)']}
+              colors={['transparent', 'rgba(15,25,35,0.85)']}
               style={styles.quickGradient}
             />
-            <Text style={styles.quickLabel}>마스터클래스</Text>
+            <Text style={styles.quickLabel}>음악교육</Text>
           </TouchableOpacity>
-          <TouchableOpacity style={styles.quickCard}>
-            <Image source={require('../../assets/images/performance.jpg')} style={styles.quickImage} resizeMode="cover" />
+          <TouchableOpacity style={styles.quickCard} onPress={() => router.push('/(tabs)/sns')} activeOpacity={0.85}>
+            <Image source={{ uri: 'https://eugeneonmusic.com/wp-content/uploads/2025/10/DSC06077.jpg' }} style={styles.quickImage} resizeMode="cover" />
             <LinearGradient
-              colors={['transparent', 'rgba(15,25,35,0.7)']}
+              colors={['transparent', 'rgba(15,25,35,0.85)']}
               style={styles.quickGradient}
             />
-            <Text style={styles.quickLabel}>앙상블</Text>
+            <Text style={styles.quickLabel}>예술기획</Text>
           </TouchableOpacity>
         </View>
 

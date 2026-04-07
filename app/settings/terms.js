@@ -90,22 +90,35 @@ export default function TermsScreen() {
         <Text style={styles.listItem}>4. 신고된 내용은 검토 후 경고, 이용 정지, 계정 삭제 등의 조치가 취해질 수 있습니다.</Text>
         <Text style={styles.listItem}>5. 차단된 사용자의 메시지는 더 이상 수신되지 않으며, 차단은 해제할 수 있습니다.</Text>
 
-        <Text style={styles.sectionTitle}>제9조 (회원 탈퇴 및 자격 상실)</Text>
+        <Text style={styles.sectionTitle}>제9조 (커뮤니티 서비스 이용규칙)</Text>
+        <Text style={styles.listItem}>1. 회원은 커뮤니티 게시판을 통해 자유롭게 의견을 공유할 수 있습니다.</Text>
+        <Text style={styles.listItem}>2. 다음 행위는 금지되며, 위반 시 게시글 삭제 및 서비스 이용이 제한될 수 있습니다:</Text>
+        <Text style={styles.subItem}>- 욕설, 비방, 혐오 표현 등 부적절한 언어 사용</Text>
+        <Text style={styles.subItem}>- 음란물, 불법 콘텐츠 또는 저작권을 침해하는 콘텐츠 게시</Text>
+        <Text style={styles.subItem}>- 스팸, 광고성 게시글 및 댓글 작성</Text>
+        <Text style={styles.subItem}>- 개인정보를 무단으로 게시하거나 타인의 사생활을 침해하는 행위</Text>
+        <Text style={styles.subItem}>- 타인을 사칭하거나 허위 정보를 유포하는 행위</Text>
+        <Text style={styles.subItem}>- 특정 개인이나 단체를 대상으로 한 괴롭힘 또는 위협</Text>
+        <Text style={styles.listItem}>3. 부적절한 게시글은 상단 메뉴를 통해 신고할 수 있으며, 부적절한 댓글은 길게 눌러 신고할 수 있습니다.</Text>
+        <Text style={styles.listItem}>4. 게시글 작성자를 차단할 수 있으며, 차단된 사용자의 콘텐츠는 더 이상 표시되지 않습니다.</Text>
+        <Text style={styles.listItem}>5. 신고된 콘텐츠는 검토 후 경고, 게시글 삭제, 이용 정지, 계정 삭제 등의 조치가 취해질 수 있습니다.</Text>
+
+        <Text style={styles.sectionTitle}>제10조 (회원 탈퇴 및 자격 상실)</Text>
         <Text style={styles.listItem}>1. 회원은 회사에 언제든지 탈퇴를 요청할 수 있으며, 회사는 즉시 회원탈퇴를 처리합니다.</Text>
         <Text style={styles.listItem}>2. 회원이 다음 각 호의 사유에 해당하는 경우 회사는 회원자격을 제한 및 정지시킬 수 있습니다.</Text>
         <Text style={styles.subItem}>- 가입 신청 시에 허위 내용을 등록한 경우</Text>
         <Text style={styles.subItem}>- 다른 사람의 서비스 이용을 방해하는 경우</Text>
 
-        <Text style={styles.sectionTitle}>제10조 (저작권의 귀속)</Text>
+        <Text style={styles.sectionTitle}>제11조 (저작권의 귀속)</Text>
         <Text style={styles.body}>
           서비스에서 제공하는 모든 강좌 콘텐츠, 레슨 자료, 악보 등의 저작권은 회사 또는 해당 저작권자에게 귀속됩니다. 이용자는 서비스를 통해 얻은 정보를 회사의 사전 승낙 없이 복제, 배포, 방송 기타 방법에 의하여 영리목적으로 이용하거나 제3자에게 제공할 수 없습니다.
         </Text>
 
-        <Text style={styles.sectionTitle}>제11조 (면책)</Text>
+        <Text style={styles.sectionTitle}>제12조 (면책)</Text>
         <Text style={styles.listItem}>1. 회사는 천재지변 또는 이에 준하는 불가항력으로 인하여 서비스를 제공할 수 없는 경우에는 서비스 제공에 관한 책임이 면제됩니다.</Text>
         <Text style={styles.listItem}>2. 회사는 이용자의 귀책사유로 인한 서비스 이용의 장애에 대하여는 책임을 지지 않습니다.</Text>
 
-        <Text style={styles.sectionTitle}>제12조 (분쟁해결)</Text>
+        <Text style={styles.sectionTitle}>제13조 (분쟁해결)</Text>
         <Text style={styles.body}>
           서비스 이용으로 발생한 분쟁에 대해 소송이 제기되는 경우 회사의 본사 소재지를 관할하는 법원을 관할 법원으로 합니다.
         </Text>

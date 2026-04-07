@@ -1,10 +1,491 @@
-import { useEffect } from 'react';
+import { useEffect, useState, useRef, useCallback } from 'react';
+import { View, Animated, StyleSheet, Dimensions, Platform, Easing } from 'react-native';
 import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
+import * as SplashScreen from 'expo-splash-screen';
 import { AuthProvider, useAuth } from '../hooks/useAuth';
 import { useNotifications } from '../hooks/useNotifications';
 import { doc, setDoc } from 'firebase/firestore';
 import { db } from '../config/firebase';
+import Svg, { Path, Circle as SvgCircle, Line } from 'react-native-svg';
+
+// 네이티브 스플래시 스크린 유지 (앱 준비 전까지)
+SplashScreen.preventAutoHideAsync().catch(() => {});
+
+const { width: SCREEN_W, height: SCREEN_H } = Dimensions.get('window');
+
+// ── SVG 음악 아이콘들 ──
+function DoubleNote({ size = 24, color = '#C9A96E' }) {
+  return (
+    <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+      <Path d="M9 18V5l12-2v13" stroke={color} strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round" />
+      <Path d="M6 21a3 3 0 100-6 3 3 0 000 6z" fill={color} opacity={0.3} stroke={color} strokeWidth={1} />
+      <Path d="M18 19a3 3 0 100-6 3 3 0 000 6z" fill={color} opacity={0.3} stroke={color} strokeWidth={1} />
+    </Svg>
+  );
+}
+
+function SingleNote({ size = 20, color = '#C9A96E' }) {
+  return (
+    <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+      <Path d="M12 3v15" stroke={color} strokeWidth={1.5} strokeLinecap="round" />
+      <Path d="M12 3l6-1v5l-6 1V3z" fill={color} opacity={0.25} stroke={color} strokeWidth={1} strokeLinejoin="round" />
+      <SvgCircle cx="9" cy="18" r="3" fill={color} opacity={0.3} stroke={color} strokeWidth={1} />
+    </Svg>
+  );
+}
+
+function TrebleClef({ size = 32, color = '#C9A96E' }) {
+  return (
+    <Svg width={size} height={size * 1.6} viewBox="0 0 24 38" fill="none">
+      <Path
+        d="M12 36V8c0-4 3-7 5-7s3 2 3 4c0 3-4 6-8 8-4 2-7 5-7 9 0 5 4 8 7 8 2 0 4-1 5-3"
+        stroke={color} strokeWidth={1.2} strokeLinecap="round" fill="none" />
+      <SvgCircle cx="12" cy="28" r="2" fill={color} opacity={0.4} />
+    </Svg>
+  );
+}
+
+function SharpSign({ size = 18, color = '#C9A96E' }) {
+  return (
+    <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+      <Line x1="8" y1="2" x2="8" y2="22" stroke={color} strokeWidth={1.5} />
+      <Line x1="16" y1="2" x2="16" y2="22" stroke={color} strokeWidth={1.5} />
+      <Line x1="3" y1="8" x2="21" y2="6" stroke={color} strokeWidth={2} strokeLinecap="round" />
+      <Line x1="3" y1="18" x2="21" y2="16" stroke={color} strokeWidth={2} strokeLinecap="round" />
+    </Svg>
+  );
+}
+
+function PianoKeys({ width = 200, color = '#C9A96E' }) {
+  return (
+    <Svg width={width} height={8} viewBox="0 0 200 8" fill="none">
+      {/* 건반 느낌의 라인들 */}
+      {[0, 28, 56, 84, 100, 128, 156, 184].map((x, i) => (
+        <Line key={i} x1={x} y1="0" x2={x} y2="8" stroke={color} strokeWidth={0.8} opacity={0.3} />
+      ))}
+      {/* 상단/하단 라인 */}
+      <Line x1="0" y1="0" x2="200" y2="0" stroke={color} strokeWidth={1} opacity={0.5} />
+      <Line x1="0" y1="8" x2="200" y2="8" stroke={color} strokeWidth={1} opacity={0.5} />
+    </Svg>
+  );
+}
+
+// ── 떠다니는 파티클 (골드 반짝임) ──
+function FloatingParticle({ anim, x, y, size = 3 }) {
+  return (
+    <Animated.View
+      style={{
+        position: 'absolute',
+        left: x,
+        top: y,
+        width: size,
+        height: size,
+        borderRadius: size / 2,
+        backgroundColor: '#C9A96E',
+        opacity: anim.opacity,
+        transform: [{ translateY: anim.translateY }, { scale: anim.scale }],
+      }}
+    />
+  );
+}
+
+// ── 오선지 (Staff Lines) ──
+function StaffLines({ opacity, width: lineW }) {
+  return (
+    <Animated.View style={{ position: 'absolute', opacity, width: SCREEN_W, alignItems: 'flex-end' }}>
+      {[0, 6, 12, 18, 24].map((offset) => (
+        <Animated.View
+          key={offset}
+          style={{
+            height: 0.5,
+            backgroundColor: '#C9A96E',
+            opacity: 0.12,
+            marginBottom: 5.5,
+            width: lineW,
+          }}
+        />
+      ))}
+    </Animated.View>
+  );
+}
+
+// ── 애니메이션 스플래시 화면 ──
+function AnimatedSplash({ onFinish }) {
+  // 메인 요소 애니메이션
+  const logoOpacity = useRef(new Animated.Value(0)).current;
+  const logoScale = useRef(new Animated.Value(0.6)).current;
+  const logoRotate = useRef(new Animated.Value(-0.02)).current;
+  const ringScale = useRef(new Animated.Value(0)).current;
+  const ringOpacity = useRef(new Animated.Value(0)).current;
+  const titleOpacity = useRef(new Animated.Value(0)).current;
+  const titleTranslateY = useRef(new Animated.Value(20)).current;
+  const subtitleOpacity = useRef(new Animated.Value(0)).current;
+  const subtitleTranslateY = useRef(new Animated.Value(10)).current;
+  const lineWidth = useRef(new Animated.Value(0)).current;
+  const lineLeftWidth = useRef(new Animated.Value(0)).current;
+  const lineRightWidth = useRef(new Animated.Value(0)).current;
+  const fadeOut = useRef(new Animated.Value(1)).current;
+  const finalScale = useRef(new Animated.Value(1)).current;
+
+  // 오선지 배경
+  const staffOpacity = useRef(new Animated.Value(0)).current;
+  const staffWidth = useRef(new Animated.Value(0)).current;
+
+  // 건반 장식 (미사용)
+  const pianoOpacity = useRef(new Animated.Value(0)).current;
+
+  // 음표/음악기호 애니메이션 (8개)
+  const NUM_NOTES = 8;
+  const noteAnims = useRef(
+    Array.from({ length: NUM_NOTES }, () => ({
+      opacity: new Animated.Value(0),
+      translateY: new Animated.Value(0),
+      translateX: new Animated.Value(0),
+      scale: new Animated.Value(0.5),
+      rotate: new Animated.Value(0),
+    }))
+  ).current;
+
+  // 골드 파티클 (12개)
+  const NUM_PARTICLES = 12;
+  const particleAnims = useRef(
+    Array.from({ length: NUM_PARTICLES }, () => ({
+      opacity: new Animated.Value(0),
+      translateY: new Animated.Value(0),
+      scale: new Animated.Value(0),
+    }))
+  ).current;
+
+  // 음표 위치/종류 설정
+  const noteConfigs = [
+    { x: SCREEN_W * 0.08, y: SCREEN_H * 0.2, type: 'single', size: 18, delay: 0, floatDist: -25 },
+    { x: SCREEN_W * 0.82, y: SCREEN_H * 0.18, type: 'double', size: 20, delay: 100, floatDist: -30 },
+    { x: SCREEN_W * 0.15, y: SCREEN_H * 0.38, type: 'sharp', size: 14, delay: 200, floatDist: -15 },
+    { x: SCREEN_W * 0.78, y: SCREEN_H * 0.42, type: 'single', size: 16, delay: 150, floatDist: -20 },
+    { x: SCREEN_W * 0.05, y: SCREEN_H * 0.58, type: 'double', size: 22, delay: 300, floatDist: -28 },
+    { x: SCREEN_W * 0.85, y: SCREEN_H * 0.62, type: 'treble', size: 20, delay: 250, floatDist: -22 },
+    { x: SCREEN_W * 0.2, y: SCREEN_H * 0.75, type: 'single', size: 15, delay: 350, floatDist: -18 },
+    { x: SCREEN_W * 0.72, y: SCREEN_H * 0.78, type: 'double', size: 17, delay: 400, floatDist: -24 },
+  ];
+
+  // 파티클 위치 (로고 주변 원형 배치)
+  const particleConfigs = Array.from({ length: NUM_PARTICLES }, (_, i) => {
+    const angle = (i / NUM_PARTICLES) * Math.PI * 2;
+    const radius = 80 + Math.random() * 40;
+    return {
+      x: SCREEN_W / 2 + Math.cos(angle) * radius - 2,
+      y: SCREEN_H / 2 - 40 + Math.sin(angle) * radius - 2,
+      size: 2 + Math.random() * 3,
+      delay: i * 60,
+      floatDist: -15 - Math.random() * 20,
+    };
+  });
+
+  useEffect(() => {
+    SplashScreen.hideAsync().catch(() => {});
+
+    // ── 음표 애니메이션 생성 ──
+    const noteAnimations = noteAnims.map((anim, i) => {
+      const cfg = noteConfigs[i];
+      return Animated.sequence([
+        Animated.delay(600 + cfg.delay),
+        Animated.parallel([
+          Animated.timing(anim.opacity, { toValue: 0.5 + Math.random() * 0.3, duration: 600, useNativeDriver: true }),
+          Animated.timing(anim.scale, { toValue: 0.8 + Math.random() * 0.4, duration: 600, easing: Easing.out(Easing.back(1.5)), useNativeDriver: true }),
+          Animated.timing(anim.translateY, { toValue: cfg.floatDist, duration: 1800, easing: Easing.inOut(Easing.sin), useNativeDriver: true }),
+          Animated.timing(anim.rotate, { toValue: (Math.random() - 0.5) * 0.3, duration: 1800, useNativeDriver: true }),
+          // 좌우 미세 흔들림
+          Animated.sequence([
+            Animated.timing(anim.translateX, { toValue: (Math.random() - 0.5) * 10, duration: 900, useNativeDriver: true }),
+            Animated.timing(anim.translateX, { toValue: (Math.random() - 0.5) * 8, duration: 900, useNativeDriver: true }),
+          ]),
+        ]),
+      ]);
+    });
+
+    // ── 파티클 애니메이션 생성 ──
+    const particleAnimations = particleAnims.map((anim, i) => {
+      const cfg = particleConfigs[i];
+      return Animated.sequence([
+        Animated.delay(800 + cfg.delay),
+        Animated.parallel([
+          Animated.sequence([
+            Animated.timing(anim.opacity, { toValue: 0.7 + Math.random() * 0.3, duration: 300, useNativeDriver: true }),
+            Animated.delay(400 + Math.random() * 400),
+            Animated.timing(anim.opacity, { toValue: 0, duration: 500, useNativeDriver: true }),
+          ]),
+          Animated.timing(anim.translateY, { toValue: cfg.floatDist, duration: 1200, useNativeDriver: true }),
+          Animated.sequence([
+            Animated.timing(anim.scale, { toValue: 1, duration: 300, useNativeDriver: true }),
+            Animated.timing(anim.scale, { toValue: 0, duration: 900, useNativeDriver: true }),
+          ]),
+        ]),
+      ]);
+    });
+
+    // ── 메인 시퀀스 ──
+    Animated.parallel([
+      // 오선지: 독립적으로 오른쪽→왼쪽 끝까지 펼쳐짐
+      Animated.parallel([
+        Animated.timing(staffOpacity, { toValue: 1, duration: 400, useNativeDriver: true }),
+        Animated.timing(staffWidth, { toValue: SCREEN_W, duration: 1800, easing: Easing.out(Easing.cubic), useNativeDriver: false }),
+      ]),
+
+      // 메인 시퀀스
+      Animated.sequence([
+        // 1단계: 짧은 대기 후 로고 등장
+        Animated.delay(300),
+
+        // 2단계: 로고 등장 + 링 이펙트
+        Animated.parallel([
+          Animated.timing(logoOpacity, { toValue: 1, duration: 500, useNativeDriver: true }),
+          Animated.spring(logoScale, { toValue: 1, friction: 6, tension: 35, useNativeDriver: true }),
+          Animated.timing(logoRotate, { toValue: 0, duration: 600, easing: Easing.out(Easing.cubic), useNativeDriver: true }),
+          // 링 확장 이펙트
+          Animated.sequence([
+            Animated.delay(200),
+            Animated.parallel([
+              Animated.timing(ringScale, { toValue: 1.8, duration: 700, easing: Easing.out(Easing.cubic), useNativeDriver: true }),
+              Animated.sequence([
+                Animated.timing(ringOpacity, { toValue: 0.6, duration: 200, useNativeDriver: true }),
+                Animated.timing(ringOpacity, { toValue: 0, duration: 500, useNativeDriver: true }),
+              ]),
+            ]),
+          ]),
+        ]),
+
+        // 3단계: 골드 라인 양쪽으로 확장 (1000~1400ms)
+        Animated.parallel([
+          Animated.timing(lineLeftWidth, { toValue: 1, duration: 500, easing: Easing.out(Easing.cubic), useNativeDriver: false }),
+          Animated.sequence([
+            Animated.delay(80),
+            Animated.timing(lineRightWidth, { toValue: 1, duration: 500, easing: Easing.out(Easing.cubic), useNativeDriver: false }),
+          ]),
+          // 건반 장식 등장
+          Animated.sequence([
+            Animated.delay(200),
+            Animated.timing(pianoOpacity, { toValue: 1, duration: 400, useNativeDriver: true }),
+          ]),
+        ]),
+
+        // 4단계: 타이틀 + 서브타이틀 (1400~1900ms)
+        Animated.parallel([
+          Animated.timing(titleOpacity, { toValue: 1, duration: 400, useNativeDriver: true }),
+          Animated.spring(titleTranslateY, { toValue: 0, friction: 8, tension: 40, useNativeDriver: true }),
+          Animated.sequence([
+            Animated.delay(200),
+            Animated.parallel([
+              Animated.timing(subtitleOpacity, { toValue: 1, duration: 400, useNativeDriver: true }),
+              Animated.spring(subtitleTranslateY, { toValue: 0, friction: 8, tension: 40, useNativeDriver: true }),
+            ]),
+          ]),
+        ]),
+
+        // 5단계: 잠시 대기
+        Animated.delay(600),
+
+        // 6단계: 페이드아웃 + 살짝 확대
+        Animated.parallel([
+          Animated.timing(fadeOut, { toValue: 0, duration: 450, easing: Easing.in(Easing.cubic), useNativeDriver: true }),
+          Animated.timing(finalScale, { toValue: 1.05, duration: 450, useNativeDriver: true }),
+        ]),
+      ]),
+
+      // 음표들 동시에 (delay로 시차)
+      ...noteAnimations,
+
+      // 파티클들 동시에
+      ...particleAnimations,
+    ]).start(() => {
+      onFinish();
+    });
+  }, []);
+
+  // 보간값
+  const animLineLeft = lineLeftWidth.interpolate({ inputRange: [0, 1], outputRange: [0, 40] });
+  const animLineRight = lineRightWidth.interpolate({ inputRange: [0, 1], outputRange: [0, 40] });
+  const logoRotateStr = logoRotate.interpolate({ inputRange: [-0.1, 0.1], outputRange: ['-6deg', '6deg'] });
+
+  // 음표 아이콘 렌더링
+  const renderNoteIcon = (type, size, color) => {
+    switch (type) {
+      case 'double': return <DoubleNote size={size} color={color} />;
+      case 'single': return <SingleNote size={size} color={color} />;
+      case 'treble': return <TrebleClef size={size} color={color} />;
+      case 'sharp': return <SharpSign size={size} color={color} />;
+      default: return <SingleNote size={size} color={color} />;
+    }
+  };
+
+  return (
+    <Animated.View style={[splashStyles.container, { opacity: fadeOut, transform: [{ scale: finalScale }] }]}>
+
+      {/* 오선지 배경 (상단) */}
+      <View style={{ position: 'absolute', top: SCREEN_H * 0.22 }}>
+        <StaffLines opacity={staffOpacity} width={staffWidth} />
+      </View>
+
+      {/* 오선지 배경 (하단) */}
+      <View style={{ position: 'absolute', top: SCREEN_H * 0.68 }}>
+        <StaffLines opacity={staffOpacity} width={staffWidth} />
+      </View>
+
+      {/* 떠다니는 음표/음악기호들 */}
+      {noteConfigs.map((cfg, i) => {
+        const anim = noteAnims[i];
+        const rotateStr = anim.rotate.interpolate({
+          inputRange: [-0.5, 0.5],
+          outputRange: ['-15deg', '15deg'],
+        });
+        return (
+          <Animated.View
+            key={`note-${i}`}
+            style={{
+              position: 'absolute',
+              left: cfg.x,
+              top: cfg.y,
+              opacity: anim.opacity,
+              transform: [
+                { translateY: anim.translateY },
+                { translateX: anim.translateX },
+                { scale: anim.scale },
+                { rotate: rotateStr },
+              ],
+            }}
+          >
+            {renderNoteIcon(cfg.type, cfg.size, '#C9A96E')}
+          </Animated.View>
+        );
+      })}
+
+      {/* 골드 파티클 (로고 주변 반짝임) */}
+      {particleConfigs.map((cfg, i) => (
+        <FloatingParticle
+          key={`particle-${i}`}
+          anim={particleAnims[i]}
+          x={cfg.x}
+          y={cfg.y}
+          size={cfg.size}
+        />
+      ))}
+
+      {/* 로고 링 이펙트 */}
+      <Animated.View
+        style={[
+          splashStyles.logoRing,
+          {
+            opacity: ringOpacity,
+            transform: [{ scale: ringScale }],
+          },
+        ]}
+      />
+
+      {/* 로고 */}
+      <Animated.Image
+        source={require('../assets/images/logo.png')}
+        style={[
+          splashStyles.logo,
+          {
+            opacity: logoOpacity,
+            transform: [{ scale: logoScale }, { rotate: logoRotateStr }],
+          },
+        ]}
+        resizeMode="contain"
+      />
+
+      {/* 골드 라인 (좌우 대칭 확장) */}
+      <View style={splashStyles.lineRow}>
+        <Animated.View style={[splashStyles.goldLine, { width: animLineLeft, marginRight: 6 }]} />
+        <View style={splashStyles.goldDiamond} />
+        <Animated.View style={[splashStyles.goldLine, { width: animLineRight, marginLeft: 6 }]} />
+      </View>
+
+      {/* 앱 타이틀 */}
+      <Animated.Text
+        style={[
+          splashStyles.title,
+          {
+            opacity: titleOpacity,
+            transform: [{ translateY: titleTranslateY }],
+          },
+        ]}
+      >
+        유진온뮤직
+      </Animated.Text>
+
+      {/* 서브타이틀 */}
+      <Animated.Text
+        style={[
+          splashStyles.subtitle,
+          {
+            opacity: subtitleOpacity,
+            transform: [{ translateY: subtitleTranslateY }],
+          },
+        ]}
+      >
+        EON International Music Academy
+      </Animated.Text>
+    </Animated.View>
+  );
+}
+
+const splashStyles = StyleSheet.create({
+  container: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: '#0f1923',
+    alignItems: 'center',
+    justifyContent: 'center',
+    zIndex: 999,
+  },
+  logoRing: {
+    position: 'absolute',
+    width: 120,
+    height: 120,
+    borderRadius: 60,
+    borderWidth: 2,
+    borderColor: '#C9A96E',
+  },
+  logo: {
+    width: 130,
+    height: 130,
+    marginBottom: 24,
+  },
+  lineRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 14,
+  },
+  goldLine: {
+    height: 1.5,
+    backgroundColor: '#C9A96E',
+    borderRadius: 1,
+  },
+  goldDiamond: {
+    width: 6,
+    height: 6,
+    backgroundColor: '#C9A96E',
+    transform: [{ rotate: '45deg' }],
+  },
+  pianoWrap: {
+    marginBottom: 18,
+    opacity: 0.4,
+  },
+  title: {
+    fontSize: 26,
+    fontWeight: '700',
+    color: '#ffffff',
+    letterSpacing: 3,
+    marginBottom: 10,
+  },
+  subtitle: {
+    fontSize: 11,
+    fontWeight: '500',
+    color: '#6b7b8d',
+    letterSpacing: 2,
+    textTransform: 'uppercase',
+  },
+});
 
 // 앱 시작 시 푸시 토큰을 Firestore에 저장하는 컴포넌트
 function NotificationInit() {
@@ -31,6 +512,12 @@ function NotificationInit() {
 }
 
 export default function RootLayout() {
+  const [splashDone, setSplashDone] = useState(false);
+
+  const handleSplashFinish = useCallback(() => {
+    setSplashDone(true);
+  }, []);
+
   return (
     <AuthProvider>
       <StatusBar style="light" />
@@ -57,6 +544,8 @@ export default function RootLayout() {
         <Stack.Screen name="lesson/notes" />
         <Stack.Screen name="lesson/note-write" options={{ presentation: 'modal' }} />
         <Stack.Screen name="lesson/assignments" />
+        <Stack.Screen name="lesson/sheet-music" />
+        <Stack.Screen name="lesson/videos" />
         <Stack.Screen name="news/[id]" />
         <Stack.Screen name="settings/profile" />
         <Stack.Screen name="settings/notifications" />
@@ -67,6 +556,7 @@ export default function RootLayout() {
         <Stack.Screen name="settings/privacy" />
         <Stack.Screen name="settings/terms" />
       </Stack>
+      {!splashDone && <AnimatedSplash onFinish={handleSplashFinish} />}
     </AuthProvider>
   );
 }

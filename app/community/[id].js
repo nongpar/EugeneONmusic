@@ -1,16 +1,29 @@
 import { useState, useEffect } from 'react';
 import {
   View, Text, TextInput, StyleSheet, FlatList, TouchableOpacity,
-  ActivityIndicator, KeyboardAvoidingView, Platform,
+  ActivityIndicator, KeyboardAvoidingView, Platform, Alert, Modal,
 } from 'react-native';
-import Svg, { Path } from 'react-native-svg';
+import Svg, { Path, Circle } from 'react-native-svg';
 import { router, useLocalSearchParams } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import {
-  doc, getDoc, collection, query, orderBy, onSnapshot, addDoc, serverTimestamp,
+  doc, getDoc, collection, query, orderBy, onSnapshot, addDoc, serverTimestamp, setDoc,
 } from 'firebase/firestore';
 import { db } from '../../config/firebase';
 import { useAuth } from '../../hooks/useAuth';
+
+const showAlert = (title, message, buttons) => {
+  if (Platform.OS === 'web') {
+    if (buttons) {
+      const confirmed = window.confirm(`${title}\n${message}`);
+      if (confirmed && buttons[1]?.onPress) buttons[1].onPress();
+    } else {
+      window.alert(`${title}\n${message}`);
+    }
+  } else {
+    Alert.alert(title, message, buttons);
+  }
+};
 
 // SVG 아이콘
 function BackIcon({ size = 24, color = '#8a9bae' }) {
@@ -27,6 +40,15 @@ function SendIcon({ size = 18, color = '#fff' }) {
     </Svg>
   );
 }
+function MoreIcon({ size = 20, color = '#8a9bae' }) {
+  return (
+    <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+      <Circle cx="12" cy="5" r="1.5" fill={color} />
+      <Circle cx="12" cy="12" r="1.5" fill={color} />
+      <Circle cx="12" cy="19" r="1.5" fill={color} />
+    </Svg>
+  );
+}
 
 function getTimeAgo(date) {
   const diff = Math.floor((Date.now() - date.getTime()) / 1000);
@@ -36,21 +58,48 @@ function getTimeAgo(date) {
   return `${Math.floor(diff / 86400)}일 전`;
 }
 
-function CommentItem({ item }) {
+function CommentItem({ item, currentUid, onReportComment }) {
   const time = getTimeAgo(item.createdAt?.toDate?.() || new Date());
+  const isMine = item.authorId === currentUid;
+
+  const handleLongPress = () => {
+    if (isMine) return;
+    showAlert(
+      '댓글 신고',
+      '이 댓글을 부적절한 콘텐츠로 신고하시겠습니까?',
+      [
+        { text: '취소', style: 'cancel' },
+        {
+          text: '신고',
+          style: 'destructive',
+          onPress: () => {
+            if (onReportComment) onReportComment(item);
+            showAlert('신고 완료', '신고가 접수되었습니다. 검토 후 조치하겠습니다.');
+          },
+        },
+      ]
+    );
+  };
+
   return (
-    <View style={styles.commentCard}>
-      <View style={styles.commentHeader}>
-        <View style={styles.commentAvatar}>
-          <Text style={styles.commentAvatarText}>
-            {(item.authorName || '?').charAt(0).toUpperCase()}
-          </Text>
+    <TouchableOpacity
+      activeOpacity={0.8}
+      onLongPress={handleLongPress}
+      delayLongPress={500}
+    >
+      <View style={styles.commentCard}>
+        <View style={styles.commentHeader}>
+          <View style={styles.commentAvatar}>
+            <Text style={styles.commentAvatarText}>
+              {(item.authorName || '?').charAt(0).toUpperCase()}
+            </Text>
+          </View>
+          <Text style={styles.commentAuthor}>{item.authorName || '익명'}</Text>
+          <Text style={styles.commentTime}>{time}</Text>
         </View>
-        <Text style={styles.commentAuthor}>{item.authorName || '익명'}</Text>
-        <Text style={styles.commentTime}>{time}</Text>
+        <Text style={styles.commentBody}>{item.body}</Text>
       </View>
-      <Text style={styles.commentBody}>{item.body}</Text>
-    </View>
+    </TouchableOpacity>
   );
 }
 
@@ -63,6 +112,7 @@ export default function PostDetailScreen() {
   const [commentText, setCommentText] = useState('');
   const [loading, setLoading] = useState(true);
   const [sending, setSending] = useState(false);
+  const [showMoreMenu, setShowMoreMenu] = useState(false);
 
   useEffect(() => {
     const fetchPost = async () => {
@@ -98,6 +148,93 @@ export default function PostDetailScreen() {
     setSending(false);
   };
 
+  // 게시글 신고
+  const handleReportPost = () => {
+    if (!user || !post) return;
+    showAlert(
+      '게시글 신고',
+      '이 게시글을 부적절한 콘텐츠로 신고하시겠습니까?',
+      [
+        { text: '취소', style: 'cancel' },
+        {
+          text: '신고',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              await addDoc(collection(db, 'reports'), {
+                type: 'post',
+                postId: post.id,
+                postTitle: post.title,
+                reportedUserId: post.authorId,
+                reportedUserName: post.authorName,
+                reporterUserId: user.uid,
+                reporterName: user.displayName || user.email,
+                createdAt: serverTimestamp(),
+                status: 'pending',
+              });
+              showAlert('신고 완료', '신고가 접수되었습니다. 검토 후 조치하겠습니다.');
+            } catch (err) {
+              console.warn('신고 저장 실패:', err);
+            }
+            setShowMoreMenu(false);
+          },
+        },
+      ]
+    );
+  };
+
+  // 작성자 차단
+  const handleBlockUser = () => {
+    if (!user || !post) return;
+    const authorName = post.authorName || '익명';
+    showAlert(
+      '사용자 차단',
+      `${authorName}님을 차단하시겠습니까?\n차단하면 이 사용자의 게시글과 댓글이 표시되지 않습니다.`,
+      [
+        { text: '취소', style: 'cancel' },
+        {
+          text: '차단',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              await setDoc(doc(db, 'blockedUsers', `${user.uid}_${post.authorId}`), {
+                blockerUid: user.uid,
+                blockedUid: post.authorId,
+                blockedName: authorName,
+                createdAt: serverTimestamp(),
+              });
+              showAlert('차단 완료', '사용자가 차단되었습니다.');
+            } catch (err) {
+              console.warn('차단 실패:', err);
+            }
+            setShowMoreMenu(false);
+          },
+        },
+      ]
+    );
+  };
+
+  // 댓글 신고
+  const handleReportComment = async (comment) => {
+    if (!user) return;
+    try {
+      await addDoc(collection(db, 'reports'), {
+        type: 'comment',
+        postId: id,
+        commentId: comment.id,
+        commentText: comment.body,
+        reportedUserId: comment.authorId,
+        reportedUserName: comment.authorName,
+        reporterUserId: user.uid,
+        reporterName: user.displayName || user.email,
+        createdAt: serverTimestamp(),
+        status: 'pending',
+      });
+    } catch (err) {
+      console.warn('댓글 신고 저장 실패:', err);
+    }
+  };
+
   if (loading) {
     return (
       <View style={[styles.container, styles.center, { paddingTop: insets.top }]}>
@@ -126,8 +263,29 @@ export default function PostDetailScreen() {
           <BackIcon />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>게시글</Text>
-        <View style={{ width: 24 }} />
+        {user && post && post.authorId !== user.uid ? (
+          <TouchableOpacity onPress={() => setShowMoreMenu(true)}>
+            <MoreIcon />
+          </TouchableOpacity>
+        ) : (
+          <View style={{ width: 24 }} />
+        )}
       </View>
+
+      {/* 더보기 메뉴 모달 */}
+      <Modal visible={showMoreMenu} transparent animationType="fade" onRequestClose={() => setShowMoreMenu(false)}>
+        <TouchableOpacity style={styles.menuOverlay} activeOpacity={1} onPress={() => setShowMoreMenu(false)}>
+          <View style={[styles.menuBox, { top: insets.top + 50 }]}>
+            <TouchableOpacity style={styles.menuOptionItem} onPress={handleReportPost}>
+              <Text style={styles.menuOptionText}>게시글 신고</Text>
+            </TouchableOpacity>
+            <View style={styles.menuDivider} />
+            <TouchableOpacity style={styles.menuOptionItem} onPress={handleBlockUser}>
+              <Text style={[styles.menuOptionText, { color: '#e74c3c' }]}>작성자 차단</Text>
+            </TouchableOpacity>
+          </View>
+        </TouchableOpacity>
+      </Modal>
 
       <FlatList
         data={comments}
@@ -144,7 +302,7 @@ export default function PostDetailScreen() {
             <Text style={styles.commentTitle}>댓글 {comments.length}</Text>
           </View>
         )}
-        renderItem={({ item }) => <CommentItem item={item} />}
+        renderItem={({ item }) => <CommentItem item={item} currentUid={user?.uid} onReportComment={handleReportComment} />}
         contentContainerStyle={styles.listContent}
         showsVerticalScrollIndicator={false}
       />
@@ -214,4 +372,26 @@ const styles = StyleSheet.create({
     alignItems: 'center', justifyContent: 'center',
   },
   sendBtnDisabled: { opacity: 0.4 },
+
+  /* 더보기 메뉴 */
+  menuOverlay: {
+    flex: 1, backgroundColor: 'rgba(0,0,0,0.4)',
+  },
+  menuBox: {
+    position: 'absolute', right: 16,
+    backgroundColor: '#1a2530', borderRadius: 12,
+    paddingVertical: 4, minWidth: 150,
+    shadowColor: '#000', shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3, shadowRadius: 8, elevation: 8,
+    borderWidth: 1, borderColor: '#2a3a4a',
+  },
+  menuOptionItem: {
+    paddingHorizontal: 16, paddingVertical: 14,
+  },
+  menuOptionText: {
+    fontSize: 14, fontWeight: '600', color: '#c0cdd8',
+  },
+  menuDivider: {
+    height: 1, backgroundColor: '#2a3a4a',
+  },
 });

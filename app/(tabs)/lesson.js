@@ -190,20 +190,14 @@ export default function LessonScreen() {
         <MenuCard
           icon={<SheetIcon />}
           title="악보 라이브러리"
-          subtitle="레슨에서 사용하는 악보"
-          onPress={() => router.push({
-            pathname: '/course/[id]',
-            params: { id: 'sheet-music', title: '악보 라이브러리', url: 'https://eon-music.com/courses/' },
-          })}
+          subtitle="나만의 악보 컬렉션"
+          onPress={() => router.push('/lesson/sheet-music')}
         />
         <MenuCard
           icon={<VideoIcon />}
           title="레슨 영상"
-          subtitle="녹화된 레슨 다시보기"
-          onPress={() => router.push({
-            pathname: '/course/[id]',
-            params: { id: 'lesson-video', title: '레슨 영상', url: 'https://eon-music.com/courses/' },
-          })}
+          subtitle="연습 영상 업로드 · 다시보기"
+          onPress={() => router.push('/lesson/videos')}
         />
 
         <View style={{ height: 20 }} />

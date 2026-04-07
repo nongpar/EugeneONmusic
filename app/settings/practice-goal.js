@@ -72,7 +72,24 @@ export default function PracticeGoalScreen() {
   const handleSave = async () => {
     try {
       await AsyncStorage.setItem(STORAGE_KEY, String(selectedMinutes));
-      showAlert('저장 완료', '연습 목표가 설정되었습니다');
+      const goalLabel = GOALS.find((g) => g.minutes === selectedMinutes)?.label || `${selectedMinutes}분`;
+      if (Platform.OS === 'web') {
+        const start = window.confirm(`매일 ${goalLabel} 연습 목표가 설정되었습니다!\n\n바로 연습을 시작할까요?`);
+        if (start) {
+          router.replace({ pathname: '/(tabs)/practice', params: { autoStart: '1' } });
+        } else {
+          router.back();
+        }
+      } else {
+        Alert.alert(
+          '목표 설정 완료!',
+          `매일 ${goalLabel} 목표가 설정되었습니다.\n바로 연습을 시작할까요?`,
+          [
+            { text: '나중에', style: 'cancel', onPress: () => router.back() },
+            { text: '바로 시작', onPress: () => router.replace({ pathname: '/(tabs)/practice', params: { autoStart: '1' } }) },
+          ]
+        );
+      }
     } catch (err) {
       showAlert('오류', '저장에 실패했습니다');
     }

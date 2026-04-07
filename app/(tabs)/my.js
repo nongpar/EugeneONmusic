@@ -99,10 +99,79 @@ function LoggedOutView() {
   );
 }
 
+// ── 오늘의 연습 달성률 위젯 ──
+const MINI_RADIUS = 32;
+const MINI_STROKE = 5;
+const MINI_CIRC = 2 * Math.PI * MINI_RADIUS;
+const MINI_SIZE = (MINI_RADIUS + MINI_STROKE) * 2;
+
+function TodayProgressWidget({ todaySeconds, goalMinutes, todayProgress, todayGoalMet, goalStreakDays }) {
+  const todayMins = Math.round(todaySeconds / 60);
+  const percent = Math.round(todayProgress * 100);
+  const progressColor = todayGoalMet ? '#4ade80' : '#C9A96E';
+  const offset = MINI_CIRC * (1 - todayProgress);
+
+  return (
+    <TouchableOpacity
+      style={styles.todayWidget}
+      onPress={() => {
+        if (todayGoalMet) {
+          router.push('/settings/practice-stats');
+        } else {
+          router.push({ pathname: '/(tabs)/practice', params: { autoStart: '1' } });
+        }
+      }}
+      activeOpacity={0.8}
+    >
+      <View style={styles.todayLeft}>
+        {/* 미니 원형 프로그래스 */}
+        <View style={{ width: MINI_SIZE, height: MINI_SIZE, alignItems: 'center', justifyContent: 'center' }}>
+          <Svg width={MINI_SIZE} height={MINI_SIZE}>
+            <Circle cx={MINI_SIZE / 2} cy={MINI_SIZE / 2} r={MINI_RADIUS}
+              stroke="#222f3a" strokeWidth={MINI_STROKE} fill="transparent" />
+            <Circle cx={MINI_SIZE / 2} cy={MINI_SIZE / 2} r={MINI_RADIUS}
+              stroke={progressColor} strokeWidth={MINI_STROKE} fill="transparent"
+              strokeDasharray={MINI_CIRC} strokeDashoffset={offset}
+              strokeLinecap="round"
+              transform={`rotate(-90 ${MINI_SIZE / 2} ${MINI_SIZE / 2})`} />
+          </Svg>
+          <Text style={[styles.todayPercent, todayGoalMet && { color: '#4ade80' }]}>{percent}%</Text>
+        </View>
+        <View style={styles.todayInfo}>
+          <Text style={styles.todayTitle}>
+            {todayGoalMet ? '오늘 목표 달성!' : '오늘의 연습'}
+          </Text>
+          <Text style={styles.todayDetail}>
+            {todayMins}분 / {goalMinutes}분
+          </Text>
+        </View>
+      </View>
+      <View style={styles.todayRight}>
+        {goalStreakDays > 0 && (
+          <View style={styles.streakBadge}>
+            <Text style={styles.streakBadgeText}>{goalStreakDays}일 연속 달성</Text>
+          </View>
+        )}
+        {!todayGoalMet ? (
+          <View style={styles.startBadge}>
+            <Text style={styles.startBadgeText}>연습 시작</Text>
+          </View>
+        ) : (
+          <ChevronIcon />
+        )}
+      </View>
+    </TouchableOpacity>
+  );
+}
+
 function LoggedInView({ user, onLogout }) {
   const displayName = user.displayName || user.email?.split('@')[0] || '사용자';
   const initial = displayName.charAt(0).toUpperCase();
-  const { totalDays, totalHours, streakDays, loading: statsLoading } = usePracticeStats(user?.uid);
+  const {
+    totalDays, totalHours, streakDays,
+    todaySeconds, goalMinutes, todayProgress, todayGoalMet, goalStreakDays,
+    loading: statsLoading,
+  } = usePracticeStats(user?.uid);
 
   return (
     <ScrollView showsVerticalScrollIndicator={false}>
@@ -140,6 +209,17 @@ function LoggedInView({ user, onLogout }) {
           <Text style={styles.statLabel}>연속일</Text>
         </View>
       </View>
+
+      {/* 오늘의 연습 달성률 위젯 */}
+      {!statsLoading && (
+        <TodayProgressWidget
+          todaySeconds={todaySeconds}
+          goalMinutes={goalMinutes}
+          todayProgress={todayProgress}
+          todayGoalMet={todayGoalMet}
+          goalStreakDays={goalStreakDays}
+        />
+      )}
 
       {/* 메뉴 */}
       <View style={styles.menuSection}>
@@ -277,6 +357,32 @@ const styles = StyleSheet.create({
   menuLeft: { flexDirection: 'row', alignItems: 'center', gap: 12 },
   menuLabel: { fontSize: 15, color: '#ffffff' },
   menuSub: { fontSize: 11, color: '#5a6a7a', marginTop: 1 },
+
+  // 오늘의 연습 위젯
+  todayWidget: {
+    flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
+    marginHorizontal: 20, marginBottom: 20,
+    backgroundColor: '#1a2530', borderRadius: 16, padding: 16,
+    borderWidth: 1, borderColor: '#222f3a',
+  },
+  todayLeft: { flexDirection: 'row', alignItems: 'center', gap: 14 },
+  todayPercent: {
+    position: 'absolute', fontSize: 13, fontWeight: '700', color: '#C9A96E',
+  },
+  todayInfo: { gap: 3 },
+  todayTitle: { fontSize: 15, fontWeight: '700', color: '#ffffff' },
+  todayDetail: { fontSize: 13, color: '#6b7b8d' },
+  todayRight: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+  streakBadge: {
+    backgroundColor: '#C9A96E18', paddingHorizontal: 10, paddingVertical: 4,
+    borderRadius: 10, borderWidth: 1, borderColor: '#C9A96E30',
+  },
+  streakBadgeText: { fontSize: 11, fontWeight: '600', color: '#C9A96E' },
+  startBadge: {
+    backgroundColor: '#C9A96E', paddingHorizontal: 12, paddingVertical: 6,
+    borderRadius: 12,
+  },
+  startBadgeText: { fontSize: 12, fontWeight: '700', color: '#0f1923' },
 
   logoutBtn: {
     flexDirection: 'row', alignItems: 'center', justifyContent: 'center',

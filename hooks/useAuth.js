@@ -1,9 +1,65 @@
 import { useState, useEffect, createContext, useContext, useCallback } from 'react';
+import { Platform as RNPlatform } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+
+// 네이티브에서만 SecureStore 사용 (웹에서는 AsyncStorage 폴백)
+let SecureStore = null;
+if (RNPlatform.OS !== 'web') {
+  SecureStore = require('expo-secure-store');
+}
 
 const WP_BASE = 'https://www.eon-music.com/wp-json';
 const AUTH_STORAGE_KEY = '@eon_auth';
-const CRED_STORAGE_KEY = '@eon_cred';
+const CRED_STORAGE_KEY = 'eon_cred';
+
+// SecureStore 키 안전 변환 (허용: 영숫자, '.', '-', '_')
+const safeKey = (key) => key.replace(/[^a-zA-Z0-9._-]/g, '_');
+
+// 보안 저장소 헬퍼 (네이티브: SecureStore, 웹: AsyncStorage)
+const secureStorage = {
+  async setItem(key, value) {
+    if (SecureStore) {
+      try {
+        await SecureStore.setItemAsync(safeKey(key), value);
+      } catch (e) {
+        console.warn('SecureStore setItem fallback:', e);
+        await AsyncStorage.setItem(key, value);
+      }
+    } else {
+      await AsyncStorage.setItem(key, value);
+    }
+  },
+  async getItem(key) {
+    if (SecureStore) {
+      try {
+        let value = await SecureStore.getItemAsync(safeKey(key));
+        // SecureStore에 없으면 AsyncStorage에서 마이그레이션 시도
+        if (!value) {
+          const legacyValue = await AsyncStorage.getItem(key).catch(() => null)
+            || await AsyncStorage.getItem('@' + key.replace(/^@/, '')).catch(() => null);
+          if (legacyValue) {
+            try { await SecureStore.setItemAsync(safeKey(key), legacyValue); } catch {}
+            try { await AsyncStorage.removeItem(key); } catch {}
+            try { await AsyncStorage.removeItem('@' + key.replace(/^@/, '')); } catch {}
+            value = legacyValue;
+          }
+        }
+        return value;
+      } catch (e) {
+        console.warn('SecureStore getItem fallback:', e);
+        return await AsyncStorage.getItem(key).catch(() => null);
+      }
+    }
+    return await AsyncStorage.getItem(key);
+  },
+  async removeItem(key) {
+    if (SecureStore) {
+      try { await SecureStore.deleteItemAsync(safeKey(key)); } catch {}
+    }
+    try { await AsyncStorage.removeItem(key); } catch {}
+    try { await AsyncStorage.removeItem('@' + key.replace(/^@/, '')); } catch {}
+  },
+};
 
 const AuthContext = createContext({
   user: null,
@@ -112,11 +168,15 @@ export function AuthProvider({ children }) {
       JSON.stringify({ token: newToken, user: wpUser })
     );
 
-    // WebView 자동 로그인용 자격증명 저장
-    await AsyncStorage.setItem(
-      CRED_STORAGE_KEY,
-      JSON.stringify({ username, password })
-    );
+    // WebView 자동 로그인용 자격증명 보안 저장 (실패해도 로그인은 유지)
+    try {
+      await secureStorage.setItem(
+        CRED_STORAGE_KEY,
+        JSON.stringify({ username, password })
+      );
+    } catch (credErr) {
+      console.warn('자격증명 보안 저장 실패 (로그인은 정상):', credErr);
+    }
 
     return wpUser;
   }, []);
@@ -125,14 +185,14 @@ export function AuthProvider({ children }) {
     setUser(null);
     setToken(null);
     await AsyncStorage.removeItem(AUTH_STORAGE_KEY);
-    await AsyncStorage.removeItem(CRED_STORAGE_KEY);
+    await secureStorage.removeItem(CRED_STORAGE_KEY);
   }, []);
 
   const getToken = useCallback(() => token, [token]);
 
   const getCredentials = useCallback(async () => {
     try {
-      const saved = await AsyncStorage.getItem(CRED_STORAGE_KEY);
+      const saved = await secureStorage.getItem(CRED_STORAGE_KEY);
       return saved ? JSON.parse(saved) : null;
     } catch { return null; }
   }, []);

@@ -7,7 +7,7 @@ import Svg, { Path, Circle, Rect, Line } from 'react-native-svg';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
 
-const YOUTUBE_API_KEY = 'AIzaSyCLF1MK0S5sk-5wfImUOSqQEJE5hDBL6_4';
+const YOUTUBE_API_KEY = process.env.EXPO_PUBLIC_YOUTUBE_API_KEY || 'AIzaSyCLF1MK0S5sk-5wfImUOSqQEJE5hDBL6_4';
 const CHANNEL_ID = 'UCK6jLVvnwAMA5lpuUYShWog';
 
 const SNS_CHANNELS = [

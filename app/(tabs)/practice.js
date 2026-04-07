@@ -1,5 +1,6 @@
 import { View, Text, StyleSheet, ScrollView } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useLocalSearchParams } from 'expo-router';
 import PracticeTimer from '../../components/PracticeTimer';
 import WeeklyChart from '../../components/WeeklyChart';
 import { useAuth } from '../../hooks/useAuth';
@@ -8,7 +9,8 @@ import { usePracticeStats } from '../../hooks/usePracticeStats';
 export default function PracticeScreen() {
   const insets = useSafeAreaInsets();
   const { user } = useAuth();
-  const { weeklyData } = usePracticeStats(user?.uid);
+  const { weeklyData, todaySeconds } = usePracticeStats(user?.uid);
+  const { autoStart } = useLocalSearchParams();
 
   return (
     <View style={[styles.container, { paddingTop: insets.top }]}>
@@ -18,7 +20,7 @@ export default function PracticeScreen() {
         showsVerticalScrollIndicator={false}
         contentContainerStyle={styles.scrollContent}
       >
-        <PracticeTimer userId={user?.uid} />
+        <PracticeTimer userId={user?.uid} todaySeconds={todaySeconds} autoStart={autoStart === '1'} />
         <WeeklyChart weeklyData={weeklyData} />
         <View style={{ height: 20 }} />
       </ScrollView>

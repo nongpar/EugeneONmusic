@@ -52,7 +52,8 @@
           "defaultChannel": "chat",
           "sounds": []
         }
-      ]
+      ],
+      "expo-secure-store"
     ],
     "extra": {
       "eas": {
