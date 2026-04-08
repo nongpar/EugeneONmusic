@@ -23,7 +23,7 @@
     },
     "android": {
       "package": "com.eugeneonmusic.app",
-      "versionCode": 1,
+      "versionCode": 4,
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#0f1923"
@@ -57,9 +57,10 @@
     ],
     "extra": {
       "eas": {
-        "projectId": ""
-      }
+        "projectId": "32eb65a4-71bb-4f57-b925-86d8bef2ffd8"
+      },
+      "router": {}
     },
-    "owner": "eugeneonmusic"
+    "owner": "parkyunho"
   }
 }
