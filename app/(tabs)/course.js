@@ -8,7 +8,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 
 // ── WordPress REST API ──
-const WP_API = 'https://eon-music.com/wp-json/wp/v2';
+const WP_API = 'https://eon-music.com/wp-json/eon/v1';
 
 // HTML 엔티티 디코딩
 function decodeHTML(html) {
@@ -40,29 +40,27 @@ function determineCategory(title) {
   return '피아노';
 }
 
-// API에서 강좌 목록 가져오기
+// API에서 강좌 목록 가져오기 (LearnDash 강좌)
 async function fetchCoursesFromAPI() {
-  const res = await fetch(`${WP_API}/product?per_page=50&_embed&orderby=date&order=desc`);
+  const res = await fetch(`${WP_API}/courses`);
   if (!res.ok) throw new Error(`API ${res.status}`);
   const data = await res.json();
 
   return data
-    .filter(p => {
-      const title = p.title?.rendered || '';
-      // 테스트/복사용 강좌 제외
+    .filter(c => {
+      const title = c.title || '';
       return !title.includes('복사용') && title.trim() !== '';
     })
-    .map((p, index) => {
-      const title = decodeHTML(p.title?.rendered || '');
-      const thumbnail = p._embedded?.['wp:featuredmedia']?.[0]?.source_url || '';
+    .map((c, index) => {
+      const title = decodeHTML(c.title || '');
       return {
-        id: String(p.id),
+        id: String(c.id),
         title,
         composer: extractComposer(title),
         category: determineCategory(title),
         instructor: '최유진',
-        thumbnail,
-        link: p.link, // eon-music.com/product/... (기본 강좌 페이지)
+        thumbnail: c.thumbnail || '',
+        link: c.link, // eon-music.com/courses/... (강좌 페이지)
         status: index === 0 ? 'new' : 'none',
       };
     });
