@@ -1,102 +1,83 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import {
   View, Text, StyleSheet, ScrollView, TouchableOpacity, Image, Linking,
-  RefreshControl,
+  RefreshControl, ActivityIndicator,
 } from 'react-native';
 import Svg, { Path, Circle } from 'react-native-svg';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 
-// ── 실제 강좌 데이터 (eon-music.com/수강신청 기준) ──
-const COURSES = [
-  {
-    id: '1',
-    title: 'Franz Liszt – La Campanella',
-    composer: 'Franz Liszt',
-    category: '피아노',
-    instructor: '최유진',
-    thumbnail: 'https://eon-music.com/wp-content/uploads/2025/12/KakaoTalk_20260106_105143263-scaled.png',
-    link: 'https://eon-music.com/courses/franz-liszt-la-campanella/',
-    detailUrl: 'https://eugeneonmusic.com/franz-liszt-la-campanella/',
-    status: 'new',
-  },
-  {
-    id: '2',
-    title: 'Franz Liszt — Transcendental Étude No.4 "Mazeppa", S.139/4',
-    composer: 'Franz Liszt',
-    category: '피아노',
-    instructor: '최유진',
-    thumbnail: 'https://eon-music.com/wp-content/uploads/2025/09/KakaoTalk_20260102_174818213_02-scaled.png',
-    link: 'https://eon-music.com/courses/%eb%a7%88%ec%a0%9c%ed%8c%8c/',
-    detailUrl: 'https://eugeneonmusic.com/franz-liszt-transcendental-etude-no-4-mazeppa/',
-    status: 'none',
-  },
-  {
-    id: '3',
-    title: 'Frédéric Chopin — Ballade No.1 in G minor, Op.23',
-    composer: 'Frédéric Chopin',
-    category: '피아노',
-    instructor: '최유진',
-    thumbnail: 'https://eon-music.com/wp-content/uploads/2025/04/KakaoTalk_20260102_174818213-scaled.png',
-    link: 'https://eon-music.com/courses/f-chopin-ballade-no-1-in-g-minor-op-23-1%eb%b6%80/',
-    detailUrl: 'https://eon-music.com/chopin_ballade_no_1',
-    status: 'popular',
-  },
-  {
-    id: '4',
-    title: 'Frédéric Chopin — Étude in A minor, Op.25 No.4',
-    composer: 'Frédéric Chopin',
-    category: '피아노',
-    instructor: '최유진',
-    thumbnail: 'https://eon-music.com/wp-content/uploads/2025/12/KakaoTalk_20260102_174818213_06-scaled.png',
-    link: 'https://eon-music.com/courses/frederic-chopin-etude-in-a-minor-op-25-no-4/',
-    detailUrl: 'https://eugeneonmusic.com/frederic-chopin-etude-in-a-minor-op-25-no-4/',
-    status: 'none',
-  },
-  {
-    id: '5',
-    title: 'Frédéric Chopin — Étude in C-sharp minor, Op.10 No.4',
-    composer: 'Frédéric Chopin',
-    category: '피아노',
-    instructor: '최유진',
-    thumbnail: 'https://eon-music.com/wp-content/uploads/2025/12/KakaoTalk_20260102_174818213_09-scaled.png',
-    link: 'https://eon-music.com/courses/frederic-chopin-etude-in-c-sharp-minor-op-10-no-4/',
-    detailUrl: 'https://eugeneonmusic.com/frederic-chopin-etude-in-c-sharp-minor-op-10-no-4/',
-    status: 'none',
-  },
-  {
-    id: '6',
-    title: 'Frédéric Chopin — Étude in G-flat major, Op.10 No.5',
-    composer: 'Frédéric Chopin',
-    category: '피아노',
-    instructor: '최유진',
-    thumbnail: 'https://eon-music.com/wp-content/uploads/2025/12/KakaoTalk_20260102_174818213_10-scaled.png',
-    link: 'https://eon-music.com/courses/frederic-chopin-etude-in-g-flat-major-op-10-no-5/',
-    detailUrl: 'https://eugeneonmusic.com/frederic-chopin-etude-in-g-flat-major-op-10-no-5/',
-    status: 'new',
-  },
-  {
-    id: '7',
-    title: 'Frédéric Chopin — Étude in G-sharp minor, Op.25 No.6',
-    composer: 'Frédéric Chopin',
-    category: '피아노',
-    instructor: '최유진',
-    thumbnail: 'https://eon-music.com/wp-content/uploads/2025/04/KakaoTalk_20260102_174818213_07-scaled.png',
-    link: 'https://eon-music.com/courses/frederic-chopin-etude-in-g-sharp-minor-op-25-no-6/',
-    detailUrl: 'https://eugeneonmusic.com/frederic-chopin-etude-in-g-sharp-minor-op-25-no-6/',
-    status: 'none',
-  },
-  {
-    id: '8',
-    title: 'Mastering the Twelve-Tone Technique',
-    composer: '',
-    category: '작곡·음악이론',
-    instructor: '최유진',
-    thumbnail: 'https://eon-music.com/wp-content/uploads/2025/09/KakaoTalk_20260106_105143263_01-scaled.png',
-    link: 'https://eon-music.com/courses/12%ec%9d%8c%ea%b8%b0%eb%b2%95/',
-    detailUrl: 'https://eugeneonmusic.com/mastering-the-twelve-tone-technique/',
-    status: 'popular',
-  },
+// ── WordPress REST API ──
+const WP_API = 'https://eon-music.com/wp-json/wp/v2';
+
+// HTML 엔티티 디코딩
+function decodeHTML(html) {
+  if (!html) return '';
+  return html
+    .replace(/&#8211;/g, '–').replace(/&#8212;/g, '—')
+    .replace(/&#8220;/g, '\u201C').replace(/&#8221;/g, '\u201D')
+    .replace(/&#8216;/g, '\u2018').replace(/&#8217;/g, '\u2019')
+    .replace(/&amp;/g, '&').replace(/&lt;/g, '<').replace(/&gt;/g, '>')
+    .replace(/&quot;/g, '"').replace(/&#039;/g, "'")
+    .replace(/<[^>]*>/g, ''); // HTML 태그 제거
+}
+
+// 제목에서 작곡가 추출 ("Franz Liszt – La Campanella" → "Franz Liszt")
+function extractComposer(title) {
+  for (const sep of [' — ', ' – ', ' ― ']) {
+    if (title.includes(sep)) return title.split(sep)[0].trim();
+  }
+  return '';
+}
+
+// 카테고리 판별
+function determineCategory(title) {
+  const lower = title.toLowerCase();
+  if (lower.includes('12음기법') || lower.includes('작곡') || lower.includes('음악이론')
+      || lower.includes('twelve-tone') || lower.includes('composition')) {
+    return '작곡·음악이론';
+  }
+  return '피아노';
+}
+
+// API에서 강좌 목록 가져오기
+async function fetchCoursesFromAPI() {
+  const res = await fetch(`${WP_API}/product?per_page=50&_embed&orderby=date&order=desc`);
+  if (!res.ok) throw new Error(`API ${res.status}`);
+  const data = await res.json();
+
+  return data
+    .filter(p => {
+      const title = p.title?.rendered || '';
+      // 테스트/복사용 강좌 제외
+      return !title.includes('복사용') && title.trim() !== '';
+    })
+    .map((p, index) => {
+      const title = decodeHTML(p.title?.rendered || '');
+      const thumbnail = p._embedded?.['wp:featuredmedia']?.[0]?.source_url || '';
+      return {
+        id: String(p.id),
+        title,
+        composer: extractComposer(title),
+        category: determineCategory(title),
+        instructor: '최유진',
+        thumbnail,
+        link: p.link, // eon-music.com/product/... (기본 강좌 페이지)
+        status: index === 0 ? 'new' : 'none',
+      };
+    });
+}
+
+// API 실패 시 폴백 데이터
+const FALLBACK_COURSES = [
+  { id: '5559', title: 'Franz Liszt – La Campanella', composer: 'Franz Liszt', category: '피아노', instructor: '최유진', thumbnail: 'https://eon-music.com/wp-content/uploads/2025/12/KakaoTalk_20260106_105143263-scaled.png', link: 'https://eon-music.com/product/franz-liszt-la-campanella/', status: 'new' },
+  { id: '5561', title: 'Franz Liszt — Transcendental Étude No.4 "Mazeppa", S.139/4', composer: 'Franz Liszt', category: '피아노', instructor: '최유진', thumbnail: 'https://eon-music.com/wp-content/uploads/2025/09/KakaoTalk_20260102_174818213_02-scaled.png', link: 'https://eon-music.com/product/franz-liszt-transcendental-etude-no-4-mazeppa-s-139-4/', status: 'none' },
+  { id: '5551', title: 'Frédéric Chopin — Ballade No.1 in G minor, Op.23', composer: 'Frédéric Chopin', category: '피아노', instructor: '최유진', thumbnail: 'https://eon-music.com/wp-content/uploads/2025/04/KakaoTalk_20260102_174818213-scaled.png', link: 'https://eon-music.com/product/%ec%87%bc%ed%8c%bd-%eb%b0%9c%eb%9d%bc%eb%93%9c-1%eb%b2%88-%eb%a7%88%ec%8a%a4%ed%84%b0%ed%81%b4%eb%9e%98%ec%8a%a4-1%eb%b6%80/', status: 'none' },
+  { id: '5557', title: 'Frédéric Chopin — Étude in A minor, Op.25 No.4', composer: 'Frédéric Chopin', category: '피아노', instructor: '최유진', thumbnail: 'https://eon-music.com/wp-content/uploads/2025/12/KakaoTalk_20260102_174818213_06-scaled.png', link: 'https://eon-music.com/product/frederic-chopin-etude-in-a-minor-op-25-no-4/', status: 'none' },
+  { id: '5560', title: 'Frédéric Chopin — Étude in C-sharp minor, Op.10 No.4', composer: 'Frédéric Chopin', category: '피아노', instructor: '최유진', thumbnail: 'https://eon-music.com/wp-content/uploads/2025/12/KakaoTalk_20260102_174818213_09-scaled.png', link: 'https://eon-music.com/product/frederic-chopin-etude-in-c-sharp-minor-op-10-no-4/', status: 'none' },
+  { id: '5558', title: 'Frédéric Chopin — Étude in G-flat major, Op.10 No.5', composer: 'Frédéric Chopin', category: '피아노', instructor: '최유진', thumbnail: 'https://eon-music.com/wp-content/uploads/2025/12/KakaoTalk_20260102_174818213_10-scaled.png', link: 'https://eon-music.com/product/frederic-chopin-etude-in-g-flat-major-op-10-no-5/', status: 'none' },
+  { id: '5562', title: 'Frédéric Chopin — Étude in G-sharp minor, Op.25 No.6', composer: 'Frédéric Chopin', category: '피아노', instructor: '최유진', thumbnail: 'https://eon-music.com/wp-content/uploads/2025/04/KakaoTalk_20260102_174818213_07-scaled.png', link: 'https://eon-music.com/product/frederic-chopin-etude-in-g-sharp-minor-op-25-no-6/', status: 'none' },
+  { id: '5553', title: 'Mastering the Twelve-Tone Technique', composer: '', category: '작곡·음악이론', instructor: '최유진', thumbnail: 'https://eon-music.com/wp-content/uploads/2025/09/KakaoTalk_20260106_105143263_01-scaled.png', link: 'https://eon-music.com/product/%ed%99%a9%ec%9a%94%ed%95%9c-12%ec%9d%8c%ea%b8%b0%eb%b2%95/', status: 'none' },
 ];
 
 const CATEGORIES = ['전체', '피아노', '작곡·음악이론'];
@@ -232,12 +213,34 @@ export default function CourseScreen() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
   const [activeCategory, setActiveCategory] = useState('전체');
+  const [courses, setCourses] = useState(FALLBACK_COURSES);
+  const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+
+  // API에서 강좌 목록 불러오기
+  const loadCourses = useCallback(async () => {
+    try {
+      const apiCourses = await fetchCoursesFromAPI();
+      if (apiCourses && apiCourses.length > 0) {
+        setCourses(apiCourses);
+      }
+    } catch (e) {
+      console.warn('강좌 목록 로딩 실패, 폴백 데이터 사용:', e);
+    } finally {
+      setLoading(false);
+      setRefreshing(false);
+    }
+  }, []);
+
+  // 최초 로딩
+  useEffect(() => {
+    loadCourses();
+  }, [loadCourses]);
 
   const filtered =
     activeCategory === '전체'
-      ? COURSES
-      : COURSES.filter((c) => c.category === activeCategory);
+      ? courses
+      : courses.filter((c) => c.category === activeCategory);
 
   const handleCoursePress = (course) => {
     router.push({
@@ -246,16 +249,14 @@ export default function CourseScreen() {
         id: course.id,
         title: course.title,
         url: course.link,
-        detailUrl: course.detailUrl || '',
-        courseUrl: course.link,
       },
     });
   };
 
   const onRefresh = useCallback(() => {
     setRefreshing(true);
-    setTimeout(() => setRefreshing(false), 1000);
-  }, []);
+    loadCourses();
+  }, [loadCourses]);
 
   return (
     <View style={[styles.container, { paddingTop: insets.top }]}>
@@ -306,7 +307,14 @@ export default function CourseScreen() {
           </View>
         </View>
 
-        {filtered.map((course) => (
+        {loading && (
+          <View style={styles.loadingWrap}>
+            <ActivityIndicator size="large" color="#C9A96E" />
+            <Text style={styles.loadingText}>강좌 불러오는 중...</Text>
+          </View>
+        )}
+
+        {!loading && filtered.map((course) => (
           <CourseCard
             key={course.id}
             course={course}
@@ -314,7 +322,7 @@ export default function CourseScreen() {
           />
         ))}
 
-        {filtered.length === 0 && (
+        {!loading && filtered.length === 0 && (
           <View style={styles.emptyWrap}>
             <BookIcon size={40} color="#3a4a5a" />
             <Text style={styles.emptyText}>해당 카테고리의 강좌가 없습니다</Text>
@@ -412,6 +420,10 @@ const styles = StyleSheet.create({
   cardTitle: { fontSize: 16, fontWeight: '700', color: '#ffffff', lineHeight: 23, letterSpacing: -0.3, marginTop: 2 },
   metaRow: { flexDirection: 'row', alignItems: 'center', gap: 5 },
   metaText: { fontSize: 13, color: '#6b7b8d', fontWeight: '500' },
+
+  /* 로딩 */
+  loadingWrap: { alignItems: 'center', paddingVertical: 60, gap: 12 },
+  loadingText: { fontSize: 14, color: '#5a6a7a' },
 
   /* 빈 상태 */
   emptyWrap: { alignItems: 'center', paddingVertical: 60, gap: 12 },

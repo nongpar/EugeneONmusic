@@ -55,7 +55,7 @@ function buildAutoLoginUrl(token, targetUrl) {
 }
 
 export default function CourseDetailScreen() {
-  const { id, title, url, detailUrl, courseUrl: enrollUrl } = useLocalSearchParams();
+  const { id, title, url } = useLocalSearchParams();
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const { user, getToken, getCredentials } = useAuth();
@@ -66,20 +66,13 @@ export default function CourseDetailScreen() {
   const [webViewSource, setWebViewSource] = useState(null);
 
   const rawUrl = url || 'https://www.eon-music.com';
-  const targetUrl = rawUrl.includes('eugeneonmusic.com')
-    ? rawUrl + (rawUrl.includes('?') ? '&embed=true' : '?embed=true')
-    : rawUrl;
   const courseTitle = title || '강좌';
-  const enrollPageUrl = enrollUrl || '';
+  // www 통일
+  const coursePageUrl = rawUrl.replace('https://eon-music.com', 'https://www.eon-music.com');
 
   // 네이티브: 2단계 로그인 → 강좌 페이지
-  // phase: 'login' = wp-login.php 폼 제출 중, 'course' = 강좌 페이지 표시
   const [phase, setPhase] = useState('login');
   const [loginCred, setLoginCred] = useState(null);
-  // 네이티브: eon-music.com URL 사용 (로그인 연동), detailUrl은 같은 도메인일 때만 사용
-  const coursePageUrl = (detailUrl && detailUrl.includes('eon-music.com'))
-    ? detailUrl.replace('https://eon-music.com', 'https://www.eon-music.com')
-    : targetUrl.replace('https://eon-music.com', 'https://www.eon-music.com');
 
   useEffect(() => {
     if (Platform.OS === 'web') {
@@ -97,7 +90,7 @@ export default function CourseDetailScreen() {
         setWebViewSource({ uri: coursePageUrl });
       }
     })();
-  }, [user, targetUrl]);
+  }, [user, rawUrl]);
 
   const handleOpenExternal = () => {
     Linking.openURL(rawUrl);
@@ -134,9 +127,7 @@ export default function CourseDetailScreen() {
 
         <View style={styles.headerCenter}>
           <Text style={styles.headerTitle} numberOfLines={1}>{courseTitle}</Text>
-          <Text style={styles.headerSub}>
-            {rawUrl.includes('eugeneonmusic.com') ? 'eugeneonmusic.com' : 'eon-music.com'}
-          </Text>
+          <Text style={styles.headerSub}>eon-music.com</Text>
         </View>
 
         <View style={styles.headerRight}>
@@ -159,11 +150,11 @@ export default function CourseDetailScreen() {
       {/* WebView / iframe */}
       <View style={styles.webviewWrap}>
         {Platform.OS === 'web' ? (
-          // 웹 플랫폼: iframe으로 상세페이지 표시
+          // 웹 플랫폼: iframe으로 강좌 페이지 표시
           <View style={{ flex: 1 }}>
             <iframe
               ref={iframeRef}
-              src={targetUrl}
+              src={coursePageUrl}
               style={{
                 flex: 1,
                 width: '100%',
@@ -174,15 +165,6 @@ export default function CourseDetailScreen() {
               title={courseTitle}
               onLoad={() => setLoading(false)}
             />
-            {enrollPageUrl ? (
-              <TouchableOpacity
-                style={styles.enrollBar}
-                onPress={() => window.open(enrollPageUrl, '_blank')}
-              >
-                <Text style={styles.enrollBarText}>수강신청 페이지로 이동</Text>
-                <ExternalIcon size={14} />
-              </TouchableOpacity>
-            ) : null}
           </View>
         ) : (
           // 네이티브: Phase 1(로그인) → Phase 2(강좌 페이지)
@@ -280,46 +262,4 @@ const styles = StyleSheet.create({
   },
   webviewLoadingText: { fontSize: 14, color: '#5a6a7a' },
 
-  /* 웹 강좌 열기 화면 */
-  webOpenWrap: {
-    flex: 1, alignItems: 'center', justifyContent: 'center',
-    backgroundColor: '#0f1923',
-  },
-  webOpenContent: {
-    alignItems: 'center', gap: 16, paddingHorizontal: 32,
-  },
-  webOpenTitle: {
-    fontSize: 20, fontWeight: '700', color: '#ffffff',
-    textAlign: 'center', marginTop: 8,
-  },
-  webOpenDesc: {
-    fontSize: 14, color: '#5a6a7a', textAlign: 'center',
-    lineHeight: 20,
-  },
-  webOpenBtn: {
-    flexDirection: 'row', alignItems: 'center', gap: 8,
-    backgroundColor: '#C9A96E', paddingVertical: 14, paddingHorizontal: 32,
-    borderRadius: 12, marginTop: 8,
-  },
-  webOpenBtnText: {
-    fontSize: 16, fontWeight: '700', color: '#0f1923',
-  },
-  webOpenEnrollBtn: {
-    paddingVertical: 10, paddingHorizontal: 20,
-    borderWidth: 1, borderColor: '#C9A96E40', borderRadius: 8,
-    marginTop: 4,
-  },
-  webOpenEnrollText: {
-    fontSize: 13, color: '#C9A96E', fontWeight: '600',
-  },
-
-  /* 수강신청 바 (웹 iframe 하단) */
-  enrollBar: {
-    flexDirection: 'row', alignItems: 'center', justifyContent: 'center',
-    gap: 8, paddingVertical: 12,
-    backgroundColor: '#C9A96E',
-  },
-  enrollBarText: {
-    fontSize: 14, fontWeight: '700', color: '#0f1923',
-  },
 });
