@@ -45,6 +45,12 @@ function determineCategory(title) {
   return '피아노';
 }
 
+// 카테고리 기반 강사 매핑
+function determineInstructor(category) {
+  if (category === '작곡·음악이론') return '황요한';
+  return '최유진';
+}
+
 // API에서 강좌 목록 가져오기 (LearnDash 강좌)
 async function fetchCoursesFromAPI() {
   const res = await fetch(`${WP_API}/courses`);
@@ -58,12 +64,13 @@ async function fetchCoursesFromAPI() {
     })
     .map((c, index) => {
       const title = decodeHTML(c.title || '');
+      const category = determineCategory(title);
       return {
         id: String(c.id),
         title,
         composer: extractComposer(title),
-        category: determineCategory(title),
-        instructor: '최유진',
+        category,
+        instructor: determineInstructor(category),
         thumbnail: c.thumbnail || '',
         link: c.link, // eon-music.com/courses/... (강좌 페이지)
         status: index === 0 ? 'new' : 'none',
@@ -80,7 +87,7 @@ const FALLBACK_COURSES = [
   { id: '5560', title: 'Frédéric Chopin — Étude in C-sharp minor, Op.10 No.4', composer: 'Frédéric Chopin', category: '피아노', instructor: '최유진', thumbnail: 'https://eon-music.com/wp-content/uploads/2025/12/KakaoTalk_20260102_174818213_09-scaled.png', link: 'https://eon-music.com/product/frederic-chopin-etude-in-c-sharp-minor-op-10-no-4/', status: 'none' },
   { id: '5558', title: 'Frédéric Chopin — Étude in G-flat major, Op.10 No.5', composer: 'Frédéric Chopin', category: '피아노', instructor: '최유진', thumbnail: 'https://eon-music.com/wp-content/uploads/2025/12/KakaoTalk_20260102_174818213_10-scaled.png', link: 'https://eon-music.com/product/frederic-chopin-etude-in-g-flat-major-op-10-no-5/', status: 'none' },
   { id: '5562', title: 'Frédéric Chopin — Étude in G-sharp minor, Op.25 No.6', composer: 'Frédéric Chopin', category: '피아노', instructor: '최유진', thumbnail: 'https://eon-music.com/wp-content/uploads/2025/04/KakaoTalk_20260102_174818213_07-scaled.png', link: 'https://eon-music.com/product/frederic-chopin-etude-in-g-sharp-minor-op-25-no-6/', status: 'none' },
-  { id: '5553', title: 'Mastering the Twelve-Tone Technique', composer: '', category: '작곡·음악이론', instructor: '최유진', thumbnail: 'https://eon-music.com/wp-content/uploads/2025/09/KakaoTalk_20260106_105143263_01-scaled.png', link: 'https://eon-music.com/product/%ed%99%a9%ec%9a%94%ed%95%9c-12%ec%9d%8c%ea%b8%b0%eb%b2%95/', status: 'none' },
+  { id: '5553', title: 'Mastering the Twelve-Tone Technique', composer: '', category: '작곡·음악이론', instructor: '황요한', thumbnail: 'https://eon-music.com/wp-content/uploads/2025/09/KakaoTalk_20260106_105143263_01-scaled.png', link: 'https://eon-music.com/product/%ed%99%a9%ec%9a%94%ed%95%9c-12%ec%9d%8c%ea%b8%b0%eb%b2%95/', status: 'none' },
 ];
 
 const CATEGORIES = ['전체', '피아노', '작곡·음악이론'];

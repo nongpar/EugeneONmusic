@@ -90,8 +90,13 @@ function SheetCard({ item, onDelete, canDelete }) {
         if (Platform.OS === 'web') {
           window.open(item.source_url, '_blank');
         } else {
-          const { Linking } = require('react-native');
-          Linking.openURL(item.source_url);
+          router.push({
+            pathname: '/lesson/pdf-viewer',
+            params: {
+              url: item.source_url,
+              title: item.title?.rendered || '악보',
+            },
+          });
         }
       }}
     >
