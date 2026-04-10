@@ -7,6 +7,7 @@ import { AuthProvider, useAuth } from '../hooks/useAuth';
 import { useNotifications } from '../hooks/useNotifications';
 import { doc, setDoc } from 'firebase/firestore';
 import { db } from '../config/firebase';
+import InAppNotification from '../components/InAppNotification';
 import Svg, { Path, Circle as SvgCircle, Line } from 'react-native-svg';
 
 // 네이티브 스플래시 스크린 유지 (앱 준비 전까지)
@@ -91,9 +92,9 @@ function FloatingParticle({ anim, x, y, size = 3 }) {
 }
 
 // ── 오선지 (Staff Lines) ──
-function StaffLines({ opacity, width: lineW }) {
+function StaffLines({ opacity, width: lineW, align = 'flex-end' }) {
   return (
-    <Animated.View style={{ position: 'absolute', opacity, width: SCREEN_W, alignItems: 'flex-end' }}>
+    <Animated.View style={{ position: 'absolute', opacity, width: SCREEN_W, alignItems: align }}>
       {[0, 6, 12, 18, 24].map((offset) => (
         <Animated.View
           key={offset}
@@ -229,7 +230,7 @@ function AnimatedSplash({ onFinish }) {
       // 오선지: 독립적으로 오른쪽→왼쪽 끝까지 펼쳐짐
       Animated.parallel([
         Animated.timing(staffOpacity, { toValue: 1, duration: 400, useNativeDriver: true }),
-        Animated.timing(staffWidth, { toValue: SCREEN_W, duration: 1800, easing: Easing.out(Easing.cubic), useNativeDriver: false }),
+        Animated.timing(staffWidth, { toValue: SCREEN_W * 0.55, duration: 1800, easing: Easing.out(Easing.cubic), useNativeDriver: false }),
       ]),
 
       // 메인 시퀀스
@@ -321,14 +322,18 @@ function AnimatedSplash({ onFinish }) {
   return (
     <Animated.View style={[splashStyles.container, { opacity: fadeOut, transform: [{ scale: finalScale }] }]}>
 
-      {/* 오선지 배경 (상단) */}
-      <View style={{ position: 'absolute', top: SCREEN_H * 0.22 }}>
-        <StaffLines opacity={staffOpacity} width={staffWidth} />
+      {/* 오선지 배경 (지그재그 4개) */}
+      <View style={{ position: 'absolute', left: 0, right: 0, top: SCREEN_H * 0.15 }}>
+        <StaffLines opacity={staffOpacity} width={staffWidth} align="flex-start" />
       </View>
-
-      {/* 오선지 배경 (하단) */}
-      <View style={{ position: 'absolute', top: SCREEN_H * 0.68 }}>
-        <StaffLines opacity={staffOpacity} width={staffWidth} />
+      <View style={{ position: 'absolute', left: 0, right: 0, top: SCREEN_H * 0.28 }}>
+        <StaffLines opacity={staffOpacity} width={staffWidth} align="flex-end" />
+      </View>
+      <View style={{ position: 'absolute', left: 0, right: 0, top: SCREEN_H * 0.68 }}>
+        <StaffLines opacity={staffOpacity} width={staffWidth} align="flex-start" />
+      </View>
+      <View style={{ position: 'absolute', left: 0, right: 0, top: SCREEN_H * 0.80 }}>
+        <StaffLines opacity={staffOpacity} width={staffWidth} align="flex-end" />
       </View>
 
       {/* 떠다니는 음표/음악기호들 */}
@@ -370,29 +375,32 @@ function AnimatedSplash({ onFinish }) {
         />
       ))}
 
-      {/* 로고 링 이펙트 */}
-      <Animated.View
-        style={[
-          splashStyles.logoRing,
-          {
-            opacity: ringOpacity,
-            transform: [{ scale: ringScale }],
-          },
-        ]}
-      />
+      {/* 로고 + 링 컨테이너 */}
+      <View style={splashStyles.logoWrap}>
+        {/* 로고 링 이펙트 */}
+        <Animated.View
+          style={[
+            splashStyles.logoRing,
+            {
+              opacity: ringOpacity,
+              transform: [{ scale: ringScale }],
+            },
+          ]}
+        />
 
-      {/* 로고 */}
-      <Animated.Image
-        source={require('../assets/images/logo.png')}
-        style={[
-          splashStyles.logo,
-          {
-            opacity: logoOpacity,
-            transform: [{ scale: logoScale }, { rotate: logoRotateStr }],
-          },
-        ]}
-        resizeMode="contain"
-      />
+        {/* 로고 */}
+        <Animated.Image
+          source={require('../assets/images/logo.png')}
+          style={[
+            splashStyles.logo,
+            {
+              opacity: logoOpacity,
+              transform: [{ scale: logoScale }, { rotate: logoRotateStr }],
+            },
+          ]}
+          resizeMode="contain"
+        />
+      </View>
 
       {/* 골드 라인 (좌우 대칭 확장) */}
       <View style={splashStyles.lineRow}>
@@ -433,23 +441,29 @@ function AnimatedSplash({ onFinish }) {
 const splashStyles = StyleSheet.create({
   container: {
     ...StyleSheet.absoluteFillObject,
-    backgroundColor: '#0f1923',
+    backgroundColor: '#110E0B',
     alignItems: 'center',
     justifyContent: 'center',
     zIndex: 999,
   },
+  logoWrap: {
+    width: 140,
+    height: 140,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 24,
+  },
   logoRing: {
     position: 'absolute',
-    width: 120,
-    height: 120,
-    borderRadius: 60,
+    width: 140,
+    height: 140,
+    borderRadius: 70,
     borderWidth: 2,
     borderColor: '#C9A96E',
   },
   logo: {
-    width: 130,
-    height: 130,
-    marginBottom: 24,
+    width: 120,
+    height: 120,
   },
   lineRow: {
     flexDirection: 'row',
@@ -473,16 +487,16 @@ const splashStyles = StyleSheet.create({
   },
   title: {
     fontSize: 26,
-    fontWeight: '700',
-    color: '#ffffff',
-    letterSpacing: 3,
+    fontWeight: '300',
+    color: '#F5F0E8',
+    letterSpacing: 4,
     marginBottom: 10,
   },
   subtitle: {
     fontSize: 11,
-    fontWeight: '500',
-    color: '#6b7b8d',
-    letterSpacing: 2,
+    fontWeight: '400',
+    color: '#9e9282',
+    letterSpacing: 3,
     textTransform: 'uppercase',
   },
 });
@@ -522,10 +536,11 @@ export default function RootLayout() {
     <AuthProvider>
       <StatusBar style="light" />
       <NotificationInit />
+      <InAppNotification />
       <Stack
         screenOptions={{
           headerShown: false,
-          contentStyle: { backgroundColor: '#0f1923' },
+          contentStyle: { backgroundColor: '#110E0B' },
         }}
       >
         <Stack.Screen name="(tabs)" />
@@ -555,6 +570,7 @@ export default function RootLayout() {
         <Stack.Screen name="settings/practice-stats" />
         <Stack.Screen name="settings/privacy" />
         <Stack.Screen name="settings/terms" />
+        <Stack.Screen name="admin/send-notification" />
       </Stack>
       {!splashDone && <AnimatedSplash onFinish={handleSplashFinish} />}
     </AuthProvider>

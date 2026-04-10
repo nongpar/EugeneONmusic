@@ -14,7 +14,7 @@ const showAlert = (title, message) => {
 };
 
 // ── SVG 아이콘 ──
-function PersonIcon({ size = 48, color = '#4a5a6a' }) {
+function PersonIcon({ size = 48, color = '#C9A96E' }) {
   return (
     <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
       <Path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2" stroke={color} strokeWidth={1.5} strokeLinecap="round" />
@@ -23,7 +23,7 @@ function PersonIcon({ size = 48, color = '#4a5a6a' }) {
   );
 }
 
-function ChevronIcon({ size = 18, color = '#4a5a6a' }) {
+function ChevronIcon({ size = 18, color = 'rgba(201,169,110,0.3)' }) {
   return (
     <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
       <Path d="M9 18l6-6-6-6" stroke={color} strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" />
@@ -40,7 +40,7 @@ function LogoutIcon({ size = 20, color = '#e74c3c' }) {
 }
 
 // 메뉴 아이콘들
-function makeIcon(pathData, size = 22, color = '#8a9bae') {
+function makeIcon(pathData, size = 22, color = '#C9A96E') {
   return (
     <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
       {pathData.map((d, i) => <Path key={i} d={d} stroke={color} strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round" />)}
@@ -128,7 +128,7 @@ function TodayProgressWidget({ todaySeconds, goalMinutes, todayProgress, todayGo
         <View style={{ width: MINI_SIZE, height: MINI_SIZE, alignItems: 'center', justifyContent: 'center' }}>
           <Svg width={MINI_SIZE} height={MINI_SIZE}>
             <Circle cx={MINI_SIZE / 2} cy={MINI_SIZE / 2} r={MINI_RADIUS}
-              stroke="#222f3a" strokeWidth={MINI_STROKE} fill="transparent" />
+              stroke="rgba(201,169,110,0.15)" strokeWidth={MINI_STROKE} fill="transparent" />
             <Circle cx={MINI_SIZE / 2} cy={MINI_SIZE / 2} r={MINI_RADIUS}
               stroke={progressColor} strokeWidth={MINI_STROKE} fill="transparent"
               strokeDasharray={MINI_CIRC} strokeDashoffset={offset}
@@ -229,6 +229,13 @@ function LoggedInView({ user, onLogout }) {
         <MenuItem iconKey="chart" label="연습 통계" onPress={() => router.push('/settings/practice-stats')} />
       </View>
 
+      {/* 관리자 메뉴 (선생님만) */}
+      {user?.role === 'teacher' && (
+        <View style={[styles.menuSection, { marginTop: 12 }]}>
+          <MenuItem iconKey="bell" label="알림 전송" subtitle="공지 / 알림 보내기" onPress={() => router.push('/admin/send-notification')} />
+        </View>
+      )}
+
       <View style={[styles.menuSection, { marginTop: 12 }]}>
         <MenuItem
           iconKey="globe"
@@ -260,11 +267,30 @@ export default function MyScreen() {
   const { user, loading, logout } = useAuth();
   const insets = useSafeAreaInsets();
 
-  const handleLogout = async () => {
-    try {
-      await logout();
-    } catch {
-      showAlert('오류', '로그아웃에 실패했습니다.');
+  const handleLogout = () => {
+    if (Platform.OS === 'web') {
+      if (window.confirm('로그아웃 하시겠습니까?')) {
+        logout().catch(() => showAlert('오류', '로그아웃에 실패했습니다.'));
+      }
+    } else {
+      Alert.alert(
+        '로그아웃',
+        '정말 로그아웃 하시겠습니까?',
+        [
+          { text: '취소', style: 'cancel' },
+          {
+            text: '로그아웃',
+            style: 'destructive',
+            onPress: async () => {
+              try {
+                await logout();
+              } catch {
+                showAlert('오류', '로그아웃에 실패했습니다.');
+              }
+            },
+          },
+        ]
+      );
     }
   };
 
@@ -285,13 +311,14 @@ export default function MyScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#0f1923' },
+  container: { flex: 1, backgroundColor: '#110E0B' },
   center: { alignItems: 'center', justifyContent: 'center' },
   screenTitle: {
-    fontSize: 20, fontWeight: 'bold', color: '#ffffff',
-    paddingHorizontal: 20, paddingTop: 12, paddingBottom: 8,
+    fontSize: 22, fontWeight: '300', color: '#F5F0E8',
+    paddingHorizontal: 24, paddingTop: 16, paddingBottom: 14,
+    letterSpacing: 1, borderBottomWidth: 0.5, borderBottomColor: 'rgba(201,169,110,0.15)',
   },
-  loadingText: { color: '#6b7b8d', fontSize: 16 },
+  loadingText: { color: '#9e9282', fontSize: 16 },
 
   // Logged Out
   loggedOutContainer: {
@@ -300,21 +327,21 @@ const styles = StyleSheet.create({
   },
   avatarPlaceholder: {
     width: 80, height: 80, borderRadius: 40,
-    backgroundColor: '#1a2530', alignItems: 'center', justifyContent: 'center',
-    marginBottom: 8,
+    backgroundColor: 'rgba(201,169,110,0.1)', alignItems: 'center', justifyContent: 'center',
+    marginBottom: 8, borderWidth: 0.5, borderColor: 'rgba(201,169,110,0.25)',
   },
-  loggedOutTitle: { fontSize: 20, fontWeight: 'bold', color: '#ffffff' },
-  loggedOutSubtitle: { fontSize: 14, color: '#6b7b8d', textAlign: 'center', lineHeight: 22 },
+  loggedOutTitle: { fontSize: 20, fontWeight: '300', color: '#F5F0E8', letterSpacing: 0.5 },
+  loggedOutSubtitle: { fontSize: 14, color: '#9e9282', textAlign: 'center', lineHeight: 22 },
   loginBtn: {
-    backgroundColor: '#C9A96E', borderRadius: 12,
+    backgroundColor: '#C9A96E', borderRadius: 4,
     paddingVertical: 14, paddingHorizontal: 48, marginTop: 12,
   },
-  loginBtnText: { fontSize: 16, fontWeight: 'bold', color: '#0f1923' },
+  loginBtnText: { fontSize: 16, fontWeight: '500', color: '#110E0B', letterSpacing: 0.5 },
   signUpBtn: {
-    borderWidth: 1, borderColor: '#C9A96E30', borderRadius: 12,
+    borderWidth: 0.5, borderColor: 'rgba(201,169,110,0.25)', borderRadius: 4,
     paddingVertical: 12, paddingHorizontal: 40,
   },
-  signUpBtnText: { fontSize: 14, fontWeight: '600', color: '#C9A96E' },
+  signUpBtnText: { fontSize: 14, fontWeight: '400', color: '#C9A96E', letterSpacing: 0.3 },
 
   // Logged In
   profileSection: { alignItems: 'center', paddingVertical: 24, gap: 6 },
@@ -323,72 +350,72 @@ const styles = StyleSheet.create({
     backgroundColor: '#C9A96E', alignItems: 'center', justifyContent: 'center',
     marginBottom: 8,
   },
-  avatarText: { fontSize: 28, fontWeight: 'bold', color: '#0f1923' },
-  userName: { fontSize: 22, fontWeight: 'bold', color: '#ffffff' },
-  userEmail: { fontSize: 14, color: '#6b7b8d' },
+  avatarText: { fontSize: 28, fontWeight: '300', color: '#110E0B' },
+  userName: { fontSize: 22, fontWeight: '300', color: '#F5F0E8', letterSpacing: 0.5 },
+  userEmail: { fontSize: 14, color: '#9e9282' },
   accountBadge: {
     flexDirection: 'row', alignItems: 'center', gap: 6,
-    backgroundColor: '#1a2530', paddingHorizontal: 12, paddingVertical: 5,
-    borderRadius: 12, marginTop: 8,
+    backgroundColor: 'rgba(201,169,110,0.07)', paddingHorizontal: 12, paddingVertical: 5,
+    borderRadius: 4, marginTop: 8, borderWidth: 0.5, borderColor: 'rgba(201,169,110,0.18)',
   },
-  accountDot: { width: 6, height: 6, borderRadius: 3, backgroundColor: '#4ade80' },
-  accountText: { fontSize: 11, color: '#6b7b8d' },
+  accountDot: { width: 6, height: 6, borderRadius: 3, backgroundColor: '#C9A96E' },
+  accountText: { fontSize: 11, color: '#9e9282' },
 
   statsRow: {
     flexDirection: 'row', marginHorizontal: 20,
-    backgroundColor: '#1a2530', borderRadius: 16, padding: 16,
+    backgroundColor: 'rgba(201,169,110,0.07)', borderRadius: 4, padding: 16,
     justifyContent: 'space-around', marginBottom: 20,
-    borderWidth: 1, borderColor: '#222f3a',
+    borderWidth: 0.5, borderColor: 'rgba(201,169,110,0.18)',
   },
   statBox: { alignItems: 'center', gap: 4 },
-  statValue: { fontSize: 20, fontWeight: 'bold', color: '#C9A96E' },
-  statLabel: { fontSize: 12, color: '#6b7b8d' },
+  statValue: { fontSize: 20, fontWeight: '300', color: '#C9A96E' },
+  statLabel: { fontSize: 12, color: '#9e9282' },
 
   menuSection: {
-    marginHorizontal: 20, backgroundColor: '#1a2530',
-    borderRadius: 16, overflow: 'hidden',
-    borderWidth: 1, borderColor: '#222f3a',
+    marginHorizontal: 20, backgroundColor: 'rgba(201,169,110,0.07)',
+    borderRadius: 4, overflow: 'hidden',
+    borderWidth: 0.5, borderColor: 'rgba(201,169,110,0.18)',
   },
   menuItem: {
     flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center',
     paddingVertical: 16, paddingHorizontal: 16,
-    borderBottomWidth: 1, borderBottomColor: '#0f1923',
+    borderBottomWidth: 0.5, borderBottomColor: 'rgba(201,169,110,0.1)',
   },
   menuLeft: { flexDirection: 'row', alignItems: 'center', gap: 12 },
-  menuLabel: { fontSize: 15, color: '#ffffff' },
-  menuSub: { fontSize: 11, color: '#5a6a7a', marginTop: 1 },
+  menuLabel: { fontSize: 15, fontWeight: '400', color: '#F5F0E8', letterSpacing: 0.3 },
+  menuSub: { fontSize: 11, color: '#9e9282', marginTop: 1 },
 
   // 오늘의 연습 위젯
   todayWidget: {
     flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
     marginHorizontal: 20, marginBottom: 20,
-    backgroundColor: '#1a2530', borderRadius: 16, padding: 16,
-    borderWidth: 1, borderColor: '#222f3a',
+    backgroundColor: 'rgba(201,169,110,0.07)', borderRadius: 4, padding: 16,
+    borderWidth: 0.5, borderColor: 'rgba(201,169,110,0.18)',
   },
   todayLeft: { flexDirection: 'row', alignItems: 'center', gap: 14 },
   todayPercent: {
-    position: 'absolute', fontSize: 13, fontWeight: '700', color: '#C9A96E',
+    position: 'absolute', fontSize: 13, fontWeight: '500', color: '#C9A96E',
   },
   todayInfo: { gap: 3 },
-  todayTitle: { fontSize: 15, fontWeight: '700', color: '#ffffff' },
-  todayDetail: { fontSize: 13, color: '#6b7b8d' },
+  todayTitle: { fontSize: 15, fontWeight: '400', color: '#F5F0E8' },
+  todayDetail: { fontSize: 13, color: '#9e9282' },
   todayRight: { flexDirection: 'row', alignItems: 'center', gap: 8 },
   streakBadge: {
-    backgroundColor: '#C9A96E18', paddingHorizontal: 10, paddingVertical: 4,
-    borderRadius: 10, borderWidth: 1, borderColor: '#C9A96E30',
+    backgroundColor: 'rgba(201,169,110,0.1)', paddingHorizontal: 10, paddingVertical: 4,
+    borderRadius: 4, borderWidth: 0.5, borderColor: 'rgba(201,169,110,0.25)',
   },
-  streakBadgeText: { fontSize: 11, fontWeight: '600', color: '#C9A96E' },
+  streakBadgeText: { fontSize: 11, fontWeight: '500', color: '#C9A96E' },
   startBadge: {
     backgroundColor: '#C9A96E', paddingHorizontal: 12, paddingVertical: 6,
-    borderRadius: 12,
+    borderRadius: 4,
   },
-  startBadgeText: { fontSize: 12, fontWeight: '700', color: '#0f1923' },
+  startBadgeText: { fontSize: 12, fontWeight: '600', color: '#110E0B', letterSpacing: 0.5 },
 
   logoutBtn: {
     flexDirection: 'row', alignItems: 'center', justifyContent: 'center',
     gap: 8, marginHorizontal: 20, marginTop: 20,
-    paddingVertical: 14, backgroundColor: '#1a2530', borderRadius: 12,
-    borderWidth: 1, borderColor: '#222f3a',
+    paddingVertical: 14, backgroundColor: 'rgba(201,169,110,0.07)', borderRadius: 4,
+    borderWidth: 0.5, borderColor: 'rgba(201,169,110,0.18)',
   },
-  logoutText: { fontSize: 15, fontWeight: '600', color: '#e74c3c' },
+  logoutText: { fontSize: 15, fontWeight: '400', color: '#e74c3c' },
 });

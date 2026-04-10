@@ -10,7 +10,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 const WP_API = 'https://www.eugeneonmusic.com/wp-json/wp/v2';
 
 // ── SVG 아이콘 ──
-function BackIcon({ size = 22, color = '#8a9bae' }) {
+function BackIcon({ size = 22, color = '#C9A96E' }) {
   return (
     <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
       <Path d="M19 12H5M5 12l7 7M5 12l7-7" stroke={color} strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" />
@@ -24,7 +24,7 @@ function ExternalIcon({ size = 18, color = '#C9A96E' }) {
     </Svg>
   );
 }
-function ShareIcon({ size = 18, color = '#8a9bae' }) {
+function ShareIcon({ size = 18, color = '#C9A96E' }) {
   return (
     <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
       <Circle cx="18" cy="5" r="3" stroke={color} strokeWidth={2} />
@@ -34,7 +34,7 @@ function ShareIcon({ size = 18, color = '#8a9bae' }) {
     </Svg>
   );
 }
-function CalendarIcon({ size = 14, color = '#5a6a7a' }) {
+function CalendarIcon({ size = 14, color = '#9e9282' }) {
   return (
     <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
       <Rect x="3" y="4" width="18" height="17" rx="2" stroke={color} strokeWidth={2} />
@@ -57,7 +57,7 @@ function getCategoryInfo(categoryIds) {
   for (const id of (categoryIds || [])) {
     if (CATEGORY_CONFIG[id]) return CATEGORY_CONFIG[id];
   }
-  return { label: '소식', color: '#8a9bae' };
+  return { label: '소식', color: '#C9A96E' };
 }
 
 function formatDate(dateStr) {
@@ -380,26 +380,26 @@ export default function NewsDetailScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#0f1923' },
+  container: { flex: 1, backgroundColor: '#110E0B' },
 
   /* 헤더 */
   header: {
     flexDirection: 'row', alignItems: 'center',
     paddingHorizontal: 12, paddingVertical: 10,
-    borderBottomWidth: 1, borderBottomColor: '#1a2530',
+    borderBottomWidth: 0.5, borderBottomColor: 'rgba(201,169,110,0.15)',
     gap: 8,
   },
   headerBtn: {
-    width: 36, height: 36, borderRadius: 18,
+    width: 36, height: 36, borderRadius: 4,
     alignItems: 'center', justifyContent: 'center',
   },
   headerTitle: {
     flex: 1, textAlign: 'center',
-    fontSize: 16, fontWeight: '700', color: '#ffffff',
+    fontSize: 16, fontWeight: '400', color: '#F5F0E8', letterSpacing: 0.3,
   },
 
   center: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: 12 },
-  loadingText: { fontSize: 14, color: '#5a6a7a' },
+  loadingText: { fontSize: 14, color: '#9e9282' },
   errorText: { fontSize: 14, color: '#f87171' },
 
   scrollContent: { paddingBottom: 20 },
@@ -407,7 +407,7 @@ const styles = StyleSheet.create({
   /* 대표 이미지 */
   featuredImage: {
     height: 220,
-    backgroundColor: '#1a2530',
+    backgroundColor: 'rgba(201,169,110,0.07)',
   },
 
   /* 메타 */
@@ -416,22 +416,22 @@ const styles = StyleSheet.create({
   },
   categoryBadge: {
     alignSelf: 'flex-start',
-    paddingHorizontal: 10, paddingVertical: 4, borderRadius: 6,
+    paddingHorizontal: 10, paddingVertical: 4, borderRadius: 4,
   },
-  categoryText: { fontSize: 11, fontWeight: 'bold', color: '#fff' },
+  categoryText: { fontSize: 11, fontWeight: '400', color: '#fff', letterSpacing: 0.5 },
   title: {
-    fontSize: 22, fontWeight: '800', color: '#ffffff',
-    lineHeight: 30, letterSpacing: -0.5,
+    fontSize: 22, fontWeight: '400', color: '#F5F0E8',
+    lineHeight: 30, letterSpacing: 0.3,
   },
   metaRow: {
     flexDirection: 'row', alignItems: 'center', gap: 6,
   },
-  metaText: { fontSize: 13, color: '#5a6a7a' },
-  metaDot: { fontSize: 13, color: '#3a4a5a' },
+  metaText: { fontSize: 13, color: '#9e9282' },
+  metaDot: { fontSize: 13, color: 'rgba(201,169,110,0.3)' },
 
   /* 구분선 */
   divider: {
-    height: 1, backgroundColor: '#1a2530',
+    height: 0.5, backgroundColor: 'rgba(201,169,110,0.15)',
     marginHorizontal: 20, marginVertical: 20,
   },
 
@@ -440,18 +440,18 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20, gap: 14,
   },
   contentHeading: {
-    fontWeight: '700', color: '#ffffff',
-    lineHeight: 28, marginTop: 8,
+    fontWeight: '400', color: '#F5F0E8',
+    lineHeight: 28, marginTop: 8, letterSpacing: 0.3,
   },
   contentParagraph: {
     fontSize: 15, color: '#b0c0d0', lineHeight: 26,
   },
   contentImageWrap: {
-    marginVertical: 8, borderRadius: 12, overflow: 'hidden',
+    marginVertical: 8, borderRadius: 4, overflow: 'hidden',
     alignSelf: 'center',
   },
   contentImage: {
-    borderRadius: 12, backgroundColor: '#1a2530',
+    borderRadius: 4, backgroundColor: 'rgba(201,169,110,0.07)',
   },
   contentListItem: {
     flexDirection: 'row', gap: 8, paddingLeft: 4,
@@ -463,8 +463,8 @@ const styles = StyleSheet.create({
   originalLink: {
     flexDirection: 'row', alignItems: 'center', justifyContent: 'center',
     gap: 8, marginTop: 24, marginHorizontal: 20,
-    paddingVertical: 14, borderRadius: 12,
-    backgroundColor: '#1a2530', borderWidth: 1, borderColor: '#222f3a',
+    paddingVertical: 14, borderRadius: 4,
+    backgroundColor: 'rgba(201,169,110,0.07)', borderWidth: 0.5, borderColor: 'rgba(201,169,110,0.18)',
   },
-  originalLinkText: { fontSize: 14, color: '#C9A96E', fontWeight: '600' },
+  originalLinkText: { fontSize: 14, color: '#C9A96E', fontWeight: '400', letterSpacing: 0.3 },
 });

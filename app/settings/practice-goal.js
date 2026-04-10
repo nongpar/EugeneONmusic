@@ -24,7 +24,7 @@ const GOALS = [
 ];
 
 // ── SVG Icons ──
-function BackIcon({ size = 24, color = '#ffffff' }) {
+function BackIcon({ size = 24, color = '#F5F0E8' }) {
   return (
     <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
       <Path d="M15 18l-6-6 6-6" stroke={color} strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" />
@@ -160,7 +160,7 @@ export default function PracticeGoalScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#0f1923',
+    backgroundColor: '#110E0B',
   },
   header: {
     flexDirection: 'row',
@@ -174,8 +174,9 @@ const styles = StyleSheet.create({
   },
   headerTitle: {
     fontSize: 18,
-    fontWeight: 'bold',
-    color: '#ffffff',
+    fontWeight: '400',
+    color: '#F5F0E8',
+    letterSpacing: 0.3,
   },
   content: {
     paddingHorizontal: 20,
@@ -188,20 +189,21 @@ const styles = StyleSheet.create({
   },
   iconTitle: {
     fontSize: 20,
-    fontWeight: 'bold',
-    color: '#ffffff',
+    fontWeight: '400',
+    color: '#F5F0E8',
     marginTop: 12,
+    letterSpacing: 0.3,
   },
   iconSubtitle: {
     fontSize: 13,
-    color: '#6b7b8d',
+    color: '#9e9282',
   },
   card: {
-    backgroundColor: '#1a2530',
-    borderRadius: 16,
+    backgroundColor: 'rgba(201,169,110,0.07)',
+    borderRadius: 4,
     overflow: 'hidden',
-    borderWidth: 1,
-    borderColor: '#222f3a',
+    borderWidth: 0.5,
+    borderColor: 'rgba(201,169,110,0.18)',
   },
   goalRow: {
     flexDirection: 'row',
@@ -209,8 +211,8 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     paddingVertical: 16,
     paddingHorizontal: 16,
-    borderBottomWidth: 1,
-    borderBottomColor: '#0f1923',
+    borderBottomWidth: 0.5,
+    borderBottomColor: '#110E0B',
   },
   goalLeft: {
     flexDirection: 'row',
@@ -222,7 +224,7 @@ const styles = StyleSheet.create({
     height: 10,
     borderRadius: 5,
     borderWidth: 2,
-    borderColor: '#4a5a6a',
+    borderColor: '#9e9282',
     backgroundColor: 'transparent',
   },
   goalDotSelected: {
@@ -231,7 +233,7 @@ const styles = StyleSheet.create({
   },
   goalLabel: {
     fontSize: 16,
-    color: '#ffffff',
+    color: '#F5F0E8',
   },
   goalLabelSelected: {
     color: '#C9A96E',
@@ -246,23 +248,24 @@ const styles = StyleSheet.create({
   },
   selectedValue: {
     fontSize: 32,
-    fontWeight: 'bold',
+    fontWeight: '300',
     color: '#C9A96E',
   },
   selectedSub: {
     fontSize: 16,
-    color: '#6b7b8d',
+    color: '#9e9282',
   },
   saveBtn: {
     backgroundColor: '#C9A96E',
-    borderRadius: 12,
+    borderRadius: 4,
     paddingVertical: 14,
     alignItems: 'center',
     marginTop: 20,
   },
   saveBtnText: {
     fontSize: 16,
-    fontWeight: 'bold',
-    color: '#0f1923',
+    fontWeight: '400',
+    color: '#110E0B',
+    letterSpacing: 0.5,
   },
 });

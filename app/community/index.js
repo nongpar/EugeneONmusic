@@ -12,7 +12,7 @@ import { db } from '../../config/firebase';
 import { useAuth } from '../../hooks/useAuth';
 
 // SVG 아이콘
-function BackIcon({ size = 24, color = '#8a9bae' }) {
+function BackIcon({ size = 24, color = '#C9A96E' }) {
   return (
     <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
       <Path d="M19 12H5M5 12l7 7M5 12l7-7" stroke={color} strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" />
@@ -27,7 +27,7 @@ function WriteIcon({ size = 24, color = '#C9A96E' }) {
     </Svg>
   );
 }
-function EmptyDocIcon({ size = 48, color = '#4a5a6a' }) {
+function EmptyDocIcon({ size = 48, color = '#9e9282' }) {
   return (
     <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
       <Path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8l-6-6z" stroke={color} strokeWidth={1.5} />
@@ -35,14 +35,14 @@ function EmptyDocIcon({ size = 48, color = '#4a5a6a' }) {
     </Svg>
   );
 }
-function ChatBubbleIcon({ size = 14, color = '#6b7b8d' }) {
+function ChatBubbleIcon({ size = 14, color = '#9e9282' }) {
   return (
     <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
       <Path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z" stroke={color} strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" />
     </Svg>
   );
 }
-function HeartIcon({ size = 14, color = '#6b7b8d' }) {
+function HeartIcon({ size = 14, color = '#9e9282' }) {
   return (
     <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
       <Path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z" stroke={color} strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" />
@@ -160,31 +160,31 @@ export default function CommunityScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#0f1923' },
+  container: { flex: 1, backgroundColor: '#110E0B' },
   header: {
     flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center',
     paddingHorizontal: 20, paddingVertical: 12,
   },
-  headerTitle: { fontSize: 18, fontWeight: 'bold', color: '#ffffff' },
+  headerTitle: { fontSize: 18, fontWeight: '400', color: '#F5F0E8', letterSpacing: 0.5 },
   center: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: 8 },
-  emptyText: { fontSize: 16, fontWeight: '600', color: '#8a9bae' },
-  emptySubtext: { fontSize: 14, color: '#4a5a6a' },
+  emptyText: { fontSize: 16, fontWeight: '400', color: '#C9A96E' },
+  emptySubtext: { fontSize: 14, color: '#9e9282' },
   listContent: { paddingHorizontal: 20, paddingBottom: 20 },
   postCard: {
-    backgroundColor: '#1a2530', borderRadius: 12, padding: 16,
-    marginBottom: 10, gap: 8,
+    backgroundColor: 'rgba(201,169,110,0.07)', borderRadius: 4, padding: 16,
+    marginBottom: 10, gap: 8, borderWidth: 0.5, borderColor: 'rgba(201,169,110,0.15)',
   },
   postHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
-  categoryBadge: { paddingHorizontal: 8, paddingVertical: 3, borderRadius: 6 },
-  categoryText: { fontSize: 11, fontWeight: 'bold', color: '#fff' },
-  timeText: { fontSize: 12, color: '#5a6a7a' },
-  postTitle: { fontSize: 16, fontWeight: '600', color: '#ffffff', lineHeight: 22 },
-  postBody: { fontSize: 13, color: '#8a9bae', lineHeight: 20 },
+  categoryBadge: { paddingHorizontal: 8, paddingVertical: 3, borderRadius: 4 },
+  categoryText: { fontSize: 11, fontWeight: '400', color: '#fff', letterSpacing: 0.5 },
+  timeText: { fontSize: 12, color: '#9e9282' },
+  postTitle: { fontSize: 16, fontWeight: '400', color: '#F5F0E8', lineHeight: 22, letterSpacing: 0.3 },
+  postBody: { fontSize: 13, color: '#9e9282', lineHeight: 20 },
   postFooter: {
     flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center',
     marginTop: 4,
   },
-  authorText: { fontSize: 12, color: '#6b7b8d' },
+  authorText: { fontSize: 12, color: '#9e9282' },
   statsRow: { flexDirection: 'row', alignItems: 'center', gap: 4 },
-  statText: { fontSize: 12, color: '#6b7b8d' },
+  statText: { fontSize: 12, color: '#9e9282' },
 });

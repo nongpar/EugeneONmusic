@@ -4,8 +4,11 @@ import { router } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAuth } from '../../hooks/useAuth';
 
-// SVG 아이콘들
-function CalendarIcon({ size = 22, color = '#C9A96E' }) {
+const GOLD = '#C9A96E';
+const GOLD_DIM = 'rgba(201,169,110,0.6)';
+
+// SVG 아이콘들 — 골드 톤 통일
+function CalendarIcon({ size = 22, color = GOLD }) {
   return (
     <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
       <Rect x="3" y="4" width="18" height="17" rx="2" stroke={color} strokeWidth={1.8} />
@@ -15,7 +18,7 @@ function CalendarIcon({ size = 22, color = '#C9A96E' }) {
     </Svg>
   );
 }
-function NoteIcon({ size = 22, color = '#4ade80' }) {
+function NoteIcon({ size = 22, color = GOLD }) {
   return (
     <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
       <Path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8l-6-6z" stroke={color} strokeWidth={1.8} />
@@ -25,7 +28,7 @@ function NoteIcon({ size = 22, color = '#4ade80' }) {
     </Svg>
   );
 }
-function TaskIcon({ size = 22, color = '#f472b6' }) {
+function TaskIcon({ size = 22, color = GOLD }) {
   return (
     <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
       <Path d="M9 11l3 3L22 4" stroke={color} strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" />
@@ -33,7 +36,7 @@ function TaskIcon({ size = 22, color = '#f472b6' }) {
     </Svg>
   );
 }
-function CommunityIcon({ size = 22, color = '#60a5fa' }) {
+function CommunityIcon({ size = 22, color = GOLD }) {
   return (
     <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
       <Circle cx="9" cy="7" r="3" stroke={color} strokeWidth={1.8} />
@@ -43,7 +46,7 @@ function CommunityIcon({ size = 22, color = '#60a5fa' }) {
     </Svg>
   );
 }
-function ChatIcon({ size = 22, color = '#a78bfa' }) {
+function ChatIcon({ size = 22, color = GOLD }) {
   return (
     <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
       <Path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2v10z" stroke={color} strokeWidth={1.8} />
@@ -52,7 +55,7 @@ function ChatIcon({ size = 22, color = '#a78bfa' }) {
     </Svg>
   );
 }
-function TimerIcon({ size = 22, color = '#fbbf24' }) {
+function TimerIcon({ size = 22, color = GOLD }) {
   return (
     <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
       <Circle cx="12" cy="13" r="8" stroke={color} strokeWidth={1.8} />
@@ -62,7 +65,7 @@ function TimerIcon({ size = 22, color = '#fbbf24' }) {
     </Svg>
   );
 }
-function SheetIcon({ size = 22, color = '#a78bfa' }) {
+function SheetIcon({ size = 22, color = GOLD }) {
   return (
     <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
       <Rect x="4" y="2" width="16" height="20" rx="2" stroke={color} strokeWidth={1.8} />
@@ -73,7 +76,7 @@ function SheetIcon({ size = 22, color = '#a78bfa' }) {
     </Svg>
   );
 }
-function VideoIcon({ size = 22, color = '#fb923c' }) {
+function VideoIcon({ size = 22, color = GOLD }) {
   return (
     <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
       <Rect x="2" y="5" width="15" height="14" rx="2" stroke={color} strokeWidth={1.8} />
@@ -81,7 +84,7 @@ function VideoIcon({ size = 22, color = '#fb923c' }) {
     </Svg>
   );
 }
-function MentorManageIcon({ size = 22, color = '#C9A96E' }) {
+function MentorManageIcon({ size = 22, color = GOLD }) {
   return (
     <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
       <Path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2" stroke={color} strokeWidth={2} strokeLinecap="round" />
@@ -91,11 +94,22 @@ function MentorManageIcon({ size = 22, color = '#C9A96E' }) {
     </Svg>
   );
 }
-function ChevronIcon({ size = 16, color = '#3a4a5a' }) {
+function ChevronIcon({ size = 16, color = 'rgba(201,169,110,0.3)' }) {
   return (
     <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
       <Path d="M9 6l6 6-6 6" stroke={color} strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" />
     </Svg>
+  );
+}
+
+// 장식 디바이더
+function OrnamentLine() {
+  return (
+    <View style={styles.ornamentLine}>
+      <View style={styles.ornamentLeft} />
+      <View style={styles.ornamentDot} />
+      <View style={styles.ornamentRight} />
+    </View>
   );
 }
 
@@ -123,7 +137,7 @@ export default function LessonScreen() {
     <View style={[styles.container, { paddingTop: insets.top }]}>
       <View style={styles.header}>
         <Text style={styles.headerTitle}>레슨</Text>
-        <Text style={styles.headerSub}>스케줄 · 노트 · 학습</Text>
+        <Text style={styles.headerSub}>SCHEDULE  ·  NOTE  ·  STUDY</Text>
       </View>
 
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
@@ -161,6 +175,8 @@ export default function LessonScreen() {
           onPress={() => router.push('/lesson/assignments')}
         />
 
+        <OrnamentLine />
+
         {/* 연습 */}
         <Text style={styles.sectionTitle}>연습</Text>
         <MenuCard
@@ -169,6 +185,8 @@ export default function LessonScreen() {
           subtitle="연습 시간을 기록하세요"
           onPress={() => router.push('/practice')}
         />
+
+        <OrnamentLine />
 
         {/* 소통 */}
         <Text style={styles.sectionTitle}>소통</Text>
@@ -184,6 +202,8 @@ export default function LessonScreen() {
           subtitle="멘토 신청 후 담당 선생님과 대화하세요"
           onPress={() => router.push('/chat')}
         />
+
+        <OrnamentLine />
 
         {/* 학습 자료 */}
         <Text style={styles.sectionTitle}>학습 자료</Text>
@@ -207,32 +227,64 @@ export default function LessonScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#0f1923' },
+  container: { flex: 1, backgroundColor: '#110E0B' },
   header: {
-    paddingHorizontal: 24, paddingTop: 16, paddingBottom: 12,
-    borderBottomWidth: 1, borderBottomColor: '#1a2530',
+    paddingHorizontal: 24, paddingTop: 16, paddingBottom: 14,
+    borderBottomWidth: 0.5, borderBottomColor: 'rgba(201,169,110,0.15)',
   },
-  headerTitle: { fontSize: 22, fontWeight: '700', color: '#ffffff', letterSpacing: -0.5 },
-  headerSub: { fontSize: 12, color: '#C9A96E', marginTop: 2, fontWeight: '500', letterSpacing: 0.5 },
+  headerTitle: {
+    fontSize: 22, fontWeight: '300', color: '#F5F0E8', letterSpacing: 1,
+  },
+  headerSub: {
+    fontSize: 10, color: GOLD, marginTop: 4, fontWeight: '400', letterSpacing: 2.5,
+  },
   scrollContent: { paddingHorizontal: 20, paddingBottom: 20 },
   sectionTitle: {
-    fontSize: 12, fontWeight: '600', color: '#4a5a6a',
-    textTransform: 'uppercase', letterSpacing: 1,
-    marginTop: 24, marginBottom: 10,
+    fontSize: 10, fontWeight: '500', color: GOLD_DIM,
+    textTransform: 'uppercase', letterSpacing: 2.5,
+    marginTop: 24, marginBottom: 12,
   },
+
+  // 장식 디바이더
+  ornamentLine: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: 16,
+    marginBottom: 4,
+    gap: 8,
+  },
+  ornamentLeft: {
+    flex: 1, height: 0.5,
+    backgroundColor: 'rgba(201,169,110,0.2)',
+  },
+  ornamentDot: {
+    width: 4, height: 4, borderRadius: 2,
+    backgroundColor: 'rgba(201,169,110,0.3)',
+  },
+  ornamentRight: {
+    flex: 1, height: 0.5,
+    backgroundColor: 'rgba(201,169,110,0.2)',
+  },
+
+  // 메뉴 카드
   menuCard: {
     flexDirection: 'row', alignItems: 'center',
-    backgroundColor: '#1a2530', borderRadius: 14, padding: 16,
+    backgroundColor: 'rgba(201,169,110,0.07)',
+    borderRadius: 4, padding: 16,
     marginBottom: 8, gap: 14,
-    borderWidth: 1, borderColor: '#222f3a',
+    borderWidth: 0.5, borderColor: 'rgba(201,169,110,0.18)',
   },
   menuIconWrap: {
-    width: 44, height: 44, borderRadius: 12,
-    backgroundColor: '#0f1923',
+    width: 44, height: 44, borderRadius: 22,
+    backgroundColor: 'rgba(201,169,110,0.1)',
     alignItems: 'center', justifyContent: 'center',
-    borderWidth: 1, borderColor: '#222f3a',
+    borderWidth: 0.5, borderColor: 'rgba(201,169,110,0.25)',
   },
   menuText: { flex: 1, gap: 3 },
-  menuTitle: { fontSize: 15, fontWeight: '600', color: '#ffffff', letterSpacing: -0.2 },
-  menuSubtitle: { fontSize: 12, color: '#5a6a7a' },
+  menuTitle: {
+    fontSize: 15, fontWeight: '400', color: '#F5F0E8', letterSpacing: 0.3,
+  },
+  menuSubtitle: {
+    fontSize: 12, color: '#9e9282', letterSpacing: 0.2,
+  },
 });

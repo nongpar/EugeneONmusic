@@ -28,7 +28,7 @@ const showAlert = (title, message, buttons) => {
 };
 
 // ── SVG 아이콘 ──
-function BackIcon({ size = 22, color = '#8a9bae' }) {
+function BackIcon({ size = 22, color = '#9e9282' }) {
   return (
     <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
       <Path d="M19 12H5M5 12l7 7M5 12l7-7" stroke={color} strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" />
@@ -58,7 +58,7 @@ function SheetDocIcon({ size = 40, color = '#C9A96E' }) {
   );
 }
 
-function ImageIcon({ size = 40, color = '#60a5fa' }) {
+function ImageIcon({ size = 40, color = '#C9A96E' }) {
   return (
     <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
       <Rect x="3" y="3" width="18" height="18" rx="2" stroke={color} strokeWidth={1.5} />
@@ -317,7 +317,7 @@ export default function SheetMusicScreen() {
           <View style={styles.shelfRow}>
             <View style={styles.shelfBoard} />
           </View>
-          <SheetDocIcon size={56} color="#2a3a4a" />
+          <SheetDocIcon size={56} color="rgba(201,169,110,0.3)" />
           <Text style={styles.emptyTitle}>악보가 아직 없습니다</Text>
           <Text style={styles.emptyDesc}>
             {isTeacher
@@ -377,26 +377,26 @@ export default function SheetMusicScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#0f1923' },
+  container: { flex: 1, backgroundColor: '#110E0B' },
   center: { flex: 1, alignItems: 'center', justifyContent: 'center' },
 
   header: {
     flexDirection: 'row', alignItems: 'center',
     paddingHorizontal: 16, paddingVertical: 12,
-    borderBottomWidth: 1, borderBottomColor: '#1a2530', gap: 12,
+    borderBottomWidth: 0.5, borderBottomColor: 'rgba(201,169,110,0.15)', gap: 12,
   },
-  headerBtn: { width: 36, height: 36, borderRadius: 18, alignItems: 'center', justifyContent: 'center' },
+  headerBtn: { width: 36, height: 36, borderRadius: 4, alignItems: 'center', justifyContent: 'center' },
   headerCenter: { flex: 1, alignItems: 'center' },
-  headerTitle: { fontSize: 17, fontWeight: '700', color: '#ffffff' },
-  headerSub: { fontSize: 11, color: '#5a6a7a', marginTop: 1 },
+  headerTitle: { fontSize: 17, fontWeight: '300', color: '#F5F0E8', letterSpacing: 1 },
+  headerSub: { fontSize: 11, color: '#9e9282', marginTop: 1, letterSpacing: 0.5 },
 
-  uploadBar: { height: 28, backgroundColor: '#1a2530', justifyContent: 'center' },
-  uploadProgress: { position: 'absolute', left: 0, top: 0, bottom: 0, backgroundColor: '#C9A96E30' },
-  uploadText: { fontSize: 11, color: '#C9A96E', textAlign: 'center', fontWeight: '600' },
+  uploadBar: { height: 28, backgroundColor: 'rgba(201,169,110,0.07)', justifyContent: 'center' },
+  uploadProgress: { position: 'absolute', left: 0, top: 0, bottom: 0, backgroundColor: 'rgba(201,169,110,0.15)' },
+  uploadText: { fontSize: 11, color: '#C9A96E', textAlign: 'center', fontWeight: '400' },
 
   emptyShelf: { flexGrow: 1, alignItems: 'center', justifyContent: 'center', gap: 12, paddingHorizontal: 40 },
-  emptyTitle: { fontSize: 18, fontWeight: '700', color: '#ffffff', marginTop: 8 },
-  emptyDesc: { fontSize: 13, color: '#5a6a7a', textAlign: 'center', lineHeight: 20 },
+  emptyTitle: { fontSize: 18, fontWeight: '300', color: '#F5F0E8', marginTop: 8, letterSpacing: 0.5 },
+  emptyDesc: { fontSize: 13, color: '#9e9282', textAlign: 'center', lineHeight: 20 },
 
   shelfRow: { width: '100%', paddingHorizontal: 20, marginVertical: 16 },
   shelfBoard: {
@@ -408,47 +408,47 @@ const styles = StyleSheet.create({
   uploadBtns: { flexDirection: 'row', gap: 12, marginTop: 12 },
   uploadBtn: {
     flexDirection: 'row', alignItems: 'center', gap: 8,
-    backgroundColor: '#1a2530', paddingVertical: 14, paddingHorizontal: 20,
-    borderRadius: 12, borderWidth: 1, borderColor: '#C9A96E30',
+    backgroundColor: 'rgba(201,169,110,0.07)', paddingVertical: 14, paddingHorizontal: 20,
+    borderRadius: 4, borderWidth: 1, borderColor: 'rgba(201,169,110,0.18)',
   },
-  uploadBtnText: { fontSize: 13, fontWeight: '600', color: '#C9A96E' },
+  uploadBtnText: { fontSize: 13, fontWeight: '400', color: '#C9A96E' },
 
   uploadBtnsRow: {
     flexDirection: 'row', gap: 8, paddingHorizontal: 20, marginTop: 16, marginBottom: 8,
   },
   uploadBtnSmall: {
     flexDirection: 'row', alignItems: 'center', gap: 6,
-    backgroundColor: '#1a2530', paddingVertical: 8, paddingHorizontal: 14,
-    borderRadius: 8, borderWidth: 1, borderColor: '#222f3a',
+    backgroundColor: 'rgba(201,169,110,0.07)', paddingVertical: 8, paddingHorizontal: 14,
+    borderRadius: 4, borderWidth: 1, borderColor: 'rgba(201,169,110,0.18)',
   },
-  uploadBtnSmallText: { fontSize: 12, fontWeight: '600', color: '#8a9bae' },
+  uploadBtnSmallText: { fontSize: 12, fontWeight: '400', color: '#9e9282' },
 
   shelfContainer: { paddingBottom: 20 },
   shelfGrid: { flexDirection: 'row', flexWrap: 'wrap', paddingHorizontal: 16 },
   shelfSlot: { width: '50%', paddingHorizontal: 6, marginBottom: 4 },
 
   sheetCard: {
-    backgroundColor: '#1a2530', borderRadius: 10, padding: 12,
+    backgroundColor: 'rgba(201,169,110,0.07)', borderRadius: 4, padding: 12,
     alignItems: 'center', marginBottom: 8,
-    borderWidth: 1, borderColor: '#222f3a',
+    borderWidth: 1, borderColor: 'rgba(201,169,110,0.18)',
   },
   bookCover: {
-    width: '100%', height: 120, backgroundColor: '#0f1923',
-    borderRadius: 6, alignItems: 'center', justifyContent: 'center',
+    width: '100%', height: 120, backgroundColor: '#110E0B',
+    borderRadius: 4, alignItems: 'center', justifyContent: 'center',
     marginBottom: 10, overflow: 'hidden',
-    borderWidth: 1, borderColor: '#222f3a',
+    borderWidth: 1, borderColor: 'rgba(201,169,110,0.18)',
   },
   bookThumbnail: { width: '100%', height: '100%' },
   bookSpine: {
     position: 'absolute', left: 0, top: 0, bottom: 0, width: 4,
-    backgroundColor: '#C9A96E40', borderTopLeftRadius: 6, borderBottomLeftRadius: 6,
+    backgroundColor: 'rgba(201,169,110,0.25)', borderTopLeftRadius: 4, borderBottomLeftRadius: 4,
   },
-  sheetTitle: { fontSize: 13, fontWeight: '600', color: '#ffffff', textAlign: 'center', lineHeight: 18 },
-  sheetDate: { fontSize: 10, color: '#3a4a5a', marginTop: 4 },
+  sheetTitle: { fontSize: 13, fontWeight: '400', color: '#F5F0E8', textAlign: 'center', lineHeight: 18 },
+  sheetDate: { fontSize: 10, color: '#9e9282', marginTop: 4 },
   deleteBtn: {
     position: 'absolute', top: 8, right: 8,
-    width: 28, height: 28, borderRadius: 14,
-    backgroundColor: '#1a2530', alignItems: 'center', justifyContent: 'center',
+    width: 28, height: 28, borderRadius: 4,
+    backgroundColor: 'rgba(201,169,110,0.07)', alignItems: 'center', justifyContent: 'center',
     borderWidth: 1, borderColor: '#e74c3c30',
   },
 

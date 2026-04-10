@@ -14,7 +14,7 @@ const showAlert = (title, message) => {
 };
 
 // ── SVG Icons ──
-function BackIcon({ size = 24, color = '#ffffff' }) {
+function BackIcon({ size = 24, color = '#F5F0E8' }) {
   return (
     <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
       <Path d="M15 18l-6-6 6-6" stroke={color} strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" />
@@ -83,7 +83,7 @@ export default function ProfileScreen() {
             value={displayName}
             onChangeText={setDisplayName}
             placeholder="이름을 입력하세요"
-            placeholderTextColor="#4a5a6a"
+            placeholderTextColor="rgba(201,169,110,0.3)"
           />
         </View>
 
@@ -119,7 +119,7 @@ export default function ProfileScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#0f1923',
+    backgroundColor: '#110E0B',
   },
   header: {
     flexDirection: 'row',
@@ -133,8 +133,9 @@ const styles = StyleSheet.create({
   },
   headerTitle: {
     fontSize: 18,
-    fontWeight: 'bold',
-    color: '#ffffff',
+    fontWeight: '400',
+    color: '#F5F0E8',
+    letterSpacing: 0.3,
   },
   content: {
     paddingHorizontal: 20,
@@ -154,54 +155,55 @@ const styles = StyleSheet.create({
   },
   avatarText: {
     fontSize: 32,
-    fontWeight: 'bold',
-    color: '#0f1923',
+    fontWeight: '300',
+    color: '#110E0B',
   },
   card: {
-    backgroundColor: '#1a2530',
-    borderRadius: 16,
+    backgroundColor: 'rgba(201,169,110,0.07)',
+    borderRadius: 4,
     padding: 16,
     marginBottom: 12,
-    borderWidth: 1,
-    borderColor: '#222f3a',
+    borderWidth: 0.5,
+    borderColor: 'rgba(201,169,110,0.18)',
   },
   fieldLabel: {
     fontSize: 12,
-    color: '#6b7b8d',
+    color: '#9e9282',
     marginBottom: 8,
     fontWeight: '600',
+    letterSpacing: 0.5,
   },
   textInput: {
-    backgroundColor: '#0f1923',
-    borderRadius: 10,
+    backgroundColor: '#0C0A08',
+    borderRadius: 4,
     paddingHorizontal: 14,
     paddingVertical: 12,
     fontSize: 15,
-    color: '#ffffff',
-    borderWidth: 1,
-    borderColor: '#222f3a',
+    color: '#F5F0E8',
+    borderWidth: 0.5,
+    borderColor: 'rgba(201,169,110,0.18)',
   },
   readOnlyField: {
-    backgroundColor: '#0f1923',
-    borderRadius: 10,
+    backgroundColor: '#0C0A08',
+    borderRadius: 4,
     paddingHorizontal: 14,
     paddingVertical: 12,
-    borderWidth: 1,
-    borderColor: '#222f3a',
+    borderWidth: 0.5,
+    borderColor: 'rgba(201,169,110,0.18)',
   },
   readOnlyText: {
     fontSize: 15,
-    color: '#6b7b8d',
+    color: '#9e9282',
   },
   fieldHint: {
     fontSize: 11,
-    color: '#4a5a6a',
+    color: 'rgba(201,169,110,0.3)',
     marginTop: 6,
     marginLeft: 4,
   },
   saveBtn: {
     backgroundColor: '#C9A96E',
-    borderRadius: 12,
+    borderRadius: 4,
     paddingVertical: 14,
     alignItems: 'center',
     marginTop: 12,
@@ -209,8 +211,9 @@ const styles = StyleSheet.create({
   },
   saveBtnText: {
     fontSize: 16,
-    fontWeight: 'bold',
-    color: '#0f1923',
+    fontWeight: '400',
+    color: '#110E0B',
+    letterSpacing: 0.5,
   },
   webLink: {
     flexDirection: 'row',
@@ -218,9 +221,9 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     gap: 8,
     paddingVertical: 14,
-    backgroundColor: '#1a2530',
-    borderRadius: 12,
-    borderWidth: 1,
+    backgroundColor: 'rgba(201,169,110,0.07)',
+    borderRadius: 4,
+    borderWidth: 0.5,
     borderColor: '#C9A96E30',
   },
   webLinkText: {

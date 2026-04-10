@@ -56,8 +56,8 @@ export default function WeeklyChart({ weeklyData }) {
                       backgroundColor: isToday
                         ? '#C9A96E'
                         : hasPractice
-                        ? '#2C5F8A'
-                        : '#1a2530',
+                        ? 'rgba(201,169,110,0.4)'
+                        : 'rgba(201,169,110,0.07)',
                     },
                   ]}
                 />
@@ -95,10 +95,12 @@ export default function WeeklyChart({ weeklyData }) {
 const styles = StyleSheet.create({
   container: {
     marginHorizontal: 20,
-    backgroundColor: '#1a2530',
-    borderRadius: 16,
+    backgroundColor: 'rgba(201,169,110,0.07)',
+    borderRadius: 4,
     padding: 20,
     gap: 16,
+    borderWidth: 0.5,
+    borderColor: 'rgba(201,169,110,0.15)',
   },
   header: {
     flexDirection: 'row',
@@ -107,12 +109,13 @@ const styles = StyleSheet.create({
   },
   title: {
     fontSize: 17,
-    fontWeight: 'bold',
-    color: '#ffffff',
+    fontWeight: '400',
+    color: '#F5F0E8',
+    letterSpacing: 0.3,
   },
   totalTime: {
     fontSize: 15,
-    fontWeight: '600',
+    fontWeight: '400',
     color: '#C9A96E',
   },
   chartArea: {
@@ -131,7 +134,7 @@ const styles = StyleSheet.create({
   },
   barValue: {
     fontSize: 9,
-    color: '#6b7b8d',
+    color: '#9e9282',
     height: 14,
   },
   barTrack: {
@@ -142,24 +145,24 @@ const styles = StyleSheet.create({
   },
   bar: {
     width: '65%',
-    borderRadius: 4,
+    borderRadius: 2,
     minHeight: 4,
   },
   dayLabel: {
     fontSize: 12,
-    color: '#6b7b8d',
+    color: '#9e9282',
     marginTop: 4,
   },
   todayLabel: {
     color: '#C9A96E',
-    fontWeight: 'bold',
+    fontWeight: '400',
   },
   statsRow: {
     flexDirection: 'row',
     justifyContent: 'space-around',
     alignItems: 'center',
-    backgroundColor: '#0f1923',
-    borderRadius: 12,
+    backgroundColor: '#0C0A08',
+    borderRadius: 4,
     paddingVertical: 14,
   },
   statItem: {
@@ -168,16 +171,16 @@ const styles = StyleSheet.create({
   },
   statValue: {
     fontSize: 16,
-    fontWeight: 'bold',
-    color: '#ffffff',
+    fontWeight: '300',
+    color: '#F5F0E8',
   },
   statLabel: {
     fontSize: 12,
-    color: '#6b7b8d',
+    color: '#9e9282',
   },
   divider: {
-    width: 1,
+    width: 0.5,
     height: 30,
-    backgroundColor: '#2a3a4a',
+    backgroundColor: 'rgba(201,169,110,0.18)',
   },
 });

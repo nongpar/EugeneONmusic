@@ -5,7 +5,7 @@ import { router } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import {
   collection, query, where, orderBy, onSnapshot,
-  addDoc, serverTimestamp, getDocs,
+  addDoc, serverTimestamp, getDocs, doc, getDoc, updateDoc,
 } from 'firebase/firestore';
 import { db } from '../../config/firebase';
 import { useAuth } from '../../hooks/useAuth';
@@ -13,7 +13,7 @@ import { useAuth } from '../../hooks/useAuth';
 const ROLE_COLORS = { teacher: '#C9A96E', student: '#2C5F8A' };
 
 // ── SVG 아이콘 ──
-function ChatIcon({ size = 48, color = '#4a5a6a' }) {
+function ChatIcon({ size = 48, color = 'rgba(201,169,110,0.3)' }) {
   return (
     <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
       <Path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z" stroke={color} strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round" />
@@ -97,20 +97,24 @@ function MentorRequestSection({ user }) {
 
   useEffect(() => {
     if (!user) return;
-    // 기존 멘토 신청 확인
+    // 기존 활성 멘토 신청 확인 (ended/rejected 제외)
     const q = query(
       collection(db, 'mentorships'),
       where('studentId', '==', user.uid)
     );
     const unsub = onSnapshot(q, (snap) => {
-      setHasRequest(snap.docs.length > 0);
+      const activeRequest = snap.docs.some((d) => {
+        const status = d.data().status;
+        return status === 'pending' || status === 'active';
+      });
+      setHasRequest(activeRequest);
     });
     return unsub;
   }, [user]);
 
   const handleRequest = async () => {
     if (hasRequest) {
-      Alert.alert('안내', '이미 멘토 신청이 되어있습니다.');
+      Alert.alert('안내', '이미 멘토 신청이 되어있거나 진행 중입니다.');
       return;
     }
     setRequesting(true);
@@ -200,7 +204,6 @@ export default function ChatScreen() {
         const tb = b.lastMessageAt?.toMillis?.() || 0;
         return tb - ta;
       });
-      console.log('[Chat] rooms loaded:', roomList.length);
       setRooms(roomList);
       setLoading(false);
     }, (err) => {
@@ -214,8 +217,26 @@ export default function ChatScreen() {
       collection(db, 'mentorships'),
       where(mentorField, '==', user.uid)
     );
-    const unsubMentor = onSnapshot(mentorQ, (snap) => {
-      setMentorships(snap.docs.map((d) => ({ id: d.id, ...d.data() })));
+    const unsubMentor = onSnapshot(mentorQ, async (snap) => {
+      const list = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
+      setMentorships(list);
+
+      // 깨진 멘토십 자동 정리: active 상태인데 채팅방이 삭제된 경우
+      for (const m of list) {
+        if (m.status === 'active' && m.chatRoomId) {
+          try {
+            const roomSnap = await getDoc(doc(db, 'chatRooms', m.chatRoomId));
+            if (!roomSnap.exists()) {
+              // 채팅방이 삭제됨 → 멘토십을 ended로 변경
+              await updateDoc(doc(db, 'mentorships', m.id), {
+                status: 'ended',
+                endedAt: serverTimestamp(),
+                endReason: 'chatRoom_deleted',
+              });
+            }
+          } catch {}
+        }
+      }
     });
 
     return () => {
@@ -301,86 +322,86 @@ export default function ChatScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#0f1923' },
+  container: { flex: 1, backgroundColor: '#110E0B' },
 
   /* 헤더 */
   header: {
     flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center',
     paddingHorizontal: 20, paddingTop: 12, paddingBottom: 10,
-    borderBottomWidth: 1, borderBottomColor: '#1a2530',
+    borderBottomWidth: 0.5, borderBottomColor: 'rgba(201,169,110,0.15)',
   },
-  screenTitle: { fontSize: 20, fontWeight: 'bold', color: '#ffffff' },
-  screenSub: { fontSize: 12, color: '#5a6a7a', marginTop: 2 },
+  screenTitle: { fontSize: 20, fontWeight: '300', color: '#F5F0E8', letterSpacing: 0.5 },
+  screenSub: { fontSize: 12, color: '#9e9282', marginTop: 2 },
   mentorManageBtn: {
     flexDirection: 'row', alignItems: 'center', gap: 5,
     backgroundColor: '#C9A96E20', paddingHorizontal: 12, paddingVertical: 6,
-    borderRadius: 8, borderWidth: 1, borderColor: '#C9A96E30',
+    borderRadius: 4, borderWidth: 0.5, borderColor: '#C9A96E30',
   },
-  mentorManageBtnText: { fontSize: 12, fontWeight: '700', color: '#C9A96E' },
+  mentorManageBtnText: { fontSize: 12, fontWeight: '400', color: '#C9A96E', letterSpacing: 0.3 },
 
   center: { flex: 1, alignItems: 'center', justifyContent: 'center' },
-  loadingText: { color: '#6b7b8d', fontSize: 16 },
+  loadingText: { color: '#9e9282', fontSize: 16 },
   listContent: { paddingHorizontal: 20 },
 
   /* 멘토 신청 */
   mentorBtn: {
     flexDirection: 'row', alignItems: 'center', gap: 12,
-    backgroundColor: '#1a2530', borderRadius: 14, padding: 16,
-    marginVertical: 12, borderWidth: 1, borderColor: '#C9A96E30',
+    backgroundColor: 'rgba(201,169,110,0.07)', borderRadius: 4, padding: 16,
+    marginVertical: 12, borderWidth: 0.5, borderColor: '#C9A96E30',
   },
   mentorTextWrap: { flex: 1 },
-  mentorBtnTitle: { fontSize: 15, fontWeight: '700', color: '#C9A96E' },
-  mentorBtnSub: { fontSize: 12, color: '#5a6a7a', marginTop: 2 },
+  mentorBtnTitle: { fontSize: 15, fontWeight: '400', color: '#C9A96E', letterSpacing: 0.3 },
+  mentorBtnSub: { fontSize: 12, color: '#9e9282', marginTop: 2 },
 
   /* 대기 중 */
   pendingCard: {
     flexDirection: 'row', alignItems: 'center', gap: 10,
-    backgroundColor: '#1a2530', borderRadius: 12, padding: 14,
-    marginVertical: 12, borderWidth: 1, borderColor: '#222f3a',
+    backgroundColor: 'rgba(201,169,110,0.07)', borderRadius: 4, padding: 14,
+    marginVertical: 12, borderWidth: 0.5, borderColor: 'rgba(201,169,110,0.18)',
   },
   pendingDot: {
     width: 10, height: 10, borderRadius: 5, backgroundColor: '#fbbf24',
   },
-  pendingTitle: { fontSize: 14, fontWeight: '600', color: '#fbbf24' },
-  pendingSub: { fontSize: 12, color: '#5a6a7a' },
+  pendingTitle: { fontSize: 14, fontWeight: '400', color: '#fbbf24' },
+  pendingSub: { fontSize: 12, color: '#9e9282' },
 
   /* 채팅방 아이템 */
   roomCard: {
     flexDirection: 'row', alignItems: 'center',
-    paddingVertical: 14, borderBottomWidth: 1, borderBottomColor: '#1a2530',
+    paddingVertical: 14, borderBottomWidth: 0.5, borderBottomColor: 'rgba(201,169,110,0.15)',
     gap: 12,
   },
   avatar: {
     width: 50, height: 50, borderRadius: 25,
     alignItems: 'center', justifyContent: 'center',
   },
-  avatarText: { fontSize: 18, fontWeight: 'bold', color: '#fff' },
+  avatarText: { fontSize: 18, fontWeight: '300', color: '#fff' },
   roomInfo: { flex: 1, gap: 4 },
   roomTop: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
   nameRow: { flexDirection: 'row', alignItems: 'center', gap: 6 },
-  roomName: { fontSize: 15, fontWeight: '600', color: '#ffffff' },
+  roomName: { fontSize: 15, fontWeight: '400', color: '#F5F0E8' },
   roleBadge: { paddingHorizontal: 6, paddingVertical: 2, borderRadius: 4 },
-  roleText: { fontSize: 10, fontWeight: 'bold' },
-  timeText: { fontSize: 11, color: '#5a6a7a' },
-  lastMsg: { fontSize: 13, color: '#6b7b8d' },
+  roleText: { fontSize: 10, fontWeight: '400' },
+  timeText: { fontSize: 11, color: '#9e9282' },
+  lastMsg: { fontSize: 13, color: '#9e9282' },
   unreadBadge: {
     backgroundColor: '#e74c3c', borderRadius: 10,
     minWidth: 20, height: 20, alignItems: 'center', justifyContent: 'center',
     paddingHorizontal: 6,
   },
-  unreadText: { fontSize: 11, fontWeight: 'bold', color: '#fff' },
+  unreadText: { fontSize: 11, fontWeight: '400', color: '#fff' },
 
   /* 빈 상태 */
   emptyContainer: {
     flex: 1, alignItems: 'center', justifyContent: 'center', gap: 12, paddingHorizontal: 40,
   },
-  emptyTitle: { fontSize: 18, fontWeight: '700', color: '#ffffff' },
-  emptySub: { fontSize: 14, color: '#6b7b8d', textAlign: 'center' },
+  emptyTitle: { fontSize: 18, fontWeight: '300', color: '#F5F0E8', letterSpacing: 0.3 },
+  emptySub: { fontSize: 14, color: '#9e9282', textAlign: 'center' },
   emptyBtn: {
-    backgroundColor: '#C9A96E', borderRadius: 12,
+    backgroundColor: '#C9A96E', borderRadius: 4,
     paddingVertical: 12, paddingHorizontal: 32, marginTop: 8,
   },
-  emptyBtnText: { fontSize: 15, fontWeight: '700', color: '#0f1923' },
+  emptyBtnText: { fontSize: 15, fontWeight: '400', color: '#110E0B', letterSpacing: 0.3 },
   emptyList: { alignItems: 'center', paddingVertical: 60, gap: 12 },
-  emptyListText: { fontSize: 14, color: '#5a6a7a', textAlign: 'center' },
+  emptyListText: { fontSize: 14, color: '#9e9282', textAlign: 'center' },
 });

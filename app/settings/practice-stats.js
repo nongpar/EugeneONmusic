@@ -6,7 +6,7 @@ import { useAuth } from '../../hooks/useAuth';
 import { usePracticeStats } from '../../hooks/usePracticeStats';
 
 // ── SVG Icons ──
-function BackIcon({ size = 24, color = '#ffffff' }) {
+function BackIcon({ size = 24, color = '#F5F0E8' }) {
   return (
     <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
       <Path d="M15 18l-6-6 6-6" stroke={color} strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" />
@@ -44,7 +44,7 @@ function WeeklyBarChart({ weeklyData }) {
                   styles.barFill,
                   {
                     height: barHeight,
-                    backgroundColor: isToday ? '#C9A96E' : item.minutes > 0 ? '#2C5F8A' : '#222f3a',
+                    backgroundColor: isToday ? '#C9A96E' : item.minutes > 0 ? '#2C5F8A' : 'rgba(201,169,110,0.18)',
                   },
                 ]}
               />
@@ -154,7 +154,7 @@ export default function PracticeStatsScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#0f1923',
+    backgroundColor: '#110E0B',
   },
   header: {
     flexDirection: 'row',
@@ -162,16 +162,17 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     paddingHorizontal: 16,
     paddingVertical: 12,
-    borderBottomWidth: 1,
-    borderBottomColor: '#222f3a',
+    borderBottomWidth: 0.5,
+    borderBottomColor: 'rgba(201,169,110,0.18)',
   },
   backBtn: {
     padding: 4,
   },
   headerTitle: {
     fontSize: 18,
-    fontWeight: 'bold',
-    color: '#ffffff',
+    fontWeight: '400',
+    color: '#F5F0E8',
+    letterSpacing: 0.3,
   },
   content: {
     paddingHorizontal: 20,
@@ -185,27 +186,28 @@ const styles = StyleSheet.create({
   },
   emptyText: {
     fontSize: 15,
-    color: '#6b7b8d',
+    color: '#9e9282',
   },
 
   // 오늘 카드
   todayCard: {
-    backgroundColor: '#1a2530',
-    borderRadius: 16,
+    backgroundColor: 'rgba(201,169,110,0.07)',
+    borderRadius: 4,
     padding: 24,
     alignItems: 'center',
-    borderWidth: 1,
+    borderWidth: 0.5,
     borderColor: '#C9A96E30',
     marginBottom: 24,
   },
   todayLabel: {
     fontSize: 13,
-    color: '#8a9bae',
+    color: '#C9A96E',
     marginBottom: 8,
+    letterSpacing: 0.5,
   },
   todayValue: {
     fontSize: 32,
-    fontWeight: '800',
+    fontWeight: '300',
     color: '#C9A96E',
     letterSpacing: -1,
   },
@@ -222,9 +224,10 @@ const styles = StyleSheet.create({
   },
   sectionTitle: {
     fontSize: 15,
-    fontWeight: '700',
-    color: '#ffffff',
+    fontWeight: '400',
+    color: '#F5F0E8',
     marginBottom: 12,
+    letterSpacing: 0.3,
   },
   sectionSub: {
     fontSize: 13,
@@ -235,11 +238,11 @@ const styles = StyleSheet.create({
 
   // 차트
   chartCard: {
-    backgroundColor: '#1a2530',
-    borderRadius: 16,
+    backgroundColor: 'rgba(201,169,110,0.07)',
+    borderRadius: 4,
     padding: 20,
-    borderWidth: 1,
-    borderColor: '#222f3a',
+    borderWidth: 0.5,
+    borderColor: 'rgba(201,169,110,0.18)',
   },
   chartContainer: {
     flexDirection: 'row',
@@ -252,14 +255,14 @@ const styles = StyleSheet.create({
   },
   chartMinutes: {
     fontSize: 11,
-    color: '#6b7b8d',
+    color: '#9e9282',
     marginBottom: 6,
     fontWeight: '600',
   },
   barTrack: {
     width: 28,
     height: 120,
-    backgroundColor: '#0f1923',
+    backgroundColor: '#110E0B',
     borderRadius: 6,
     justifyContent: 'flex-end',
     overflow: 'hidden',
@@ -270,13 +273,13 @@ const styles = StyleSheet.create({
   },
   chartDay: {
     fontSize: 12,
-    color: '#6b7b8d',
+    color: '#9e9282',
     marginTop: 8,
     fontWeight: '500',
   },
   chartDayToday: {
     color: '#C9A96E',
-    fontWeight: '700',
+    fontWeight: '400',
   },
 
   // 통계 그리드
@@ -288,38 +291,39 @@ const styles = StyleSheet.create({
   statCard: {
     flex: 1,
     minWidth: '45%',
-    backgroundColor: '#1a2530',
-    borderRadius: 14,
+    backgroundColor: 'rgba(201,169,110,0.07)',
+    borderRadius: 4,
     padding: 16,
     alignItems: 'center',
-    borderWidth: 1,
-    borderColor: '#222f3a',
+    borderWidth: 0.5,
+    borderColor: 'rgba(201,169,110,0.18)',
   },
   statValue: {
     fontSize: 28,
-    fontWeight: '800',
+    fontWeight: '300',
     letterSpacing: -1,
   },
   statUnit: {
     fontSize: 12,
-    color: '#6b7b8d',
+    color: '#9e9282',
     marginTop: 2,
   },
   statLabel: {
     fontSize: 12,
-    color: '#8a9bae',
+    color: '#C9A96E',
     marginTop: 8,
-    fontWeight: '600',
+    fontWeight: '400',
+    letterSpacing: 0.5,
   },
 
   // 동기부여
   motivationCard: {
-    backgroundColor: '#1a2530',
-    borderRadius: 16,
+    backgroundColor: 'rgba(201,169,110,0.07)',
+    borderRadius: 4,
     padding: 20,
     alignItems: 'center',
-    borderWidth: 1,
-    borderColor: '#222f3a',
+    borderWidth: 0.5,
+    borderColor: 'rgba(201,169,110,0.18)',
     gap: 8,
   },
   motivationEmoji: {
@@ -327,7 +331,7 @@ const styles = StyleSheet.create({
   },
   motivationText: {
     fontSize: 14,
-    color: '#8a9bae',
+    color: '#C9A96E',
     textAlign: 'center',
     lineHeight: 22,
   },

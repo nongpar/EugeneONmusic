@@ -4,7 +4,7 @@ import Svg, { Circle, Path, Line } from 'react-native-svg';
 import { savePracticeSession, loadGoalMinutes } from '../hooks/usePracticeStats';
 
 // SVG 아이콘
-function RefreshSvg({ size = 24, color = '#8a9bae' }) {
+function RefreshSvg({ size = 24, color = '#C9A96E' }) {
   return (
     <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
       <Path d="M1 4v6h6M23 20v-6h-6" stroke={color} strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" />
@@ -27,7 +27,7 @@ function PauseSvg({ size = 32, color = '#fff' }) {
     </Svg>
   );
 }
-function SaveSvg({ size = 24, color = '#8a9bae' }) {
+function SaveSvg({ size = 24, color = '#C9A96E' }) {
   return (
     <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
       <Path d="M19 21H5a2 2 0 01-2-2V5a2 2 0 012-2h11l5 5v11a2 2 0 01-2 2z" stroke={color} strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" />
@@ -175,7 +175,7 @@ export default function PracticeTimer({ userId, todaySeconds: externalTodaySecon
     <View style={styles.container}>
       {/* 목표 정보 헤더 */}
       <View style={styles.goalHeader}>
-        <TrophySvg size={16} color={progress >= 1 ? '#4ade80' : '#6b7b8d'} />
+        <TrophySvg size={16} color={progress >= 1 ? '#4ade80' : '#9e9282'} />
         <Text style={[styles.goalText, progress >= 1 && styles.goalTextMet]}>
           {progress >= 1
             ? '오늘 목표 달성!'
@@ -187,7 +187,7 @@ export default function PracticeTimer({ userId, todaySeconds: externalTodaySecon
       <View style={styles.timerWrap}>
         <Svg width={SIZE} height={SIZE}>
           {/* 배경 원 */}
-          <Circle cx={SIZE / 2} cy={SIZE / 2} r={RADIUS} stroke="#1a2530" strokeWidth={STROKE_WIDTH} fill="transparent" />
+          <Circle cx={SIZE / 2} cy={SIZE / 2} r={RADIUS} stroke="rgba(201,169,110,0.15)" strokeWidth={STROKE_WIDTH} fill="transparent" />
           {/* 오늘 기존 연습분 (어두운 색) */}
           {externalTodaySeconds > 0 && (
             <Circle
@@ -250,7 +250,7 @@ export default function PracticeTimer({ userId, todaySeconds: externalTodaySecon
           onPress={handleSave}
           disabled={saving || seconds === 0}
         >
-          <SaveSvg color={seconds > 0 ? '#C9A96E' : '#8a9bae'} />
+          <SaveSvg color={seconds > 0 ? '#C9A96E' : '#9e9282'} />
         </TouchableOpacity>
       </View>
 
@@ -276,32 +276,32 @@ const styles = StyleSheet.create({
   goalHeader: {
     flexDirection: 'row', alignItems: 'center', gap: 6,
     marginBottom: 8,
-    backgroundColor: '#1a2530', paddingHorizontal: 14, paddingVertical: 6,
-    borderRadius: 20,
+    backgroundColor: 'rgba(201,169,110,0.07)', paddingHorizontal: 14, paddingVertical: 6,
+    borderRadius: 4,
   },
-  goalText: { fontSize: 13, color: '#6b7b8d', fontWeight: '600' },
+  goalText: { fontSize: 13, color: '#9e9282', fontWeight: '400', letterSpacing: 0.3 },
   goalTextMet: { color: '#4ade80' },
 
   timerWrap: { width: SIZE, height: SIZE, alignItems: 'center', justifyContent: 'center' },
   timeDisplay: { position: 'absolute', alignItems: 'center', gap: 4 },
-  timeText: { fontSize: 44, fontWeight: '200', color: '#ffffff', fontVariant: ['tabular-nums'] },
-  sessionLabel: { fontSize: 14, color: '#6b7b8d' },
-  progressText: { fontSize: 22, fontWeight: '700', color: '#C9A96E', marginTop: 4 },
+  timeText: { fontSize: 44, fontWeight: '200', color: '#F5F0E8', fontVariant: ['tabular-nums'] },
+  sessionLabel: { fontSize: 14, color: '#9e9282' },
+  progressText: { fontSize: 22, fontWeight: '300', color: '#C9A96E', marginTop: 4 },
   progressTextMet: { color: '#4ade80' },
 
   celebrateBanner: {
     position: 'absolute', top: 80,
     backgroundColor: '#4ade80', paddingHorizontal: 20, paddingVertical: 10,
-    borderRadius: 20,
+    borderRadius: 4,
   },
-  celebrateText: { fontSize: 16, fontWeight: '700', color: '#0f1923' },
+  celebrateText: { fontSize: 16, fontWeight: '400', color: '#0C0A08' },
 
-  todayAccum: { fontSize: 12, color: '#5a6a7a', marginTop: 4, marginBottom: 4 },
+  todayAccum: { fontSize: 12, color: '#9e9282', marginTop: 4, marginBottom: 4 },
 
   controls: { flexDirection: 'row', alignItems: 'center', gap: 24, marginTop: 16 },
-  sideBtn: { width: 48, height: 48, borderRadius: 24, backgroundColor: '#1a2530', alignItems: 'center', justifyContent: 'center' },
-  saveBtnActive: { borderWidth: 1, borderColor: '#C9A96E40' },
-  mainBtn: { width: 64, height: 64, borderRadius: 32, backgroundColor: '#2C5F8A', alignItems: 'center', justifyContent: 'center' },
+  sideBtn: { width: 48, height: 48, borderRadius: 24, backgroundColor: 'rgba(201,169,110,0.07)', alignItems: 'center', justifyContent: 'center' },
+  saveBtnActive: { borderWidth: 0.5, borderColor: '#C9A96E40' },
+  mainBtn: { width: 64, height: 64, borderRadius: 32, backgroundColor: '#C9A96E', alignItems: 'center', justifyContent: 'center' },
   mainBtnStop: { backgroundColor: '#e74c3c' },
-  saveHint: { fontSize: 12, color: '#C9A96E', marginTop: 12, opacity: 0.7 },
+  saveHint: { fontSize: 12, color: '#C9A96E', marginTop: 12, opacity: 0.7, letterSpacing: 0.3 },
 });

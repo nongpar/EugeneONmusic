@@ -13,7 +13,7 @@ if (Platform.OS !== 'web') {
   WebView = require('react-native-webview').default;
 }
 
-function BackIcon({ size = 22, color = '#ffffff' }) {
+function BackIcon({ size = 22, color = '#F5F0E8' }) {
   return (
     <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
       <Path d="M19 12H5M5 12l7 7M5 12l7-7" stroke={color} strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" />
@@ -29,7 +29,7 @@ function ExternalIcon({ size = 18, color = '#C9A96E' }) {
   );
 }
 
-function RefreshIcon({ size = 18, color = '#8a9bae' }) {
+function RefreshIcon({ size = 18, color = '#C9A96E' }) {
   return (
     <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
       <Path d="M1 4v6h6M23 20v-6h-6" stroke={color} strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" />
@@ -146,37 +146,37 @@ export default function BlogViewerScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#0f1923' },
+  container: { flex: 1, backgroundColor: '#110E0B' },
 
   header: {
     flexDirection: 'row', alignItems: 'center',
     paddingHorizontal: 12, paddingVertical: 10,
-    borderBottomWidth: 1, borderBottomColor: '#1a2530',
+    borderBottomWidth: 0.5, borderBottomColor: 'rgba(201,169,110,0.15)',
     gap: 8,
   },
   headerBtn: {
-    width: 36, height: 36, borderRadius: 18,
+    width: 36, height: 36, borderRadius: 4,
     alignItems: 'center', justifyContent: 'center',
   },
   headerCenter: { flex: 1, alignItems: 'center' },
-  headerTitle: { fontSize: 15, fontWeight: '700', color: '#ffffff' },
-  headerSub: { fontSize: 10, color: '#5a6a7a', marginTop: 1 },
+  headerTitle: { fontSize: 15, fontWeight: '400', color: '#F5F0E8' },
+  headerSub: { fontSize: 10, color: '#9e9282', marginTop: 1 },
   headerRight: { flexDirection: 'row', gap: 4 },
 
   loadingBar: {
-    height: 2, backgroundColor: '#1a2530',
+    height: 2, backgroundColor: 'rgba(201,169,110,0.07)',
   },
   loadingProgress: {
     height: 2, width: '60%', backgroundColor: '#C9A96E',
   },
 
   webviewWrap: { flex: 1 },
-  webview: { flex: 1, backgroundColor: '#ffffff' },
+  webview: { flex: 1, backgroundColor: '#F5F0E8' },
 
   webviewLoading: {
     position: 'absolute', top: 0, left: 0, right: 0, bottom: 0,
     alignItems: 'center', justifyContent: 'center',
-    backgroundColor: '#0f1923', gap: 12,
+    backgroundColor: '#110E0B', gap: 12,
   },
-  webviewLoadingText: { fontSize: 14, color: '#6b7b8d' },
+  webviewLoadingText: { fontSize: 14, color: '#9e9282' },
 });

@@ -4,7 +4,7 @@ import { router } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 // ── SVG Icons ──
-function BackIcon({ size = 24, color = '#ffffff' }) {
+function BackIcon({ size = 24, color = '#F5F0E8' }) {
   return (
     <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
       <Path d="M15 18l-6-6 6-6" stroke={color} strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" />
@@ -12,7 +12,7 @@ function BackIcon({ size = 24, color = '#ffffff' }) {
   );
 }
 
-function GlobeIcon({ size = 20, color = '#8a9bae' }) {
+function GlobeIcon({ size = 20, color = '#C9A96E' }) {
   return (
     <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
       <Circle cx="12" cy="12" r="10" stroke={color} strokeWidth={1.8} />
@@ -22,7 +22,7 @@ function GlobeIcon({ size = 20, color = '#8a9bae' }) {
   );
 }
 
-function ShieldIcon({ size = 20, color = '#8a9bae' }) {
+function ShieldIcon({ size = 20, color = '#C9A96E' }) {
   return (
     <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
       <Path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" stroke={color} strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round" />
@@ -30,7 +30,7 @@ function ShieldIcon({ size = 20, color = '#8a9bae' }) {
   );
 }
 
-function FileIcon({ size = 20, color = '#8a9bae' }) {
+function FileIcon({ size = 20, color = '#C9A96E' }) {
   return (
     <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
       <Path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z" stroke={color} strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round" />
@@ -39,7 +39,7 @@ function FileIcon({ size = 20, color = '#8a9bae' }) {
   );
 }
 
-function ChevronIcon({ size = 18, color = '#4a5a6a' }) {
+function ChevronIcon({ size = 18, color = '#9e9282' }) {
   return (
     <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
       <Path d="M9 18l6-6-6-6" stroke={color} strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" />
@@ -125,7 +125,7 @@ export default function AppInfoScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#0f1923',
+    backgroundColor: '#110E0B',
   },
   header: {
     flexDirection: 'row',
@@ -139,8 +139,9 @@ const styles = StyleSheet.create({
   },
   headerTitle: {
     fontSize: 18,
-    fontWeight: 'bold',
-    color: '#ffffff',
+    fontWeight: '400',
+    color: '#F5F0E8',
+    letterSpacing: 0.3,
   },
   content: {
     paddingHorizontal: 20,
@@ -154,8 +155,8 @@ const styles = StyleSheet.create({
   logoWrap: {
     width: 100,
     height: 100,
-    borderRadius: 24,
-    backgroundColor: '#ffffff',
+    borderRadius: 4,
+    backgroundColor: '#F5F0E8',
     alignItems: 'center',
     justifyContent: 'center',
     overflow: 'hidden',
@@ -166,52 +167,55 @@ const styles = StyleSheet.create({
   },
   appName: {
     fontSize: 24,
-    fontWeight: 'bold',
-    color: '#ffffff',
+    fontWeight: '300',
+    color: '#F5F0E8',
     marginTop: 12,
+    letterSpacing: 0.5,
   },
   appNameEn: {
     fontSize: 14,
-    color: '#6b7b8d',
+    color: '#9e9282',
   },
   versionBadge: {
-    backgroundColor: '#1a2530',
+    backgroundColor: 'rgba(201,169,110,0.07)',
     paddingHorizontal: 14,
     paddingVertical: 5,
-    borderRadius: 12,
+    borderRadius: 4,
     marginTop: 8,
-    borderWidth: 1,
-    borderColor: '#222f3a',
+    borderWidth: 0.5,
+    borderColor: 'rgba(201,169,110,0.18)',
   },
   versionText: {
     fontSize: 12,
     color: '#C9A96E',
     fontWeight: '600',
+    letterSpacing: 0.5,
   },
   card: {
-    backgroundColor: '#1a2530',
-    borderRadius: 16,
+    backgroundColor: 'rgba(201,169,110,0.07)',
+    borderRadius: 4,
     padding: 16,
     marginBottom: 12,
-    borderWidth: 1,
-    borderColor: '#222f3a',
+    borderWidth: 0.5,
+    borderColor: 'rgba(201,169,110,0.18)',
   },
   cardTitle: {
     fontSize: 12,
-    color: '#6b7b8d',
+    color: '#9e9282',
     marginBottom: 4,
+    letterSpacing: 0.5,
   },
   cardValue: {
     fontSize: 15,
-    color: '#ffffff',
+    color: '#F5F0E8',
     fontWeight: '500',
   },
   linksCard: {
-    backgroundColor: '#1a2530',
-    borderRadius: 16,
+    backgroundColor: 'rgba(201,169,110,0.07)',
+    borderRadius: 4,
     overflow: 'hidden',
-    borderWidth: 1,
-    borderColor: '#222f3a',
+    borderWidth: 0.5,
+    borderColor: 'rgba(201,169,110,0.18)',
     marginBottom: 24,
   },
   linkRow: {
@@ -220,8 +224,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingVertical: 16,
     paddingHorizontal: 16,
-    borderBottomWidth: 1,
-    borderBottomColor: '#0f1923',
+    borderBottomWidth: 0.5,
+    borderBottomColor: '#110E0B',
   },
   linkLeft: {
     flexDirection: 'row',
@@ -230,11 +234,11 @@ const styles = StyleSheet.create({
   },
   linkLabel: {
     fontSize: 15,
-    color: '#ffffff',
+    color: '#F5F0E8',
   },
   copyright: {
     textAlign: 'center',
     fontSize: 12,
-    color: '#6b7b8d',
+    color: '#9e9282',
   },
 });

@@ -10,7 +10,7 @@ import { db } from '../../config/firebase';
 import { useAuth } from '../../hooks/useAuth';
 
 // SVG 아이콘
-function CloseIcon({ size = 24, color = '#8a9bae' }) {
+function CloseIcon({ size = 24, color = '#C9A96E' }) {
   return (
     <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
       <Path d="M18 6L6 18M6 6l12 12" stroke={color} strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" />
@@ -100,7 +100,7 @@ export default function WriteScreen() {
         <TextInput
           style={styles.titleInput}
           placeholder="제목을 입력하세요"
-          placeholderTextColor="#4a5a6a"
+          placeholderTextColor="rgba(201,169,110,0.3)"
           value={title}
           onChangeText={setTitle}
           maxLength={100}
@@ -109,7 +109,7 @@ export default function WriteScreen() {
         <TextInput
           style={styles.bodyInput}
           placeholder="내용을 입력하세요"
-          placeholderTextColor="#4a5a6a"
+          placeholderTextColor="rgba(201,169,110,0.3)"
           value={body}
           onChangeText={setBody}
           multiline
@@ -121,31 +121,31 @@ export default function WriteScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#0f1923' },
+  container: { flex: 1, backgroundColor: '#110E0B' },
   header: {
     flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center',
-    paddingHorizontal: 20, paddingVertical: 12, borderBottomWidth: 1, borderBottomColor: '#1a2530',
+    paddingHorizontal: 20, paddingVertical: 12, borderBottomWidth: 0.5, borderBottomColor: 'rgba(201,169,110,0.15)',
   },
-  headerTitle: { fontSize: 18, fontWeight: 'bold', color: '#ffffff' },
+  headerTitle: { fontSize: 18, fontWeight: '400', color: '#F5F0E8', letterSpacing: 0.5 },
   submitBtn: {
-    backgroundColor: '#2C5F8A', paddingHorizontal: 16, paddingVertical: 8, borderRadius: 8,
+    backgroundColor: '#C9A96E', paddingHorizontal: 16, paddingVertical: 8, borderRadius: 4,
   },
   disabledBtn: { opacity: 0.5 },
-  submitText: { fontSize: 14, fontWeight: 'bold', color: '#ffffff' },
+  submitText: { fontSize: 14, fontWeight: '400', color: '#0C0A08', letterSpacing: 0.5 },
   form: { flex: 1, paddingHorizontal: 20, paddingTop: 16 },
   categoryRow: { flexDirection: 'row', gap: 8, marginBottom: 16 },
   categoryChip: {
-    paddingHorizontal: 14, paddingVertical: 8, borderRadius: 20,
-    backgroundColor: '#1a2530', borderWidth: 1, borderColor: '#2a3a4a',
+    paddingHorizontal: 14, paddingVertical: 8, borderRadius: 4,
+    backgroundColor: 'rgba(201,169,110,0.07)', borderWidth: 0.5, borderColor: 'rgba(201,169,110,0.18)',
   },
-  categoryChipActive: { backgroundColor: '#2C5F8A', borderColor: '#2C5F8A' },
-  categoryChipText: { fontSize: 13, color: '#6b7b8d' },
-  categoryChipTextActive: { color: '#ffffff', fontWeight: '600' },
+  categoryChipActive: { backgroundColor: 'transparent', borderColor: '#C9A96E' },
+  categoryChipText: { fontSize: 13, color: '#9e9282', letterSpacing: 0.3 },
+  categoryChipTextActive: { color: '#C9A96E', fontWeight: '400' },
   titleInput: {
-    fontSize: 18, fontWeight: '600', color: '#ffffff',
-    borderBottomWidth: 1, borderBottomColor: '#1a2530', paddingBottom: 12, marginBottom: 16,
+    fontSize: 18, fontWeight: '400', color: '#F5F0E8', letterSpacing: 0.3,
+    borderBottomWidth: 0.5, borderBottomColor: 'rgba(201,169,110,0.15)', paddingBottom: 12, marginBottom: 16,
   },
   bodyInput: {
-    fontSize: 15, color: '#ffffff', lineHeight: 24, minHeight: 200,
+    fontSize: 15, color: '#F5F0E8', lineHeight: 24, minHeight: 200,
   },
 });

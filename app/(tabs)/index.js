@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import {
   View, Text, StyleSheet, ScrollView, Image, TouchableOpacity,
-  ActivityIndicator, Dimensions, Animated,
+  ActivityIndicator, Dimensions, Animated, Platform,
 } from 'react-native';
 import Svg, { Path, Circle, Line } from 'react-native-svg';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -13,6 +13,11 @@ import Header from '../../components/Header';
 import NewsCard from '../../components/NewsCard';
 import { useAuth } from '../../hooks/useAuth';
 import { usePracticeStats } from '../../hooks/usePracticeStats';
+
+let Haptics = null;
+if (Platform.OS !== 'web') {
+  try { Haptics = require('expo-haptics'); } catch {}
+}
 
 const { width: SCREEN_W } = Dimensions.get('window');
 const WP_API = 'https://www.eugeneonmusic.com/wp-json/wp/v2';
@@ -33,7 +38,7 @@ function FlameIcon({ size = 20, color = '#e74c3c' }) {
     </Svg>
   );
 }
-function RefreshIcon({ size = 16, color = '#5a6a7a' }) {
+function RefreshIcon({ size = 16, color = '#9e9282' }) {
   return (
     <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
       <Path d="M1 4v6h6M23 20v-6h-6" stroke={color} strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" />
@@ -47,6 +52,18 @@ function StaffLines({ width = 100, color = 'rgba(201,169,110,0.08)' }) {
       {[4, 8, 12, 16, 20].map((y) => (
         <Line key={y} x1="0" y1={y} x2={width} y2={y} stroke={color} strokeWidth={1} />
       ))}
+    </Svg>
+  );
+}
+// 클래식 장식선 (Ornamental Divider)
+function OrnamentDivider({ width = 200, color = '#C9A96E' }) {
+  return (
+    <Svg width={width} height={20} viewBox={`0 0 ${width} 20`}>
+      <Line x1="0" y1="10" x2={width * 0.35} y2="10" stroke={color} strokeWidth={0.5} opacity={0.4} />
+      <Line x1={width * 0.65} y1="10" x2={width} y2="10" stroke={color} strokeWidth={0.5} opacity={0.4} />
+      <Circle cx={width * 0.5} cy="10" r="3" stroke={color} strokeWidth={0.8} fill="none" opacity={0.6} />
+      <Circle cx={width * 0.5} cy="10" r="1" fill={color} opacity={0.4} />
+      <Path d={`M${width * 0.38} 10 Q${width * 0.44} 4 ${width * 0.5} 10 Q${width * 0.56} 16 ${width * 0.62} 10`} stroke={color} strokeWidth={0.6} fill="none" opacity={0.5} />
     </Svg>
   );
 }
@@ -160,6 +177,9 @@ export default function HomeScreen() {
   const handleSlideScroll = (e) => {
     const x = e.nativeEvent.contentOffset.x;
     const idx = Math.round(x / (SCREEN_W - 40));
+    if (idx !== activeSlide) {
+      if (Haptics) Haptics.selectionAsync();
+    }
     setActiveSlide(idx);
   };
 
@@ -188,10 +208,17 @@ export default function HomeScreen() {
               <View key={i} style={styles.heroSlide}>
                 <Image source={slide.image} style={styles.heroImage} resizeMode="cover" />
                 <LinearGradient
-                  colors={['transparent', 'rgba(15,25,35,0.4)', 'rgba(15,25,35,0.85)']}
+                  colors={['transparent', 'rgba(12,10,8,0.3)', 'rgba(12,10,8,0.88)']}
                   locations={[0, 0.4, 1]}
                   style={styles.heroGradient}
                 />
+                {/* 클래식 프레임 장식 */}
+                <View style={styles.heroFrame}>
+                  <View style={styles.heroFrameCornerTL} />
+                  <View style={styles.heroFrameCornerTR} />
+                  <View style={styles.heroFrameCornerBL} />
+                  <View style={styles.heroFrameCornerBR} />
+                </View>
                 <View style={styles.heroContent}>
                   <View style={styles.heroBadge}>
                     <Text style={styles.heroBadgeText}>{slide.badge}</Text>
@@ -216,27 +243,34 @@ export default function HomeScreen() {
           </View>
         </View>
 
+        {/* ── 장식 디바이더 ── */}
+        <View style={{ alignItems: 'center', marginVertical: 4 }}>
+          <OrnamentDivider width={SCREEN_W - 80} />
+        </View>
+
         {/* ── 퀵 액션 ── */}
         <View style={styles.quickRow}>
           <TouchableOpacity style={styles.quickCard} onPress={() => router.push('/(tabs)/course')} activeOpacity={0.85}>
             <Image source={{ uri: 'https://eugeneonmusic.com/wp-content/uploads/2026/02/KakaoTalk_20260214_162600793_01.jpg' }} style={styles.quickImage} resizeMode="cover" />
             <LinearGradient
-              colors={['transparent', 'rgba(15,25,35,0.85)']}
+              colors={['transparent', 'rgba(12,10,8,0.85)']}
               style={styles.quickGradient}
             />
+            <View style={styles.quickBorder} />
             <Text style={styles.quickLabel}>음악교육</Text>
           </TouchableOpacity>
           <TouchableOpacity style={styles.quickCard} onPress={() => router.push('/(tabs)/sns')} activeOpacity={0.85}>
             <Image source={{ uri: 'https://eugeneonmusic.com/wp-content/uploads/2025/10/DSC06077.jpg' }} style={styles.quickImage} resizeMode="cover" />
             <LinearGradient
-              colors={['transparent', 'rgba(15,25,35,0.85)']}
+              colors={['transparent', 'rgba(12,10,8,0.85)']}
               style={styles.quickGradient}
             />
+            <View style={styles.quickBorder} />
             <Text style={styles.quickLabel}>예술기획</Text>
           </TouchableOpacity>
         </View>
 
-        {/* ── 연습 현황 (글래스모피즘) ── */}
+        {/* ── 연습 현황 ── */}
         <View style={styles.practiceSection}>
           <View style={styles.sectionHeaderRow}>
             <View style={styles.sectionTitleWrap}>
@@ -248,7 +282,7 @@ export default function HomeScreen() {
           {user ? (
             <View style={styles.practiceRow}>
               <LinearGradient
-                colors={['#1a2530', '#1e2d3d']}
+                colors={['rgba(201,169,110,0.07)', 'rgba(201,169,110,0.06)']}
                 style={styles.practiceCard}
               >
                 <View style={styles.practiceIconWrap}>
@@ -260,7 +294,7 @@ export default function HomeScreen() {
                 <Text style={styles.practiceLabel}>오늘 연습</Text>
               </LinearGradient>
               <LinearGradient
-                colors={['#1a2530', '#1e2d3d']}
+                colors={['rgba(201,169,110,0.07)', 'rgba(201,169,110,0.06)']}
                 style={styles.practiceCard}
               >
                 <View style={styles.practiceIconWrap}>
@@ -273,7 +307,7 @@ export default function HomeScreen() {
               </LinearGradient>
             </View>
           ) : (
-            <LinearGradient colors={['#1a2530', '#1e2d3d']} style={styles.practiceEmpty}>
+            <LinearGradient colors={['rgba(201,169,110,0.07)', 'rgba(201,169,110,0.06)']} style={styles.practiceEmpty}>
               <Text style={styles.practiceEmptyText}>로그인하면 연습 기록을 확인할 수 있어요</Text>
             </LinearGradient>
           )}
@@ -281,9 +315,9 @@ export default function HomeScreen() {
 
         {/* ── 뉴스 섹션 ── */}
         <View style={styles.newsSection}>
-          {/* 오선지 장식 */}
-          <View style={styles.staffDecor}>
-            <StaffLines width={SCREEN_W} />
+          {/* 장식 디바이더 */}
+          <View style={{ alignItems: 'center', marginBottom: 16 }}>
+            <OrnamentDivider width={SCREEN_W - 80} />
           </View>
 
           <View style={styles.sectionHeaderRow}>
@@ -336,18 +370,18 @@ export default function HomeScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#0f1923' },
+  container: { flex: 1, backgroundColor: '#0C0A08' },
   scrollView: { flex: 1 },
   scrollContent: { paddingTop: 4 },
 
   /* ── 히어로 캐러셀 ── */
   heroSection: {
-    marginBottom: 14,
+    marginBottom: 10,
   },
   heroSlide: {
     width: SCREEN_W - 40,
-    height: 240,
-    borderRadius: 18,
+    height: 260,
+    borderRadius: 6,
     overflow: 'hidden',
     position: 'relative',
     marginRight: 12,
@@ -363,95 +397,129 @@ const styles = StyleSheet.create({
     right: 0,
     bottom: 0,
   },
+  // 클래식 프레임 코너 장식
+  heroFrame: {
+    position: 'absolute',
+    top: 0, left: 0, right: 0, bottom: 0,
+  },
+  heroFrameCornerTL: {
+    position: 'absolute', top: 10, left: 10,
+    width: 24, height: 24,
+    borderTopWidth: 1, borderLeftWidth: 1,
+    borderColor: 'rgba(201,169,110,0.5)',
+  },
+  heroFrameCornerTR: {
+    position: 'absolute', top: 10, right: 10,
+    width: 24, height: 24,
+    borderTopWidth: 1, borderRightWidth: 1,
+    borderColor: 'rgba(201,169,110,0.5)',
+  },
+  heroFrameCornerBL: {
+    position: 'absolute', bottom: 10, left: 10,
+    width: 24, height: 24,
+    borderBottomWidth: 1, borderLeftWidth: 1,
+    borderColor: 'rgba(201,169,110,0.5)',
+  },
+  heroFrameCornerBR: {
+    position: 'absolute', bottom: 10, right: 10,
+    width: 24, height: 24,
+    borderBottomWidth: 1, borderRightWidth: 1,
+    borderColor: 'rgba(201,169,110,0.5)',
+  },
   heroContent: {
     position: 'absolute',
-    bottom: 22,
-    left: 22,
-    right: 22,
+    bottom: 26,
+    left: 24,
+    right: 24,
   },
   heroBadge: {
-    backgroundColor: '#C9A96E',
+    backgroundColor: 'rgba(201,169,110,0.9)',
     alignSelf: 'flex-start',
-    paddingHorizontal: 10,
+    paddingHorizontal: 12,
     paddingVertical: 4,
-    borderRadius: 4,
+    borderRadius: 2,
     marginBottom: 10,
   },
   heroBadgeText: {
-    fontSize: 10,
-    fontWeight: '800',
-    color: '#0f1923',
-    letterSpacing: 1.5,
+    fontSize: 9,
+    fontWeight: '700',
+    color: '#0C0A08',
+    letterSpacing: 2.5,
   },
   heroTitle: {
-    fontSize: 22,
-    fontWeight: '800',
-    color: '#ffffff',
-    lineHeight: 28,
-    letterSpacing: -0.5,
-    textShadowColor: 'rgba(0,0,0,0.5)',
+    fontSize: 23,
+    fontWeight: '300',
+    color: '#F5F0E8',
+    lineHeight: 30,
+    letterSpacing: 0.5,
+    textShadowColor: 'rgba(0,0,0,0.7)',
     textShadowOffset: { width: 0, height: 1 },
-    textShadowRadius: 4,
+    textShadowRadius: 6,
   },
   heroSub: {
-    fontSize: 13,
-    color: 'rgba(255,255,255,0.8)',
-    marginTop: 6,
-    letterSpacing: 0.3,
+    fontSize: 12,
+    color: 'rgba(201,169,110,0.9)',
+    marginTop: 8,
+    letterSpacing: 1,
+    fontWeight: '400',
   },
   indicatorRow: {
     flexDirection: 'row',
     justifyContent: 'center',
-    gap: 6,
-    marginTop: 12,
+    gap: 8,
+    marginTop: 14,
   },
   indicator: {
     width: 6,
     height: 6,
     borderRadius: 3,
-    backgroundColor: '#2a3a4a',
+    backgroundColor: '#2a2420',
+    borderWidth: 0.5,
+    borderColor: 'rgba(201,169,110,0.2)',
   },
   indicatorActive: {
-    width: 20,
+    width: 24,
     backgroundColor: '#C9A96E',
     borderRadius: 3,
+    borderColor: '#C9A96E',
   },
 
   /* ── 퀵 액션 ── */
   quickRow: {
     flexDirection: 'row',
     paddingHorizontal: 20,
-    gap: 10,
+    gap: 12,
     marginBottom: 8,
   },
   quickCard: {
     flex: 1,
-    height: 90,
-    borderRadius: 14,
+    height: 95,
+    borderRadius: 4,
     overflow: 'hidden',
     position: 'relative',
-    borderWidth: 1,
-    borderColor: '#222f3a',
   },
   quickImage: { width: '100%', height: '100%' },
   quickGradient: {
     position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
+    top: 0, left: 0, right: 0, bottom: 0,
+  },
+  quickBorder: {
+    position: 'absolute',
+    top: 4, left: 4, right: 4, bottom: 4,
+    borderWidth: 0.5,
+    borderColor: 'rgba(201,169,110,0.4)',
   },
   quickLabel: {
     position: 'absolute',
-    bottom: 12,
-    left: 14,
-    fontSize: 14,
-    fontWeight: '700',
-    color: '#fff',
-    letterSpacing: -0.2,
-    textShadowColor: 'rgba(0,0,0,0.5)',
+    bottom: 14,
+    left: 16,
+    fontSize: 13,
+    fontWeight: '400',
+    color: '#F5F0E8',
+    letterSpacing: 2,
+    textShadowColor: 'rgba(0,0,0,0.7)',
     textShadowOffset: { width: 0, height: 1 },
-    textShadowRadius: 3,
+    textShadowRadius: 4,
   },
 
   /* ── 섹션 공통 ── */
@@ -465,19 +533,18 @@ const styles = StyleSheet.create({
   sectionTitleWrap: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
+    gap: 10,
   },
   goldBar: {
-    width: 3,
+    width: 2,
     height: 18,
-    borderRadius: 2,
     backgroundColor: '#C9A96E',
   },
   sectionTitle: {
-    fontSize: 18,
-    fontWeight: '800',
-    color: '#ffffff',
-    letterSpacing: -0.3,
+    fontSize: 16,
+    fontWeight: '400',
+    color: '#F5F0E8',
+    letterSpacing: 1.5,
   },
   refreshBtn: { padding: 6 },
 
@@ -493,43 +560,44 @@ const styles = StyleSheet.create({
   },
   practiceCard: {
     flex: 1,
-    borderRadius: 16,
+    borderRadius: 4,
     padding: 20,
     alignItems: 'center',
     gap: 8,
-    borderWidth: 1,
-    borderColor: '#222f3a',
+    borderWidth: 0.5,
+    borderColor: 'rgba(201,169,110,0.2)',
   },
   practiceIconWrap: {
     width: 42,
     height: 42,
     borderRadius: 21,
-    backgroundColor: 'rgba(201,169,110,0.08)',
+    backgroundColor: 'rgba(201,169,110,0.06)',
     alignItems: 'center',
     justifyContent: 'center',
-    borderWidth: 1,
-    borderColor: 'rgba(201,169,110,0.15)',
+    borderWidth: 0.5,
+    borderColor: 'rgba(201,169,110,0.2)',
   },
   practiceValue: {
     fontSize: 22,
-    fontWeight: '800',
-    color: '#ffffff',
-    letterSpacing: -0.5,
+    fontWeight: '300',
+    color: '#F5F0E8',
+    letterSpacing: 0.5,
   },
   practiceLabel: {
-    fontSize: 12,
-    color: '#5a6a7a',
-    fontWeight: '500',
+    fontSize: 11,
+    color: '#8a7e6d',
+    fontWeight: '400',
+    letterSpacing: 0.5,
   },
   practiceEmpty: {
     marginHorizontal: 20,
-    borderRadius: 16,
+    borderRadius: 4,
     padding: 24,
     alignItems: 'center',
-    borderWidth: 1,
-    borderColor: '#222f3a',
+    borderWidth: 0.5,
+    borderColor: 'rgba(201,169,110,0.2)',
   },
-  practiceEmptyText: { fontSize: 14, color: '#5a6a7a' },
+  practiceEmptyText: { fontSize: 13, color: '#8a7e6d', letterSpacing: 0.3 },
 
   /* ── 뉴스 섹션 ── */
   newsSection: {
@@ -544,13 +612,13 @@ const styles = StyleSheet.create({
     opacity: 0.5,
   },
   newsQuote: {
-    fontSize: 15,
-    color: '#8a9bae',
+    fontSize: 14,
+    color: '#a89880',
     fontStyle: 'italic',
     paddingHorizontal: 24,
     marginBottom: 14,
     lineHeight: 22,
-    letterSpacing: -0.2,
+    letterSpacing: 0.3,
   },
 
   /* ── 로딩/에러 ── */
@@ -559,21 +627,25 @@ const styles = StyleSheet.create({
     paddingVertical: 40,
     gap: 12,
   },
-  loadingText: { fontSize: 13, color: '#5a6a7a' },
+  loadingText: { fontSize: 13, color: '#8a7e6d' },
   errorBox: {
     alignItems: 'center',
     paddingVertical: 30,
     gap: 10,
     marginHorizontal: 20,
-    backgroundColor: '#1a2530',
-    borderRadius: 12,
+    backgroundColor: '#15120e',
+    borderRadius: 4,
+    borderWidth: 0.5,
+    borderColor: 'rgba(201,169,110,0.15)',
   },
-  errorText: { fontSize: 14, color: '#f87171' },
+  errorText: { fontSize: 14, color: '#c77a7a' },
   retryBtn: {
-    backgroundColor: '#C9A96E20',
+    backgroundColor: 'rgba(201,169,110,0.1)',
     paddingHorizontal: 16,
     paddingVertical: 8,
-    borderRadius: 8,
+    borderRadius: 2,
+    borderWidth: 0.5,
+    borderColor: 'rgba(201,169,110,0.3)',
   },
-  retryText: { fontSize: 13, fontWeight: '600', color: '#C9A96E' },
+  retryText: { fontSize: 13, fontWeight: '500', color: '#C9A96E', letterSpacing: 0.5 },
 });

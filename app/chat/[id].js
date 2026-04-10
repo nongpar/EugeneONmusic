@@ -8,15 +8,20 @@ import { router, useLocalSearchParams } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import {
   collection, query, orderBy, onSnapshot, addDoc, serverTimestamp,
-  doc, getDoc, updateDoc, increment, setDoc,
+  doc, getDoc, updateDoc, increment, setDoc, deleteDoc, getDocs, where,
 } from 'firebase/firestore';
 import { db } from '../../config/firebase';
 import { useAuth } from '../../hooks/useAuth';
 import { sendPushNotification } from '../../hooks/useNotifications';
 import ChatBubble from '../../components/ChatBubble';
 
+let Haptics = null;
+if (Platform.OS !== 'web') {
+  try { Haptics = require('expo-haptics'); } catch {}
+}
+
 // ── SVG 아이콘 ──
-function BackIcon({ size = 22, color = '#8a9bae' }) {
+function BackIcon({ size = 22, color = '#C9A96E' }) {
   return (
     <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
       <Path d="M19 12H5M5 12l7 7M5 12l7-7" stroke={color} strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" />
@@ -32,7 +37,7 @@ function SendIcon({ size = 18, color = '#fff' }) {
   );
 }
 
-function PlusIcon({ size = 22, color = '#6b7b8d' }) {
+function PlusIcon({ size = 22, color = '#9e9282' }) {
   return (
     <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
       <Circle cx="12" cy="12" r="10" stroke={color} strokeWidth={1.8} />
@@ -41,7 +46,7 @@ function PlusIcon({ size = 22, color = '#6b7b8d' }) {
   );
 }
 
-function MoreIcon({ size = 20, color = '#8a9bae' }) {
+function MoreIcon({ size = 20, color = '#C9A96E' }) {
   return (
     <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
       <Circle cx="12" cy="5" r="1.5" fill={color} />
@@ -113,6 +118,7 @@ export default function ChatDetailScreen() {
   }, [id, user]);
 
   const handleSend = async () => {
+    if (Haptics) Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     if (!inputText.trim() || !user || !id) return;
     const text = inputText.trim();
     setInputText('');
@@ -137,6 +143,7 @@ export default function ChatDetailScreen() {
         const updates = {
           lastMessage: text,
           lastMessageAt: serverTimestamp(),
+          lastMessageSenderId: user.uid,
         };
         if (otherId) {
           updates[`unread.${otherId}`] = increment(1);
@@ -154,7 +161,7 @@ export default function ChatDetailScreen() {
                 pushToken,
                 `${senderName}님의 메시지`,
                 text.length > 50 ? text.substring(0, 50) + '...' : text,
-                { chatRoomId: id, senderId: user.uid }
+                { type: 'chat', chatRoomId: id, senderId: user.uid }
               );
             }
           } catch (pushErr) {
@@ -199,6 +206,7 @@ export default function ChatDetailScreen() {
           text: '차단',
           style: 'destructive',
           onPress: async () => {
+            if (Haptics) Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
             try {
               await setDoc(doc(db, 'blockedUsers', `${user.uid}_${otherUserId}`), {
                 blockerUid: user.uid,
@@ -210,6 +218,44 @@ export default function ChatDetailScreen() {
               setShowMoreMenu(false);
             } catch (err) {
               console.warn('차단 실패:', err);
+            }
+          },
+        },
+      ]
+    );
+  };
+
+  // 채팅방 나가기
+  const handleLeaveRoom = () => {
+    showAlert(
+      '채팅방 나가기',
+      '채팅방을 나가면 대화 내용이 삭제됩니다. 나가시겠습니까?',
+      [
+        { text: '취소', style: 'cancel' },
+        {
+          text: '나가기',
+          style: 'destructive',
+          onPress: async () => {
+            if (Haptics) Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
+            try {
+              // 관련 멘토십 종료 처리
+              const mentorshipQ = query(
+                collection(db, 'mentorships'),
+                where('chatRoomId', '==', id)
+              );
+              const mentorshipSnap = await getDocs(mentorshipQ);
+              const mentorshipUpdates = mentorshipSnap.docs.map((d) =>
+                updateDoc(doc(db, 'mentorships', d.id), { status: 'ended' })
+              );
+              await Promise.all(mentorshipUpdates);
+
+              // 채팅방 삭제
+              await deleteDoc(doc(db, 'chatRooms', id));
+
+              setShowMoreMenu(false);
+              router.back();
+            } catch (err) {
+              console.warn('채팅방 나가기 실패:', err);
             }
           },
         },
@@ -290,6 +336,10 @@ export default function ChatDetailScreen() {
             <TouchableOpacity style={styles.menuOptionItem} onPress={handleBlockUser}>
               <Text style={[styles.menuOptionText, { color: '#e74c3c' }]}>사용자 차단</Text>
             </TouchableOpacity>
+            <View style={styles.menuDivider} />
+            <TouchableOpacity style={styles.menuOptionItem} onPress={handleLeaveRoom}>
+              <Text style={[styles.menuOptionText, { color: '#e74c3c' }]}>채팅방 나가기</Text>
+            </TouchableOpacity>
           </View>
         </TouchableOpacity>
       </Modal>
@@ -320,7 +370,7 @@ export default function ChatDetailScreen() {
         <TextInput
           style={styles.input}
           placeholder="메시지를 입력하세요"
-          placeholderTextColor="#4a5a6a"
+          placeholderTextColor="rgba(201,169,110,0.3)"
           value={inputText}
           onChangeText={setInputText}
           onSubmitEditing={handleSend}
@@ -338,13 +388,13 @@ export default function ChatDetailScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#0f1923' },
+  container: { flex: 1, backgroundColor: '#110E0B' },
 
   /* 헤더 */
   header: {
     flexDirection: 'row', alignItems: 'center',
     paddingHorizontal: 12, paddingVertical: 10,
-    borderBottomWidth: 1, borderBottomColor: '#1a2530',
+    borderBottomWidth: 0.5, borderBottomColor: 'rgba(201,169,110,0.15)',
     gap: 8,
   },
   headerBtn: {
@@ -352,29 +402,29 @@ const styles = StyleSheet.create({
     alignItems: 'center', justifyContent: 'center',
   },
   headerCenter: { flex: 1, alignItems: 'center', gap: 4 },
-  headerTitle: { fontSize: 16, fontWeight: '700', color: '#ffffff' },
+  headerTitle: { fontSize: 16, fontWeight: '400', color: '#F5F0E8', letterSpacing: 0.3 },
   headerRoleBadge: {
     flexDirection: 'row', alignItems: 'center', gap: 4,
-    paddingHorizontal: 8, paddingVertical: 2, borderRadius: 8,
+    paddingHorizontal: 8, paddingVertical: 2, borderRadius: 4,
   },
   headerRoleDot: { width: 5, height: 5, borderRadius: 2.5 },
-  headerRoleText: { fontSize: 10, fontWeight: '600' },
+  headerRoleText: { fontSize: 10, fontWeight: '400', letterSpacing: 0.3 },
 
   /* 메시지 */
   messageList: { paddingVertical: 12, flexGrow: 1 },
   emptyChat: { flex: 1, alignItems: 'center', justifyContent: 'center', paddingVertical: 100 },
-  emptyChatText: { fontSize: 14, color: '#4a5a6a' },
+  emptyChatText: { fontSize: 14, color: '#9e9282' },
 
   /* 입력 바 */
   inputBar: {
     flexDirection: 'row', alignItems: 'center', gap: 8,
     paddingHorizontal: 12, paddingTop: 8,
-    backgroundColor: '#1a2530', borderTopWidth: 1, borderTopColor: '#2a3a4a',
+    backgroundColor: 'rgba(201,169,110,0.07)', borderTopWidth: 0.5, borderTopColor: 'rgba(201,169,110,0.18)',
   },
   attachBtn: { padding: 4 },
   input: {
-    flex: 1, backgroundColor: '#0f1923', borderRadius: 20,
-    paddingHorizontal: 16, paddingVertical: 10, fontSize: 14, color: '#ffffff',
+    flex: 1, backgroundColor: '#110E0B', borderRadius: 4,
+    paddingHorizontal: 16, paddingVertical: 10, fontSize: 14, color: '#F5F0E8',
   },
   sendBtn: {
     width: 36, height: 36, borderRadius: 18, backgroundColor: '#C9A96E',
@@ -388,19 +438,19 @@ const styles = StyleSheet.create({
   },
   menuBox: {
     position: 'absolute', right: 16,
-    backgroundColor: '#1a2530', borderRadius: 12,
+    backgroundColor: '#1a1510', borderRadius: 4,
     paddingVertical: 4, minWidth: 150,
     shadowColor: '#000', shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.3, shadowRadius: 8, elevation: 8,
-    borderWidth: 1, borderColor: '#2a3a4a',
+    borderWidth: 0.5, borderColor: 'rgba(201,169,110,0.18)',
   },
   menuOptionItem: {
     paddingHorizontal: 16, paddingVertical: 14,
   },
   menuOptionText: {
-    fontSize: 14, fontWeight: '600', color: '#c0cdd8',
+    fontSize: 14, fontWeight: '400', color: '#c0bab0', letterSpacing: 0.3,
   },
   menuDivider: {
-    height: 1, backgroundColor: '#2a3a4a',
+    height: 0.5, backgroundColor: 'rgba(201,169,110,0.18)',
   },
 });

@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { Platform, Alert } from 'react-native';
 import { router } from 'expo-router';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 let Notifications = null;
 let Device = null;
@@ -11,6 +12,32 @@ if (Platform.OS !== 'web') {
     Notifications = require('expo-notifications');
     Device = require('expo-device');
   } catch {}
+}
+
+const NOTIF_SETTINGS_KEY = '@eon_notification_settings';
+
+/**
+ * 알림 설정 로드
+ * - chat, lesson, announcement 각각 on/off
+ */
+async function getNotificationSettings() {
+  try {
+    const saved = await AsyncStorage.getItem(NOTIF_SETTINGS_KEY);
+    if (saved) return JSON.parse(saved);
+  } catch {}
+  return { chat: true, lesson: true, announcement: true };
+}
+
+/**
+ * 알림 유형이 설정에서 허용되는지 확인
+ */
+function isNotificationAllowed(settings, type) {
+  if (!type) return true;
+  if (type === 'chat') return settings.chat !== false;
+  if (type === 'schedule' || type === 'lesson') return settings.lesson !== false;
+  if (type === 'announcement' || type === 'event') return settings.announcement !== false;
+  if (type === 'mentor') return settings.mentor !== false;
+  return true; // 알 수 없는 타입은 기본 허용
 }
 
 /**
@@ -46,7 +73,7 @@ export async function registerForPushNotifications() {
   // Expo Push Token 가져오기
   try {
     const tokenData = await Notifications.getExpoPushTokenAsync({
-      projectId: 'eugeneonmusic', // Expo 프로젝트 ID
+      projectId: '32eb65a4-71bb-4f57-b925-86d8bef2ffd8',
     });
     return tokenData.data;
   } catch (err) {
@@ -59,8 +86,36 @@ export async function registerForPushNotifications() {
  * 푸시 알림 전송 (Expo Push API)
  * - 서버 없이도 Expo Push API로 직접 전송 가능
  */
+/**
+ * 알림 유형 → Android 채널 매핑
+ */
+const TYPE_CHANNEL_MAP = {
+  chat: 'chat',
+  announcement: 'announcement',
+  event: 'announcement',
+  schedule: 'lesson',
+  lesson: 'lesson',
+  mentor: 'mentor',
+};
+
+/**
+ * 알림 유형 → 서브타이틀 매핑
+ */
+const TYPE_SUBTITLE_MAP = {
+  chat: '채팅',
+  announcement: '공지사항',
+  event: '이벤트',
+  schedule: '레슨 일정',
+  lesson: '레슨',
+  mentor: '멘토십',
+};
+
 export async function sendPushNotification(expoPushToken, title, body, data = {}) {
   if (!expoPushToken) return;
+
+  const type = data?.type || 'announcement';
+  const channelId = TYPE_CHANNEL_MAP[type] || 'announcement';
+  const subtitle = TYPE_SUBTITLE_MAP[type] || '유진온뮤직';
 
   try {
     await fetch('https://exp.host/--/api/v2/push/send', {
@@ -74,9 +129,13 @@ export async function sendPushNotification(expoPushToken, title, body, data = {}
         to: expoPushToken,
         sound: 'default',
         title,
+        subtitle,              // iOS: 제목 아래 작은 텍스트
         body,
         data,
         priority: 'high',
+        channelId,             // Android: 유형별 알림 채널
+        badge: 1,              // iOS: 앱 아이콘 뱃지
+        categoryId: type,      // 알림 카테고리 (액션 버튼용)
       }),
     });
   } catch (err) {
@@ -99,24 +158,85 @@ export function useNotifications(user) {
   useEffect(() => {
     if (Platform.OS === 'web' || !Notifications || !user) return;
 
-    // Android 알림 채널 설정
+    // Android 알림 채널 설정 (유형별 분리)
     if (Platform.OS === 'android') {
+      // 채팅 알림 — 최고 중요도, 진동, 소리
       Notifications.setNotificationChannelAsync('chat', {
-        name: '채팅 알림',
+        name: '채팅 메시지',
+        description: '선생님/학생과의 1:1 채팅 알림',
         importance: Notifications.AndroidImportance?.MAX || 4,
         vibrationPattern: [0, 250, 250, 250],
         lightColor: '#C9A96E',
         sound: 'default',
+        enableVibrate: true,
+        showBadge: true,
+      });
+
+      // 공지/이벤트 알림 — 높은 중요도
+      Notifications.setNotificationChannelAsync('announcement', {
+        name: '공지사항',
+        description: '학원 공지사항 및 이벤트 알림',
+        importance: Notifications.AndroidImportance?.HIGH || 3,
+        vibrationPattern: [0, 200, 100, 200],
+        lightColor: '#C9A96E',
+        sound: 'default',
+        enableVibrate: true,
+        showBadge: true,
+      });
+
+      // 레슨 알림 — 높은 중요도
+      Notifications.setNotificationChannelAsync('lesson', {
+        name: '레슨 일정',
+        description: '레슨 스케줄 및 리마인더',
+        importance: Notifications.AndroidImportance?.HIGH || 3,
+        vibrationPattern: [0, 300],
+        lightColor: '#C9A96E',
+        sound: 'default',
+        enableVibrate: true,
+        showBadge: true,
+      });
+
+      // 멘토십 알림 — 기본 중요도
+      Notifications.setNotificationChannelAsync('mentor', {
+        name: '멘토십',
+        description: '멘토 배정 및 멘토십 관련 알림',
+        importance: Notifications.AndroidImportance?.DEFAULT || 2,
+        lightColor: '#C9A96E',
+        sound: 'default',
+        showBadge: true,
       });
     }
 
-    // 포그라운드 알림 처리 설정
+    // 알림 카테고리 (알림에서 바로 액션 버튼)
+    Notifications.setNotificationCategoryAsync('chat', [
+      {
+        identifier: 'open_chat',
+        buttonTitle: '채팅 열기',
+        options: { opensAppToForeground: true },
+      },
+    ]);
+
+    Notifications.setNotificationCategoryAsync('announcement', [
+      {
+        identifier: 'view_detail',
+        buttonTitle: '자세히 보기',
+        options: { opensAppToForeground: true },
+      },
+    ]);
+
+    // 포그라운드 알림 처리 설정 (설정에 따라 필터링)
     Notifications.setNotificationHandler({
-      handleNotification: async () => ({
-        shouldShowAlert: true,
-        shouldPlaySound: true,
-        shouldSetBadge: true,
-      }),
+      handleNotification: async (notification) => {
+        const data = notification.request.content.data;
+        const settings = await getNotificationSettings();
+        const allowed = isNotificationAllowed(settings, data?.type);
+
+        return {
+          shouldShowAlert: allowed,
+          shouldPlaySound: allowed,
+          shouldSetBadge: allowed,
+        };
+      },
     });
 
     // 푸시 토큰 등록

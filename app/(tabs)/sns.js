@@ -7,6 +7,11 @@ import Svg, { Path, Circle, Rect, Line } from 'react-native-svg';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
 
+let Haptics = null;
+if (Platform.OS !== 'web') {
+  try { Haptics = require('expo-haptics'); } catch {}
+}
+
 const YOUTUBE_API_KEY = process.env.EXPO_PUBLIC_YOUTUBE_API_KEY || 'AIzaSyCLF1MK0S5sk-5wfImUOSqQEJE5hDBL6_4';
 const CHANNEL_ID = 'UCK6jLVvnwAMA5lpuUYShWog';
 
@@ -140,7 +145,7 @@ function PlayIcon({ size = 36 }) {
     </Svg>
   );
 }
-function ArrowIcon({ size = 16, color = '#4a5a6a' }) {
+function ArrowIcon({ size = 16, color = 'rgba(201,169,110,0.3)' }) {
   return (
     <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
       <Path d="M7 17L17 7M17 7H7M17 7v10" stroke={color} strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" />
@@ -266,7 +271,6 @@ export default function SNSScreen() {
       const posts = await fetchBlogPosts();
       setBlogPosts(posts);
     } catch (e) {
-      console.log('Blog RSS error:', e);
       setBlogError(true);
     } finally {
       setBlogLoading(false);
@@ -300,7 +304,7 @@ export default function SNSScreen() {
         };
       });
       setVideos(merged);
-    } catch (e) { console.log('YouTube API error:', e); }
+    } catch (e) { /* YouTube fetch failed */ }
     finally { setLoading(false); }
   };
 
@@ -314,7 +318,7 @@ export default function SNSScreen() {
     <View style={[styles.container, { paddingTop: insets.top }]}>
       <View style={styles.header}>
         <Text style={styles.headerTitle}>SNS</Text>
-        <Text style={styles.headerSub}>채널 · 영상 · 블로그</Text>
+        <Text style={styles.headerSub}>CHANNEL  ·  VIDEO  ·  BLOG</Text>
       </View>
 
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
@@ -336,7 +340,7 @@ export default function SNSScreen() {
             <TouchableOpacity
               key={tab.key}
               style={[styles.tabBtn, activeTab === tab.key && styles.tabBtnActive]}
-              onPress={() => setActiveTab(tab.key)}
+              onPress={() => { if (Haptics) Haptics.selectionAsync(); setActiveTab(tab.key); }}
             >
               <Text style={[styles.tabLabel, activeTab === tab.key && styles.tabLabelActive]}>{tab.label}</Text>
             </TouchableOpacity>
@@ -407,55 +411,55 @@ export default function SNSScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#0f1923' },
+  container: { flex: 1, backgroundColor: '#110E0B' },
   header: {
-    paddingHorizontal: 24, paddingTop: 16, paddingBottom: 12,
-    borderBottomWidth: 1, borderBottomColor: '#1a2530',
+    paddingHorizontal: 24, paddingTop: 16, paddingBottom: 14,
+    borderBottomWidth: 0.5, borderBottomColor: 'rgba(201,169,110,0.15)',
   },
-  headerTitle: { fontSize: 22, fontWeight: '700', color: '#ffffff', letterSpacing: -0.5 },
-  headerSub: { fontSize: 12, color: '#C9A96E', marginTop: 2, fontWeight: '500', letterSpacing: 0.5 },
+  headerTitle: { fontSize: 22, fontWeight: '300', color: '#F5F0E8', letterSpacing: 1 },
+  headerSub: { fontSize: 10, color: '#C9A96E', marginTop: 4, fontWeight: '400', letterSpacing: 2.5 },
   scrollContent: { paddingHorizontal: 20, paddingBottom: 20 },
 
   channelRow: { gap: 16, paddingVertical: 16 },
   channelChip: { alignItems: 'center', gap: 6, width: 68 },
-  channelChipIcon: { width: 50, height: 50, borderRadius: 25, alignItems: 'center', justifyContent: 'center' },
-  channelChipLabel: { fontSize: 11, color: '#8a9bae', fontWeight: '600' },
+  channelChipIcon: { width: 50, height: 50, borderRadius: 25, alignItems: 'center', justifyContent: 'center', borderWidth: 0.5, borderColor: 'rgba(201,169,110,0.18)' },
+  channelChipLabel: { fontSize: 11, color: '#9e9282', fontWeight: '400', letterSpacing: 0.3 },
 
   tabRow: { flexDirection: 'row', gap: 8, marginBottom: 16 },
-  tabBtn: { paddingHorizontal: 16, paddingVertical: 8, borderRadius: 20, backgroundColor: '#1a2530', borderWidth: 1, borderColor: '#1a2530' },
+  tabBtn: { paddingHorizontal: 16, paddingVertical: 8, borderRadius: 4, backgroundColor: 'rgba(201,169,110,0.07)', borderWidth: 0.5, borderColor: 'rgba(201,169,110,0.18)' },
   tabBtnActive: { backgroundColor: 'transparent', borderColor: '#C9A96E' },
-  tabLabel: { fontSize: 13, fontWeight: '600', color: '#5a6a7a' },
+  tabLabel: { fontSize: 13, fontWeight: '400', color: '#9e9282', letterSpacing: 0.3 },
   tabLabelActive: { color: '#C9A96E' },
 
   sectionHeader: { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 12, marginTop: 4 },
-  sectionTitleText: { fontSize: 16, fontWeight: '700', color: '#ffffff' },
-  sectionLabel: { fontSize: 13, fontWeight: '600', color: '#5a6a7a', letterSpacing: 0.5, marginTop: 24, marginBottom: 12 },
+  sectionTitleText: { fontSize: 16, fontWeight: '400', color: '#F5F0E8', letterSpacing: 0.3 },
+  sectionLabel: { fontSize: 10, fontWeight: '500', color: 'rgba(201,169,110,0.6)', textTransform: 'uppercase', letterSpacing: 2.5, marginTop: 24, marginBottom: 12 },
 
   loadingBox: { alignItems: 'center', paddingVertical: 40, gap: 12 },
-  loadingText: { fontSize: 13, color: '#6b7b8d' },
+  loadingText: { fontSize: 13, color: '#9e9282' },
 
-  videoCard: { backgroundColor: '#1a2530', borderRadius: 14, marginBottom: 12, overflow: 'hidden', borderWidth: 1, borderColor: '#222f3a' },
-  thumbnailBox: { height: 200, backgroundColor: '#0d1520', position: 'relative' },
+  videoCard: { backgroundColor: 'rgba(201,169,110,0.07)', borderRadius: 4, marginBottom: 12, overflow: 'hidden', borderWidth: 0.5, borderColor: 'rgba(201,169,110,0.18)' },
+  thumbnailBox: { height: 200, backgroundColor: '#0C0A08', position: 'relative' },
   thumbnailImage: { width: '100%', height: '100%' },
   playOverlay: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, alignItems: 'center', justifyContent: 'center' },
   videoInfo: { padding: 14, gap: 6 },
-  videoTitle: { fontSize: 14, fontWeight: '600', color: '#ffffff', lineHeight: 20, letterSpacing: -0.2 },
-  videoMeta: { fontSize: 12, color: '#5a6a7a' },
+  videoTitle: { fontSize: 14, fontWeight: '400', color: '#F5F0E8', lineHeight: 20, letterSpacing: 0.2 },
+  videoMeta: { fontSize: 12, color: '#9e9282' },
 
-  blogCard: { backgroundColor: '#1a2530', borderRadius: 14, padding: 12, marginBottom: 10, borderWidth: 1, borderColor: '#222f3a' },
+  blogCard: { backgroundColor: 'rgba(201,169,110,0.07)', borderRadius: 4, padding: 12, marginBottom: 10, borderWidth: 0.5, borderColor: 'rgba(201,169,110,0.18)' },
   blogRow: { flexDirection: 'row', gap: 12 },
-  blogThumb: { width: 80, height: 80, borderRadius: 10, backgroundColor: '#0d1520', overflow: 'hidden' },
-  blogThumbPlaceholder: { alignItems: 'center', justifyContent: 'center', backgroundColor: '#1e2d3d' },
+  blogThumb: { width: 80, height: 80, borderRadius: 4, backgroundColor: '#0C0A08', overflow: 'hidden' },
+  blogThumbPlaceholder: { alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(201,169,110,0.04)' },
   blogContent: { flex: 1, gap: 6 },
   blogHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
-  sourceBadge: { paddingHorizontal: 8, paddingVertical: 3, borderRadius: 4 },
-  sourceText: { fontSize: 11, fontWeight: '700' },
-  blogDate: { fontSize: 11, color: '#4a5a6a' },
-  blogTitle: { fontSize: 14, fontWeight: '600', color: '#ffffff', lineHeight: 20, letterSpacing: -0.2 },
-  blogPreview: { fontSize: 12, color: '#6b7b8d', lineHeight: 17 },
+  sourceBadge: { paddingHorizontal: 8, paddingVertical: 3, borderRadius: 2 },
+  sourceText: { fontSize: 11, fontWeight: '600', letterSpacing: 0.3 },
+  blogDate: { fontSize: 11, color: '#9e9282' },
+  blogTitle: { fontSize: 14, fontWeight: '400', color: '#F5F0E8', lineHeight: 20, letterSpacing: 0.2 },
+  blogPreview: { fontSize: 12, color: '#9e9282', lineHeight: 17 },
 
-  channelCard: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#1a2530', borderRadius: 12, padding: 14, marginBottom: 8, gap: 14, borderWidth: 1, borderColor: '#222f3a' },
-  channelCardIcon: { width: 42, height: 42, borderRadius: 12, alignItems: 'center', justifyContent: 'center' },
+  channelCard: { flexDirection: 'row', alignItems: 'center', backgroundColor: 'rgba(201,169,110,0.07)', borderRadius: 4, padding: 14, marginBottom: 8, gap: 14, borderWidth: 0.5, borderColor: 'rgba(201,169,110,0.18)' },
+  channelCardIcon: { width: 42, height: 42, borderRadius: 4, alignItems: 'center', justifyContent: 'center' },
   channelCardInfo: { flex: 1 },
-  channelCardName: { fontSize: 14, fontWeight: '600', color: '#ffffff' },
+  channelCardName: { fontSize: 14, fontWeight: '400', color: '#F5F0E8', letterSpacing: 0.3 },
 });

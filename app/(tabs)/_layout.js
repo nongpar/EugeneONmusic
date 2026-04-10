@@ -1,28 +1,39 @@
+import { Platform } from 'react-native';
 import { Tabs } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { HomeIcon, LessonIcon, CourseIcon, SNSIcon, MyIcon } from '../../components/TabIcons';
+
+let Haptics = null;
+if (Platform.OS !== 'web') {
+  try { Haptics = require('expo-haptics'); } catch {}
+}
 
 export default function TabLayout() {
   const insets = useSafeAreaInsets();
 
   return (
     <Tabs
+      screenListeners={{
+        tabPress: () => {
+          if (Haptics) Haptics.selectionAsync();
+        },
+      }}
       screenOptions={{
         headerShown: false,
         tabBarActiveTintColor: '#C9A96E',
-        tabBarInactiveTintColor: '#4a5a6a',
+        tabBarInactiveTintColor: 'rgba(201,169,110,0.3)',
         tabBarStyle: {
-          backgroundColor: '#0f1923',
-          borderTopColor: '#1a2530',
-          borderTopWidth: 1,
+          backgroundColor: '#0C0A08',
+          borderTopColor: 'rgba(201,169,110,0.15)',
+          borderTopWidth: 0.5,
           height: 64 + insets.bottom,
           paddingBottom: Math.max(insets.bottom, 10),
           paddingTop: 6,
         },
         tabBarLabelStyle: {
           fontSize: 10,
-          fontWeight: '600',
-          letterSpacing: 0.3,
+          fontWeight: '400',
+          letterSpacing: 1.5,
         },
       }}
     >

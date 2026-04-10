@@ -8,14 +8,14 @@ import { router } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import {
   collection, query, where, orderBy, onSnapshot,
-  doc, updateDoc, addDoc, serverTimestamp, getDocs, getDoc,
+  doc, updateDoc, addDoc, serverTimestamp, getDocs, getDoc, deleteDoc,
 } from 'firebase/firestore';
 import { db } from '../../config/firebase';
 import { useAuth } from '../../hooks/useAuth';
 import { sendPushNotification } from '../../hooks/useNotifications';
 
 // ── SVG 아이콘 ──
-function BackIcon({ size = 22, color = '#8a9bae' }) {
+function BackIcon({ size = 22, color = '#C9A96E' }) {
   return (
     <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
       <Path d="M19 12H5M5 12l7 7M5 12l7-7" stroke={color} strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" />
@@ -110,10 +110,10 @@ function PendingRequestCard({ mentorship, onAccept, onReject, accepting }) {
           disabled={accepting}
         >
           {accepting ? (
-            <ActivityIndicator size="small" color="#0f1923" />
+            <ActivityIndicator size="small" color="#0C0A08" />
           ) : (
             <>
-              <CheckIcon color="#0f1923" />
+              <CheckIcon color="#0C0A08" />
               <Text style={styles.acceptBtnText}>수락</Text>
             </>
           )}
@@ -124,7 +124,7 @@ function PendingRequestCard({ mentorship, onAccept, onReject, accepting }) {
 }
 
 // ── 활성 멘토십 카드 ──
-function ActiveMentorshipCard({ mentorship }) {
+function ActiveMentorshipCard({ mentorship, onDisconnect }) {
   const handleChat = () => {
     if (mentorship.chatRoomId) {
       router.push(`/chat/${mentorship.chatRoomId}`);
@@ -145,6 +145,13 @@ function ActiveMentorshipCard({ mentorship }) {
           <Text style={styles.activeStatus}>멘토링 진행 중</Text>
         </View>
       </View>
+      <TouchableOpacity
+        style={styles.disconnectBtn}
+        onPress={(e) => { e.stopPropagation(); onDisconnect(mentorship); }}
+        activeOpacity={0.7}
+      >
+        <Text style={styles.disconnectBtnText}>해제</Text>
+      </TouchableOpacity>
       <View style={styles.chatBtnSmall}>
         <Text style={styles.chatBtnSmallText}>채팅</Text>
       </View>
@@ -287,7 +294,7 @@ export default function MentorManageScreen() {
             tokenSnap.data().token,
             '멘토 배정 완료!',
             `${user.displayName || '선생님'}이 멘토로 배정되었습니다. 채팅을 시작해보세요!`,
-            { chatRoomId: chatRoomRef.id, screen: `/chat/${chatRoomRef.id}` }
+            { type: 'mentor', chatRoomId: chatRoomRef.id, screen: `/chat/${chatRoomRef.id}` }
           );
         }
       } catch {}
@@ -298,6 +305,30 @@ export default function MentorManageScreen() {
       showAlert('오류', '멘토 수락에 실패했습니다. 다시 시도해주세요.');
     }
     setAcceptingId(null);
+  };
+
+  const handleDisconnect = async (mentorship) => {
+    const confirmed = await confirmAction(
+      '멘토십 해제',
+      `${mentorship.studentName} 학생과의 멘토십을 해제하시겠습니까?\n해제하면 채팅방도 비활성화됩니다.`
+    );
+    if (!confirmed) return;
+
+    try {
+      await updateDoc(doc(db, 'mentorships', mentorship.id), {
+        status: 'ended',
+        endedAt: serverTimestamp(),
+      });
+
+      if (mentorship.chatRoomId) {
+        await deleteDoc(doc(db, 'chatRooms', mentorship.chatRoomId));
+      }
+
+      showAlert('완료', '멘토십이 해제되었습니다.');
+    } catch (err) {
+      console.warn('멘토십 해제 실패:', err);
+      showAlert('오류', '멘토십 해제에 실패했습니다. 다시 시도해주세요.');
+    }
   };
 
   const handleReject = async (mentorship) => {
@@ -403,7 +434,7 @@ export default function MentorManageScreen() {
                 </View>
               ) : (
                 activeList.map((item) => (
-                  <ActiveMentorshipCard key={item.id} mentorship={item} />
+                  <ActiveMentorshipCard key={item.id} mentorship={item} onDisconnect={handleDisconnect} />
                 ))
               )}
 
@@ -417,13 +448,13 @@ export default function MentorManageScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#0f1923' },
+  container: { flex: 1, backgroundColor: '#110E0B' },
 
   /* 헤더 */
   header: {
     flexDirection: 'row', alignItems: 'center',
     paddingHorizontal: 12, paddingVertical: 10,
-    borderBottomWidth: 1, borderBottomColor: '#1a2530',
+    borderBottomWidth: 0.5, borderBottomColor: 'rgba(201,169,110,0.15)',
     gap: 8,
   },
   headerBtn: {
@@ -432,11 +463,11 @@ const styles = StyleSheet.create({
   },
   headerTitle: {
     flex: 1, textAlign: 'center',
-    fontSize: 17, fontWeight: '700', color: '#ffffff',
+    fontSize: 17, fontWeight: '400', color: '#F5F0E8', letterSpacing: 0.5,
   },
 
   center: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: 12 },
-  loadingText: { fontSize: 14, color: '#5a6a7a' },
+  loadingText: { fontSize: 14, color: '#9e9282' },
 
   listContent: { paddingHorizontal: 20, paddingBottom: 20 },
 
@@ -446,18 +477,18 @@ const styles = StyleSheet.create({
     marginTop: 20, marginBottom: 12,
   },
   sectionTitle: {
-    fontSize: 15, fontWeight: '700', color: '#ffffff', flex: 1,
+    fontSize: 15, fontWeight: '400', color: '#F5F0E8', flex: 1, letterSpacing: 0.3,
   },
   countBadge: {
     backgroundColor: '#C9A96E25', paddingHorizontal: 10, paddingVertical: 3,
-    borderRadius: 10,
+    borderRadius: 4,
   },
-  countText: { fontSize: 12, fontWeight: '700', color: '#C9A96E' },
+  countText: { fontSize: 12, fontWeight: '400', color: '#C9A96E' },
 
   /* 대기 중 카드 */
   requestCard: {
-    backgroundColor: '#1a2530', borderRadius: 14, padding: 16,
-    marginBottom: 10, borderWidth: 1, borderColor: '#222f3a',
+    backgroundColor: 'rgba(201,169,110,0.07)', borderRadius: 4, padding: 16,
+    marginBottom: 10, borderWidth: 0.5, borderColor: 'rgba(201,169,110,0.18)',
   },
   requestHeader: {
     flexDirection: 'row', alignItems: 'center', gap: 12,
@@ -466,59 +497,64 @@ const styles = StyleSheet.create({
     width: 44, height: 44, borderRadius: 22,
     alignItems: 'center', justifyContent: 'center',
   },
-  avatarText: { fontSize: 16, fontWeight: 'bold', color: '#fff' },
+  avatarText: { fontSize: 16, fontWeight: '400', color: '#fff' },
   requestInfo: { flex: 1, gap: 4 },
-  requestName: { fontSize: 15, fontWeight: '600', color: '#ffffff' },
+  requestName: { fontSize: 15, fontWeight: '400', color: '#F5F0E8', letterSpacing: 0.3 },
   requestMeta: { flexDirection: 'row', alignItems: 'center', gap: 4 },
-  requestDate: { fontSize: 11, color: '#5a6a7a' },
+  requestDate: { fontSize: 11, color: '#9e9282' },
   pendingBadge: {
     backgroundColor: '#fbbf2420', paddingHorizontal: 8, paddingVertical: 3,
-    borderRadius: 6,
+    borderRadius: 4,
   },
-  pendingBadgeText: { fontSize: 11, fontWeight: '600', color: '#fbbf24' },
+  pendingBadgeText: { fontSize: 11, fontWeight: '400', color: '#fbbf24' },
 
   requestActions: {
     flexDirection: 'row', gap: 10, marginTop: 14,
   },
   actionBtn: {
     flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center',
-    gap: 6, paddingVertical: 10, borderRadius: 10,
+    gap: 6, paddingVertical: 10, borderRadius: 4,
   },
   rejectBtn: {
-    backgroundColor: '#f8717115', borderWidth: 1, borderColor: '#f8717130',
+    backgroundColor: '#f8717115', borderWidth: 0.5, borderColor: '#f8717130',
   },
-  rejectBtnText: { fontSize: 14, fontWeight: '600', color: '#f87171' },
+  rejectBtnText: { fontSize: 14, fontWeight: '400', color: '#f87171' },
   acceptBtn: {
-    backgroundColor: '#4ade80', borderWidth: 1, borderColor: '#4ade80',
+    backgroundColor: '#4ade80', borderWidth: 0.5, borderColor: '#4ade80',
   },
-  acceptBtnText: { fontSize: 14, fontWeight: '700', color: '#0f1923' },
+  acceptBtnText: { fontSize: 14, fontWeight: '400', color: '#0C0A08' },
 
   /* 활성 카드 */
   activeCard: {
     flexDirection: 'row', alignItems: 'center', gap: 12,
-    backgroundColor: '#1a2530', borderRadius: 14, padding: 16,
-    marginBottom: 8, borderWidth: 1, borderColor: '#222f3a',
+    backgroundColor: 'rgba(201,169,110,0.07)', borderRadius: 4, padding: 16,
+    marginBottom: 8, borderWidth: 0.5, borderColor: 'rgba(201,169,110,0.18)',
   },
   activeInfo: { flex: 1, gap: 4 },
-  activeName: { fontSize: 15, fontWeight: '600', color: '#ffffff' },
+  activeName: { fontSize: 15, fontWeight: '400', color: '#F5F0E8', letterSpacing: 0.3 },
   activeMetaRow: { flexDirection: 'row', alignItems: 'center', gap: 4 },
   activeStatus: { fontSize: 12, color: '#4ade80' },
   chatBtnSmall: {
     backgroundColor: '#C9A96E', paddingHorizontal: 14, paddingVertical: 7,
-    borderRadius: 8,
+    borderRadius: 4,
   },
-  chatBtnSmallText: { fontSize: 13, fontWeight: '700', color: '#0f1923' },
+  chatBtnSmallText: { fontSize: 13, fontWeight: '400', color: '#0C0A08', letterSpacing: 0.3 },
+  disconnectBtn: {
+    backgroundColor: '#e74c3c20', paddingHorizontal: 12, paddingVertical: 7,
+    borderRadius: 4, borderWidth: 0.5, borderColor: '#e74c3c40',
+  },
+  disconnectBtnText: { fontSize: 13, fontWeight: '400', color: '#e74c3c', letterSpacing: 0.3 },
 
   /* 빈 상태 */
   emptySection: {
-    backgroundColor: '#1a253060', borderRadius: 12, padding: 24,
-    alignItems: 'center', borderWidth: 1, borderColor: '#222f3a',
+    backgroundColor: 'rgba(201,169,110,0.04)', borderRadius: 4, padding: 24,
+    alignItems: 'center', borderWidth: 0.5, borderColor: 'rgba(201,169,110,0.18)',
   },
-  emptySectionText: { fontSize: 13, color: '#4a5a6a' },
+  emptySectionText: { fontSize: 13, color: '#9e9282' },
 
   emptyContainer: {
     flex: 1, alignItems: 'center', justifyContent: 'center', gap: 8,
   },
-  emptyTitle: { fontSize: 18, fontWeight: '700', color: '#ffffff' },
-  emptySub: { fontSize: 14, color: '#5a6a7a' },
+  emptyTitle: { fontSize: 18, fontWeight: '300', color: '#F5F0E8', letterSpacing: 0.5 },
+  emptySub: { fontSize: 14, color: '#9e9282' },
 });

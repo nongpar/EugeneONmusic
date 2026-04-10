@@ -31,15 +31,16 @@ export default function PracticeScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#0f1923',
+    backgroundColor: '#110E0B',
   },
   screenTitle: {
     fontSize: 20,
-    fontWeight: 'bold',
-    color: '#ffffff',
+    fontWeight: '300',
+    color: '#F5F0E8',
     paddingHorizontal: 20,
     paddingTop: 12,
     paddingBottom: 8,
+    letterSpacing: 0.5,
   },
   scroll: {
     flex: 1,

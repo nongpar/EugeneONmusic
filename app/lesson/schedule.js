@@ -14,14 +14,19 @@ import {
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
-import Svg, { Path } from 'react-native-svg';
+import Svg, { Path, Circle as SvgCircle } from 'react-native-svg';
 import { collection, query, where, onSnapshot, addDoc, updateDoc, deleteDoc, doc, serverTimestamp } from 'firebase/firestore';
 import { db } from '../../config/firebase';
+
+let Haptics = null;
+if (Platform.OS !== 'web') {
+  try { Haptics = require('expo-haptics'); } catch {}
+}
 import { useAuth } from '../../hooks/useAuth';
 
 // ── SVG Icons ──────────────────────────────────────────────
 
-function BackIcon({ size = 24, color = '#fff' }) {
+function BackIcon({ size = 24, color = '#F5F0E8' }) {
   return (
     <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
       <Path d="M15 18l-6-6 6-6" stroke={color} strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" />
@@ -29,7 +34,7 @@ function BackIcon({ size = 24, color = '#fff' }) {
   );
 }
 
-function PlusIcon({ size = 28, color = '#0f1923' }) {
+function PlusIcon({ size = 28, color = '#110E0B' }) {
   return (
     <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
       <Path d="M12 5v14M5 12h14" stroke={color} strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round" />
@@ -51,7 +56,7 @@ function CalendarIcon({ size = 18, color = '#C9A96E' }) {
   );
 }
 
-function ClockIcon({ size = 16, color = '#8899aa' }) {
+function ClockIcon({ size = 16, color = '#9e9282' }) {
   return (
     <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
       <Path
@@ -64,7 +69,7 @@ function ClockIcon({ size = 16, color = '#8899aa' }) {
   );
 }
 
-function CheckIcon({ size = 16, color = '#fff' }) {
+function CheckIcon({ size = 16, color = '#F5F0E8' }) {
   return (
     <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
       <Path d="M20 6L9 17l-5-5" stroke={color} strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round" />
@@ -72,7 +77,7 @@ function CheckIcon({ size = 16, color = '#fff' }) {
   );
 }
 
-function NoteIcon({ size = 48, color = '#334455' }) {
+function NoteIcon({ size = 48, color = 'rgba(201,169,110,0.3)' }) {
   return (
     <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
       <Path
@@ -91,6 +96,50 @@ function TrashIcon({ size = 18, color = '#e74c3c' }) {
     <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
       <Path d="M3 6h18M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6M8 6V4a2 2 0 012-2h4a2 2 0 012 2v2" stroke={color} strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" />
     </Svg>
+  );
+}
+
+// ── Manuscript Decorations ─────────────────────────────────
+
+function StaffLines() {
+  return (
+    <View style={styles.staffLines} pointerEvents="none">
+      {[0, 1, 2, 3, 4].map(i => (
+        <View key={i} style={styles.staffLine} />
+      ))}
+    </View>
+  );
+}
+
+function MusicalDivider() {
+  return (
+    <View style={styles.musicalDivider}>
+      <View style={styles.mDivLine} />
+      <Svg width={18} height={22} viewBox="0 0 18 22" fill="none">
+        <Path d="M10 2v15" stroke="rgba(201,169,110,0.25)" strokeWidth={1.2} strokeLinecap="round" />
+        <SvgCircle cx="7" cy="17" r="3.5" stroke="rgba(201,169,110,0.25)" strokeWidth={1.2} fill="rgba(201,169,110,0.08)" />
+        <Path d="M10 2c2 1 4 3 4 5s-2 3-4 2" stroke="rgba(201,169,110,0.2)" strokeWidth={1} fill="rgba(201,169,110,0.06)" />
+      </Svg>
+      <View style={styles.mDivLine} />
+    </View>
+  );
+}
+
+function ParchmentCorner({ position = 'topLeft' }) {
+  const isTop = position.includes('top');
+  const isLeft = position.includes('Left');
+  return (
+    <View style={[
+      styles.parchmentCorner,
+      { [isTop ? 'top' : 'bottom']: 0, [isLeft ? 'left' : 'right']: 0 },
+      !isTop && { transform: [{ scaleY: -1 }] },
+      !isLeft && { transform: [{ scaleX: -1 }] },
+      !isTop && !isLeft && { transform: [{ scaleX: -1 }, { scaleY: -1 }] },
+    ]} pointerEvents="none">
+      <Svg width={20} height={20} viewBox="0 0 20 20" fill="none">
+        <Path d="M2 2 C2 2 2 8 8 8 C2 8 2 14 2 14" stroke="rgba(201,169,110,0.2)" strokeWidth={0.8} />
+      </Svg>
+    </View>
   );
 }
 
@@ -120,7 +169,7 @@ function getCurrentTime() {
 }
 
 const STATUS_COLORS = {
-  scheduled: '#2C5F8A',
+  scheduled: '#C9A96E',
   completed: '#4ade80',
   cancelled: '#e74c3c',
 };
@@ -374,6 +423,9 @@ export default function LessonScheduleScreen() {
       activeOpacity={0.7}
       onLongPress={() => handleMarkCompleted(item)}
     >
+      <StaffLines />
+      <ParchmentCorner position="topLeft" />
+      <ParchmentCorner position="topRight" />
       <View style={styles.cardHeader}>
         <View style={styles.cardTitleRow}>
           <CalendarIcon />
@@ -410,9 +462,14 @@ export default function LessonScheduleScreen() {
 
   // ── Render date group ─────────────────────────────────
 
-  const renderGroup = ({ item: group }) => (
+  const renderGroup = ({ item: group, index }) => (
     <View style={styles.group}>
-      <Text style={styles.groupDate}>{group.date}</Text>
+      {index > 0 && <MusicalDivider />}
+      <View style={styles.groupDateWrap}>
+        <View style={styles.groupDateLine} />
+        <Text style={styles.groupDate}>{group.date}</Text>
+        <View style={styles.groupDateLine} />
+      </View>
       {group.data.map((schedule) => (
         <View key={schedule.id}>{renderScheduleItem({ item: schedule })}</View>
       ))}
@@ -426,7 +483,7 @@ export default function LessonScheduleScreen() {
     if (mentorships.length === 0) {
       return (
         <View style={styles.emptyContainer}>
-          <NoteIcon size={64} color="#334455" />
+          <NoteIcon size={64} color="rgba(201,169,110,0.3)" />
           <Text style={styles.emptyTitle}>멘토십이 없습니다</Text>
           <Text style={styles.emptySubtitle}>채팅 탭에서 멘토를 신청하세요</Text>
         </View>
@@ -434,7 +491,7 @@ export default function LessonScheduleScreen() {
     }
     return (
       <View style={styles.emptyContainer}>
-        <CalendarIcon size={48} color="#334455" />
+        <CalendarIcon size={48} color="rgba(201,169,110,0.3)" />
         <Text style={styles.emptyTitle}>등록된 일정이 없습니다</Text>
         <Text style={styles.emptySubtitle}>+ 버튼을 눌러 레슨 일정을 추가하세요</Text>
       </View>
@@ -467,7 +524,7 @@ export default function LessonScheduleScreen() {
                           styles.chip,
                           formMentorshipId === m.id && styles.chipActive,
                         ]}
-                        onPress={() => setFormMentorshipId(m.id)}
+                        onPress={() => { if (Haptics) Haptics.selectionAsync(); setFormMentorshipId(m.id); }}
                       >
                         <Text
                           style={[
@@ -491,7 +548,7 @@ export default function LessonScheduleScreen() {
                   value={formTitle}
                   onChangeText={setFormTitle}
                   placeholder="피아노 레슨"
-                  placeholderTextColor="#556677"
+                  placeholderTextColor="#9e9282"
                 />
               </View>
 
@@ -505,7 +562,7 @@ export default function LessonScheduleScreen() {
                     onChangeText={setFormDate}
                     onFocus={() => { if (!formDate) setFormDate(getTodayString()); }}
                     placeholder="2026-04-10"
-                    placeholderTextColor="#556677"
+                    placeholderTextColor="#9e9282"
                     keyboardType="default"
                     maxLength={10}
                   />
@@ -525,7 +582,7 @@ export default function LessonScheduleScreen() {
                     onChangeText={setFormTime}
                     onFocus={() => { if (!formTime) setFormTime(getCurrentTime()); }}
                     placeholder="14:00"
-                    placeholderTextColor="#556677"
+                    placeholderTextColor="#9e9282"
                     keyboardType="default"
                     maxLength={5}
                   />
@@ -561,7 +618,7 @@ export default function LessonScheduleScreen() {
                   value={formMemo}
                   onChangeText={setFormMemo}
                   placeholder="메모를 입력하세요"
-                  placeholderTextColor="#556677"
+                  placeholderTextColor="#9e9282"
                   multiline
                   numberOfLines={3}
                   textAlignVertical="top"
@@ -586,7 +643,7 @@ export default function LessonScheduleScreen() {
                   disabled={saving}
                 >
                   {saving ? (
-                    <ActivityIndicator size="small" color="#0f1923" />
+                    <ActivityIndicator size="small" color="#110E0B" />
                   ) : (
                     <Text style={styles.submitBtnText}>등록</Text>
                   )}
@@ -653,7 +710,7 @@ export default function LessonScheduleScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#0f1923',
+    backgroundColor: '#110E0B',
   },
 
   // Header
@@ -663,8 +720,8 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     paddingHorizontal: 16,
     paddingVertical: 14,
-    borderBottomWidth: 1,
-    borderBottomColor: '#222f3a',
+    borderBottomWidth: 0.5,
+    borderBottomColor: 'rgba(201,169,110,0.15)',
   },
   backBtn: {
     width: 40,
@@ -674,8 +731,9 @@ const styles = StyleSheet.create({
   },
   headerTitle: {
     fontSize: 18,
-    fontWeight: '700',
-    color: '#ffffff',
+    fontWeight: '300',
+    color: '#F5F0E8',
+    letterSpacing: 1,
   },
   headerRight: {
     width: 40,
@@ -702,22 +760,66 @@ const styles = StyleSheet.create({
   group: {
     marginBottom: 20,
   },
+  groupDateWrap: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 12,
+    gap: 12,
+  },
+  groupDateLine: {
+    flex: 1,
+    height: 0.5,
+    backgroundColor: 'rgba(201,169,110,0.15)',
+  },
   groupDate: {
-    fontSize: 14,
-    fontWeight: '600',
+    fontSize: 13,
+    fontWeight: '400',
     color: '#C9A96E',
-    marginBottom: 8,
-    paddingLeft: 4,
+    letterSpacing: 1.5,
+    fontStyle: 'italic',
+  },
+
+  // Manuscript decorations
+  staffLines: {
+    position: 'absolute',
+    left: 14,
+    right: 14,
+    bottom: 10,
+    height: 28,
+    justifyContent: 'space-between',
+  },
+  staffLine: {
+    height: 0.5,
+    backgroundColor: 'rgba(180,150,100,0.1)',
+  },
+  parchmentCorner: {
+    position: 'absolute',
+    zIndex: 1,
+  },
+  musicalDivider: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginVertical: 12,
+    gap: 10,
+  },
+  mDivLine: {
+    flex: 1,
+    height: 0.5,
+    backgroundColor: 'rgba(201,169,110,0.12)',
   },
 
   // Card
   card: {
-    backgroundColor: '#1a2530',
-    borderRadius: 12,
+    backgroundColor: 'rgba(245,240,225,0.05)',
+    borderRadius: 4,
     padding: 16,
     marginBottom: 10,
-    borderWidth: 1,
-    borderColor: '#222f3a',
+    borderWidth: 0.5,
+    borderColor: 'rgba(180,150,100,0.2)',
+    borderTopWidth: 1.5,
+    borderTopColor: 'rgba(201,169,110,0.25)',
+    position: 'relative',
+    overflow: 'hidden',
   },
   cardHeader: {
     flexDirection: 'row',
@@ -733,8 +835,8 @@ const styles = StyleSheet.create({
   },
   cardTitle: {
     fontSize: 16,
-    fontWeight: '600',
-    color: '#ffffff',
+    fontWeight: '400',
+    color: '#F5F0E8',
   },
   cardHeaderRight: {
     flexDirection: 'row',
@@ -752,12 +854,13 @@ const styles = StyleSheet.create({
   statusBadge: {
     paddingHorizontal: 10,
     paddingVertical: 4,
-    borderRadius: 12,
+    borderRadius: 4,
   },
   statusText: {
     fontSize: 12,
-    fontWeight: '600',
-    color: '#ffffff',
+    fontWeight: '400',
+    color: '#F5F0E8',
+    letterSpacing: 0.5,
   },
   cardBody: {
     gap: 6,
@@ -769,11 +872,11 @@ const styles = StyleSheet.create({
   },
   cardInfoText: {
     fontSize: 14,
-    color: '#8899aa',
+    color: '#9e9282',
   },
   cardMemo: {
     fontSize: 13,
-    color: '#667788',
+    color: '#9e9282',
     marginTop: 4,
     paddingLeft: 2,
   },
@@ -785,12 +888,12 @@ const styles = StyleSheet.create({
     paddingHorizontal: 14,
     paddingVertical: 6,
     backgroundColor: 'rgba(74, 222, 128, 0.15)',
-    borderRadius: 8,
+    borderRadius: 4,
     gap: 4,
   },
   completeBtnText: {
     fontSize: 13,
-    fontWeight: '600',
+    fontWeight: '400',
     color: '#4ade80',
   },
 
@@ -804,13 +907,13 @@ const styles = StyleSheet.create({
   },
   emptyTitle: {
     fontSize: 17,
-    fontWeight: '600',
-    color: '#8899aa',
+    fontWeight: '300',
+    color: '#9e9282',
     marginTop: 8,
   },
   emptySubtitle: {
     fontSize: 14,
-    color: '#556677',
+    color: '#9e9282',
     textAlign: 'center',
     lineHeight: 20,
   },
@@ -850,20 +953,21 @@ const styles = StyleSheet.create({
     justifyContent: 'flex-end',
   },
   formContainer: {
-    backgroundColor: '#1a2530',
-    borderTopLeftRadius: 20,
-    borderTopRightRadius: 20,
+    backgroundColor: '#1a1613',
+    borderTopLeftRadius: 4,
+    borderTopRightRadius: 4,
     padding: 24,
     paddingBottom: 40,
     borderTopWidth: 1,
-    borderColor: '#222f3a',
+    borderColor: 'rgba(201,169,110,0.18)',
   },
   formTitle: {
     fontSize: 20,
-    fontWeight: '700',
-    color: '#ffffff',
+    fontWeight: '300',
+    color: '#F5F0E8',
     marginBottom: 20,
     textAlign: 'center',
+    letterSpacing: 1,
   },
 
   // Fields
@@ -872,9 +976,10 @@ const styles = StyleSheet.create({
   },
   fieldLabel: {
     fontSize: 13,
-    fontWeight: '600',
-    color: '#8899aa',
+    fontWeight: '400',
+    color: '#9e9282',
     marginBottom: 8,
+    letterSpacing: 0.5,
   },
   inputRow: {
     flexDirection: 'row',
@@ -882,14 +987,14 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   input: {
-    backgroundColor: '#0f1923',
+    backgroundColor: '#110E0B',
     borderWidth: 1,
-    borderColor: '#222f3a',
-    borderRadius: 10,
+    borderColor: 'rgba(201,169,110,0.18)',
+    borderRadius: 4,
     paddingHorizontal: 14,
     paddingVertical: 12,
     fontSize: 15,
-    color: '#ffffff',
+    color: '#F5F0E8',
   },
   memoInput: {
     height: 80,
@@ -898,14 +1003,14 @@ const styles = StyleSheet.create({
   quickChip: {
     paddingHorizontal: 12,
     paddingVertical: 10,
-    borderRadius: 10,
+    borderRadius: 4,
     backgroundColor: 'rgba(201, 169, 110, 0.15)',
     borderWidth: 1,
     borderColor: '#C9A96E',
   },
   quickChipText: {
     fontSize: 13,
-    fontWeight: '600',
+    fontWeight: '400',
     color: '#C9A96E',
   },
 
@@ -918,10 +1023,10 @@ const styles = StyleSheet.create({
   chip: {
     paddingHorizontal: 16,
     paddingVertical: 8,
-    borderRadius: 20,
-    backgroundColor: '#0f1923',
+    borderRadius: 4,
+    backgroundColor: '#110E0B',
     borderWidth: 1,
-    borderColor: '#222f3a',
+    borderColor: 'rgba(201,169,110,0.18)',
     marginRight: 4,
   },
   chipActive: {
@@ -930,8 +1035,8 @@ const styles = StyleSheet.create({
   },
   chipText: {
     fontSize: 14,
-    color: '#8899aa',
-    fontWeight: '500',
+    color: '#9e9282',
+    fontWeight: '400',
   },
   chipTextActive: {
     color: '#C9A96E',
@@ -948,21 +1053,21 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     paddingVertical: 14,
-    borderRadius: 12,
+    borderRadius: 4,
     borderWidth: 1,
-    borderColor: '#222f3a',
+    borderColor: 'rgba(201,169,110,0.18)',
   },
   cancelBtnText: {
     fontSize: 15,
-    fontWeight: '600',
-    color: '#8899aa',
+    fontWeight: '400',
+    color: '#9e9282',
   },
   submitBtn: {
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
     paddingVertical: 14,
-    borderRadius: 12,
+    borderRadius: 4,
     backgroundColor: '#C9A96E',
   },
   submitBtnDisabled: {
@@ -970,7 +1075,7 @@ const styles = StyleSheet.create({
   },
   submitBtnText: {
     fontSize: 15,
-    fontWeight: '700',
-    color: '#0f1923',
+    fontWeight: '400',
+    color: '#110E0B',
   },
 });

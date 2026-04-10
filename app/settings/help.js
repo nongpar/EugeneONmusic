@@ -4,7 +4,7 @@ import { router } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 // ── SVG Icons ──
-function BackIcon({ size = 24, color = '#ffffff' }) {
+function BackIcon({ size = 24, color = '#F5F0E8' }) {
   return (
     <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
       <Path d="M15 18l-6-6 6-6" stroke={color} strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" />
@@ -38,7 +38,7 @@ function MobileIcon({ size = 22, color = '#C9A96E' }) {
   );
 }
 
-function ClockIcon({ size = 20, color = '#8a9bae' }) {
+function ClockIcon({ size = 20, color = '#C9A96E' }) {
   return (
     <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
       <Circle cx="12" cy="12" r="10" stroke={color} strokeWidth={1.8} />
@@ -56,7 +56,7 @@ function ContactItem({ icon, label, value, onPress }) {
         <Text style={styles.contactValue}>{value}</Text>
       </View>
       <Svg width={18} height={18} viewBox="0 0 24 24" fill="none">
-        <Path d="M9 18l6-6-6-6" stroke="#4a5a6a" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" />
+        <Path d="M9 18l6-6-6-6" stroke="#9e9282" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" />
       </Svg>
     </TouchableOpacity>
   );
@@ -129,7 +129,7 @@ export default function HelpScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#0f1923',
+    backgroundColor: '#110E0B',
   },
   header: {
     flexDirection: 'row',
@@ -143,8 +143,9 @@ const styles = StyleSheet.create({
   },
   headerTitle: {
     fontSize: 18,
-    fontWeight: 'bold',
-    color: '#ffffff',
+    fontWeight: '400',
+    color: '#F5F0E8',
+    letterSpacing: 0.3,
   },
   content: {
     paddingHorizontal: 20,
@@ -153,30 +154,31 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: 14,
     fontWeight: '600',
-    color: '#6b7b8d',
+    color: '#9e9282',
     marginBottom: 10,
     marginTop: 20,
     marginLeft: 4,
+    letterSpacing: 0.5,
   },
   card: {
-    backgroundColor: '#1a2530',
-    borderRadius: 16,
+    backgroundColor: 'rgba(201,169,110,0.07)',
+    borderRadius: 4,
     overflow: 'hidden',
-    borderWidth: 1,
-    borderColor: '#222f3a',
+    borderWidth: 0.5,
+    borderColor: 'rgba(201,169,110,0.18)',
   },
   contactItem: {
     flexDirection: 'row',
     alignItems: 'center',
     paddingVertical: 16,
     paddingHorizontal: 16,
-    borderBottomWidth: 1,
-    borderBottomColor: '#0f1923',
+    borderBottomWidth: 0.5,
+    borderBottomColor: '#110E0B',
   },
   contactIcon: {
     width: 40,
     height: 40,
-    borderRadius: 12,
+    borderRadius: 4,
     backgroundColor: '#C9A96E15',
     alignItems: 'center',
     justifyContent: 'center',
@@ -187,12 +189,13 @@ const styles = StyleSheet.create({
   },
   contactLabel: {
     fontSize: 12,
-    color: '#6b7b8d',
+    color: '#9e9282',
     marginBottom: 2,
+    letterSpacing: 0.5,
   },
   contactValue: {
     fontSize: 15,
-    color: '#ffffff',
+    color: '#F5F0E8',
     fontWeight: '500',
   },
   hoursRow: {
@@ -211,7 +214,7 @@ const styles = StyleSheet.create({
   },
   hourDay: {
     fontSize: 14,
-    color: '#ffffff',
+    color: '#F5F0E8',
     fontWeight: '500',
   },
   hourTime: {
@@ -221,10 +224,10 @@ const styles = StyleSheet.create({
   },
   hourDayClosed: {
     fontSize: 14,
-    color: '#6b7b8d',
+    color: '#9e9282',
   },
   hourTimeClosed: {
     fontSize: 14,
-    color: '#6b7b8d',
+    color: '#9e9282',
   },
 });

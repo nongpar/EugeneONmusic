@@ -13,7 +13,7 @@ import { db } from '../../config/firebase';
 import { useAuth } from '../../hooks/useAuth';
 
 // ── SVG 아이콘 ──
-function CloseIcon({ size = 22, color = '#8a9bae' }) {
+function CloseIcon({ size = 22, color = '#9e9282' }) {
   return (
     <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
       <Path d="M18 6L6 18M6 6l12 12" stroke={color} strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" />
@@ -192,7 +192,7 @@ export default function NoteWriteScreen() {
           disabled={saving}
         >
           {saving ? (
-            <ActivityIndicator size="small" color="#0f1923" />
+            <ActivityIndicator size="small" color="#110E0B" />
           ) : (
             <Text style={styles.saveBtnText}>저장</Text>
           )}
@@ -214,7 +214,7 @@ export default function NoteWriteScreen() {
           <TextInput
             style={styles.input}
             placeholder="레슨 노트 제목"
-            placeholderTextColor="#4a5a6a"
+            placeholderTextColor="#9e9282"
             value={title}
             onChangeText={setTitle}
             maxLength={100}
@@ -226,7 +226,7 @@ export default function NoteWriteScreen() {
             <TextInput
               style={[styles.input, { flex: 1 }]}
               placeholder="2026-04-10"
-              placeholderTextColor="#4a5a6a"
+              placeholderTextColor="#9e9282"
               value={lessonDate}
               onChangeText={setLessonDate}
               onFocus={() => { if (!lessonDate) setLessonDate(getTodayString()); }}
@@ -245,7 +245,7 @@ export default function NoteWriteScreen() {
           <TextInput
             style={[styles.input, styles.contentInput]}
             placeholder="레슨 내용, 피드백, 연습 메모 등을 작성하세요"
-            placeholderTextColor="#4a5a6a"
+            placeholderTextColor="#9e9282"
             value={content}
             onChangeText={setContent}
             multiline
@@ -261,7 +261,7 @@ export default function NoteWriteScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#0f1923',
+    backgroundColor: '#110E0B',
   },
   header: {
     flexDirection: 'row',
@@ -269,8 +269,8 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     paddingHorizontal: 16,
     paddingVertical: 14,
-    borderBottomWidth: 1,
-    borderBottomColor: '#222f3a',
+    borderBottomWidth: 0.5,
+    borderBottomColor: 'rgba(201,169,110,0.15)',
   },
   headerBtn: {
     width: 40,
@@ -280,14 +280,15 @@ const styles = StyleSheet.create({
   },
   headerTitle: {
     fontSize: 18,
-    fontWeight: '700',
-    color: '#ffffff',
+    fontWeight: '300',
+    color: '#F5F0E8',
+    letterSpacing: 1,
   },
   saveBtn: {
     backgroundColor: '#C9A96E',
     paddingHorizontal: 18,
     paddingVertical: 8,
-    borderRadius: 8,
+    borderRadius: 4,
     minWidth: 60,
     alignItems: 'center',
     justifyContent: 'center',
@@ -296,9 +297,9 @@ const styles = StyleSheet.create({
     opacity: 0.6,
   },
   saveBtnText: {
-    color: '#0f1923',
+    color: '#110E0B',
     fontSize: 15,
-    fontWeight: '700',
+    fontWeight: '400',
   },
   center: {
     flex: 1,
@@ -307,7 +308,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 32,
   },
   emptyText: {
-    color: '#8a9bae',
+    color: '#9e9282',
     fontSize: 15,
     textAlign: 'center',
   },
@@ -317,17 +318,18 @@ const styles = StyleSheet.create({
   },
   label: {
     fontSize: 14,
-    fontWeight: '600',
-    color: '#8a9bae',
+    fontWeight: '400',
+    color: '#9e9282',
     marginBottom: 8,
     marginTop: 16,
+    letterSpacing: 0.5,
   },
   input: {
-    backgroundColor: '#1a2530',
-    borderRadius: 10,
+    backgroundColor: 'rgba(201,169,110,0.07)',
+    borderRadius: 4,
     borderWidth: 1,
-    borderColor: '#222f3a',
-    color: '#ffffff',
+    borderColor: 'rgba(201,169,110,0.18)',
+    color: '#F5F0E8',
     fontSize: 15,
     paddingHorizontal: 14,
     paddingVertical: 12,
@@ -344,13 +346,13 @@ const styles = StyleSheet.create({
     marginLeft: 8,
     borderWidth: 1,
     borderColor: '#C9A96E',
-    borderRadius: 8,
+    borderRadius: 4,
     paddingHorizontal: 12,
     paddingVertical: 10,
   },
   todayBtnText: {
     color: '#C9A96E',
     fontSize: 14,
-    fontWeight: '600',
+    fontWeight: '400',
   },
 });

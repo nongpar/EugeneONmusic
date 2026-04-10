@@ -8,7 +8,7 @@ import { router } from 'expo-router';
 import { useAuth } from '../../hooks/useAuth';
 
 // ── SVG 아이콘 ──
-function BackIcon({ size = 22, color = '#8a9bae' }) {
+function BackIcon({ size = 22, color = '#C9A96E' }) {
   return (
     <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
       <Path d="M19 12H5M5 12l7 7M5 12l7-7" stroke={color} strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" />
@@ -16,7 +16,7 @@ function BackIcon({ size = 22, color = '#8a9bae' }) {
   );
 }
 
-function UserIcon({ size = 20, color = '#6b7b8d' }) {
+function UserIcon({ size = 20, color = '#9e9282' }) {
   return (
     <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
       <Path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2" stroke={color} strokeWidth={2} strokeLinecap="round" />
@@ -25,7 +25,7 @@ function UserIcon({ size = 20, color = '#6b7b8d' }) {
   );
 }
 
-function LockIcon({ size = 20, color = '#6b7b8d' }) {
+function LockIcon({ size = 20, color = '#9e9282' }) {
   return (
     <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
       <Rect x="3" y="11" width="18" height="11" rx="2" stroke={color} strokeWidth={2} />
@@ -34,7 +34,7 @@ function LockIcon({ size = 20, color = '#6b7b8d' }) {
   );
 }
 
-function EyeIcon({ size = 20, color = '#6b7b8d', open = true }) {
+function EyeIcon({ size = 20, color = '#9e9282', open = true }) {
   return (
     <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
       {open ? (
@@ -116,7 +116,7 @@ export default function LoginScreen() {
             <TextInput
               style={styles.input}
               placeholder="아이디 또는 이메일"
-              placeholderTextColor="#4a5a6a"
+              placeholderTextColor="#9e9282"
               value={username}
               onChangeText={setUsername}
               autoCapitalize="none"
@@ -131,7 +131,7 @@ export default function LoginScreen() {
             <TextInput
               style={styles.input}
               placeholder="비밀번호"
-              placeholderTextColor="#4a5a6a"
+              placeholderTextColor="#9e9282"
               value={password}
               onChangeText={setPassword}
               secureTextEntry={!showPassword}
@@ -171,47 +171,47 @@ export default function LoginScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#0f1923' },
+  container: { flex: 1, backgroundColor: '#110E0B' },
   scrollContent: {
     flexGrow: 1, paddingHorizontal: 24, paddingTop: 60, paddingBottom: 40,
   },
   backBtn: {
-    width: 40, height: 40, borderRadius: 20,
-    backgroundColor: '#1a2530', alignItems: 'center', justifyContent: 'center',
+    width: 40, height: 40, borderRadius: 4,
+    backgroundColor: 'rgba(201,169,110,0.07)', alignItems: 'center', justifyContent: 'center',
     marginBottom: 24,
   },
   logoSection: { alignItems: 'center', gap: 4, marginBottom: 40 },
   logoImage: { width: 64, height: 64, marginBottom: 8 },
-  logoText: { fontSize: 22, fontWeight: '700', color: '#ffffff', letterSpacing: 0.3 },
-  logoAccent: { fontSize: 14, fontWeight: '500', color: '#C9A96E', letterSpacing: 0.5 },
-  subtitle: { fontSize: 13, color: '#6b7b8d', marginTop: 8 },
+  logoText: { fontSize: 22, fontWeight: '300', color: '#F5F0E8', letterSpacing: 1 },
+  logoAccent: { fontSize: 14, fontWeight: '400', color: '#C9A96E', letterSpacing: 1 },
+  subtitle: { fontSize: 13, color: '#9e9282', marginTop: 8, letterSpacing: 0.3 },
 
   form: { gap: 14 },
   inputWrap: {
     flexDirection: 'row', alignItems: 'center',
-    backgroundColor: '#1a2530', borderRadius: 12,
+    backgroundColor: 'rgba(201,169,110,0.07)', borderRadius: 4,
     paddingHorizontal: 14, height: 52,
-    borderWidth: 1, borderColor: '#2a3a4a',
+    borderWidth: 0.5, borderColor: 'rgba(201,169,110,0.15)',
   },
   inputIconWrap: { marginRight: 10 },
-  input: { flex: 1, fontSize: 15, color: '#ffffff' },
+  input: { flex: 1, fontSize: 15, color: '#F5F0E8' },
   eyeBtn: { padding: 4 },
 
   primaryBtn: {
-    backgroundColor: '#C9A96E', borderRadius: 12,
+    backgroundColor: '#C9A96E', borderRadius: 4,
     height: 52, alignItems: 'center', justifyContent: 'center', marginTop: 4,
   },
   disabledBtn: { opacity: 0.6 },
-  primaryBtnText: { fontSize: 16, fontWeight: '700', color: '#0f1923' },
+  primaryBtnText: { fontSize: 16, fontWeight: '400', color: '#110E0B', letterSpacing: 0.5 },
 
   infoBox: {
-    backgroundColor: '#1a2530', borderRadius: 12,
+    backgroundColor: 'rgba(201,169,110,0.07)', borderRadius: 4,
     padding: 16, marginTop: 24,
-    borderWidth: 1, borderColor: '#222f3a',
+    borderWidth: 0.5, borderColor: 'rgba(201,169,110,0.18)',
   },
-  infoText: { fontSize: 13, color: '#6b7b8d', lineHeight: 20, textAlign: 'center' },
+  infoText: { fontSize: 13, color: '#9e9282', lineHeight: 20, textAlign: 'center' },
 
   signUpRow: { flexDirection: 'row', justifyContent: 'center', marginTop: 20 },
-  toggleText: { color: '#6b7b8d', fontSize: 14 },
-  toggleLink: { color: '#C9A96E', fontSize: 14, fontWeight: 'bold' },
+  toggleText: { color: '#9e9282', fontSize: 14 },
+  toggleLink: { color: '#C9A96E', fontSize: 14, fontWeight: '400' },
 });

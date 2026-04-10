@@ -3,7 +3,7 @@ import Svg, { Path } from 'react-native-svg';
 import { router } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-function BackIcon({ size = 24, color = '#ffffff' }) {
+function BackIcon({ size = 24, color = '#F5F0E8' }) {
   return (
     <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
       <Path d="M15 18l-6-6 6-6" stroke={color} strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" />
@@ -135,7 +135,7 @@ export default function TermsScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#0f1923',
+    backgroundColor: '#110E0B',
   },
   header: {
     flexDirection: 'row',
@@ -143,16 +143,17 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     paddingHorizontal: 16,
     paddingVertical: 12,
-    borderBottomWidth: 1,
-    borderBottomColor: '#222f3a',
+    borderBottomWidth: 0.5,
+    borderBottomColor: 'rgba(201,169,110,0.18)',
   },
   backBtn: {
     padding: 4,
   },
   headerTitle: {
     fontSize: 18,
-    fontWeight: 'bold',
-    color: '#ffffff',
+    fontWeight: '400',
+    color: '#F5F0E8',
+    letterSpacing: 0.3,
   },
   content: {
     paddingHorizontal: 20,
@@ -164,30 +165,32 @@ const styles = StyleSheet.create({
     color: '#C9A96E',
     marginBottom: 16,
     fontWeight: '600',
+    letterSpacing: 0.5,
   },
   sectionTitle: {
     fontSize: 15,
-    fontWeight: '700',
-    color: '#ffffff',
+    fontWeight: '400',
+    color: '#F5F0E8',
     marginTop: 20,
     marginBottom: 10,
+    letterSpacing: 0.3,
   },
   body: {
     fontSize: 14,
-    color: '#8a9bae',
+    color: '#C9A96E',
     lineHeight: 22,
     marginBottom: 8,
   },
   listItem: {
     fontSize: 13,
-    color: '#8a9bae',
+    color: '#C9A96E',
     lineHeight: 22,
     marginBottom: 4,
     paddingLeft: 8,
   },
   subItem: {
     fontSize: 13,
-    color: '#6b7b8d',
+    color: '#9e9282',
     lineHeight: 22,
     marginBottom: 2,
     paddingLeft: 24,

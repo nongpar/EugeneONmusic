@@ -88,8 +88,8 @@ const styles = StyleSheet.create({
   },
   senderAvatarText: {
     fontSize: 13,
-    fontWeight: 'bold',
-    color: '#fff',
+    fontWeight: '400',
+    color: '#0C0A08',
   },
   bubbleCol: {
     maxWidth: '75%',
@@ -97,33 +97,33 @@ const styles = StyleSheet.create({
   },
   senderName: {
     fontSize: 11,
-    color: '#6b7b8d',
+    color: '#9e9282',
     marginBottom: 2,
   },
   bubble: {
     paddingHorizontal: 14,
     paddingVertical: 10,
-    borderRadius: 16,
+    borderRadius: 4,
   },
   bubbleOther: {
-    backgroundColor: '#1a2530',
-    borderTopLeftRadius: 4,
+    backgroundColor: 'rgba(201,169,110,0.07)',
+    borderTopLeftRadius: 0,
   },
   bubbleMine: {
-    backgroundColor: '#2C5F8A',
-    borderTopRightRadius: 4,
+    backgroundColor: '#C9A96E',
+    borderTopRightRadius: 0,
   },
   bubbleText: {
     fontSize: 14,
-    color: '#c0cdd8',
+    color: '#c0bab0',
     lineHeight: 20,
   },
   bubbleTextMine: {
-    color: '#ffffff',
+    color: '#0C0A08',
   },
   timeText: {
     fontSize: 10,
-    color: '#4a5a6a',
+    color: '#9e9282',
   },
   timeTextMine: {
     textAlign: 'right',

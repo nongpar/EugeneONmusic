@@ -13,7 +13,7 @@ import { db } from '../../config/firebase';
 import { useAuth } from '../../hooks/useAuth';
 
 // ── SVG 아이콘 ──
-function BackIcon({ size = 22, color = '#8a9bae' }) {
+function BackIcon({ size = 22, color = '#9e9282' }) {
   return (
     <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
       <Path d="M19 12H5M5 12l7 7M5 12l7-7" stroke={color} strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" />
@@ -30,7 +30,7 @@ function NoteIcon({ size = 20, color = '#C9A96E' }) {
   );
 }
 
-function PlusIcon({ size = 24, color = '#0f1923' }) {
+function PlusIcon({ size = 24, color = '#110E0B' }) {
   return (
     <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
       <Line x1="12" y1="5" x2="12" y2="19" stroke={color} strokeWidth={2.5} strokeLinecap="round" />
@@ -39,7 +39,7 @@ function PlusIcon({ size = 24, color = '#0f1923' }) {
   );
 }
 
-function CalendarIcon({ size = 14, color = '#8a9bae' }) {
+function CalendarIcon({ size = 14, color = '#9e9282' }) {
   return (
     <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
       <Path d="M19 4H5a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2V6a2 2 0 00-2-2zM16 2v4M8 2v4M3 10h18" stroke={color} strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" />
@@ -55,14 +55,46 @@ function TrashIcon({ size = 16, color = '#e74c3c' }) {
   );
 }
 
+// ── Manuscript Decorations ──
+function StaffLines() {
+  return (
+    <View style={styles.staffLines} pointerEvents="none">
+      {[0, 1, 2, 3, 4].map(i => (
+        <View key={i} style={styles.staffLine} />
+      ))}
+    </View>
+  );
+}
+
+function ParchmentCorner({ position = 'topLeft' }) {
+  const isTop = position.includes('top');
+  const isLeft = position.includes('Left');
+  return (
+    <View style={[
+      styles.parchmentCorner,
+      { [isTop ? 'top' : 'bottom']: 0, [isLeft ? 'left' : 'right']: 0 },
+      !isTop && { transform: [{ scaleY: -1 }] },
+      !isLeft && { transform: [{ scaleX: -1 }] },
+      !isTop && !isLeft && { transform: [{ scaleX: -1 }, { scaleY: -1 }] },
+    ]} pointerEvents="none">
+      <Svg width={20} height={20} viewBox="0 0 20 20" fill="none">
+        <Path d="M2 2 C2 2 2 8 8 8 C2 8 2 14 2 14" stroke="rgba(201,169,110,0.2)" strokeWidth={0.8} />
+      </Svg>
+    </View>
+  );
+}
+
 // ── 노트 카드 ──
 function NoteCard({ note, user, confirmDelete }) {
-  const badgeColor = note.authorRole === 'teacher' ? '#C9A96E' : '#2C5F8A';
+  const badgeColor = note.authorRole === 'teacher' ? '#C9A96E' : '#9e9282';
   const roleLabel = note.authorRole === 'teacher' ? '선생님' : '학생';
   const isAuthor = user && note.authorId === user.uid;
 
   return (
     <View style={styles.noteCard}>
+      <StaffLines />
+      <ParchmentCorner position="topLeft" />
+      <ParchmentCorner position="topRight" />
       <View style={styles.noteHeader}>
         <View style={{ flex: 1 }}>
           <Text style={styles.noteTitle} numberOfLines={1}>{note.title}</Text>
@@ -235,7 +267,7 @@ export default function LessonNotesScreen() {
           <View style={styles.headerBtn} />
         </View>
         <View style={styles.center}>
-          <NoteIcon size={48} color="#3a4a5a" />
+          <NoteIcon size={48} color="rgba(201,169,110,0.3)" />
           <Text style={styles.emptyText}>멘토십이 없습니다</Text>
         </View>
       </View>
@@ -256,7 +288,7 @@ export default function LessonNotesScreen() {
       {/* 노트 목록 */}
       {notes.length === 0 ? (
         <View style={styles.center}>
-          <NoteIcon size={48} color="#3a4a5a" />
+          <NoteIcon size={48} color="rgba(201,169,110,0.3)" />
           <Text style={styles.emptyText}>
             아직 레슨 노트가 없습니다.{'\n'}첫 노트를 작성해보세요!
           </Text>
@@ -287,7 +319,7 @@ export default function LessonNotesScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#0f1923',
+    backgroundColor: '#110E0B',
   },
   header: {
     flexDirection: 'row',
@@ -295,8 +327,8 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     paddingHorizontal: 16,
     paddingVertical: 14,
-    borderBottomWidth: 1,
-    borderBottomColor: '#222f3a',
+    borderBottomWidth: 0.5,
+    borderBottomColor: 'rgba(201,169,110,0.15)',
   },
   headerBtn: {
     width: 40,
@@ -306,8 +338,9 @@ const styles = StyleSheet.create({
   },
   headerTitle: {
     fontSize: 18,
-    fontWeight: '700',
-    color: '#ffffff',
+    fontWeight: '300',
+    color: '#F5F0E8',
+    letterSpacing: 1,
   },
   center: {
     flex: 1,
@@ -316,7 +349,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 32,
   },
   emptyText: {
-    color: '#8a9bae',
+    color: '#9e9282',
     fontSize: 15,
     textAlign: 'center',
     marginTop: 16,
@@ -327,12 +360,32 @@ const styles = StyleSheet.create({
     paddingBottom: 100,
   },
   noteCard: {
-    backgroundColor: '#1a2530',
-    borderRadius: 12,
+    backgroundColor: 'rgba(245,240,225,0.05)',
+    borderRadius: 4,
     padding: 16,
     marginBottom: 12,
-    borderWidth: 1,
-    borderColor: '#222f3a',
+    borderWidth: 0.5,
+    borderColor: 'rgba(180,150,100,0.2)',
+    borderTopWidth: 1.5,
+    borderTopColor: 'rgba(201,169,110,0.25)',
+    position: 'relative',
+    overflow: 'hidden',
+  },
+  staffLines: {
+    position: 'absolute',
+    left: 14,
+    right: 14,
+    bottom: 8,
+    height: 28,
+    justifyContent: 'space-between',
+  },
+  staffLine: {
+    height: 0.5,
+    backgroundColor: 'rgba(180,150,100,0.1)',
+  },
+  parchmentCorner: {
+    position: 'absolute',
+    zIndex: 1,
   },
   noteHeader: {
     flexDirection: 'row',
@@ -341,19 +394,20 @@ const styles = StyleSheet.create({
   },
   noteTitle: {
     fontSize: 16,
-    fontWeight: '600',
-    color: '#ffffff',
+    fontWeight: '400',
+    color: '#F5F0E8',
     marginRight: 8,
   },
   roleBadge: {
     paddingHorizontal: 8,
     paddingVertical: 3,
-    borderRadius: 8,
+    borderRadius: 4,
     borderWidth: 1,
   },
   roleBadgeText: {
     fontSize: 11,
-    fontWeight: '600',
+    fontWeight: '400',
+    letterSpacing: 0.5,
   },
   deleteBtn: {
     marginLeft: 8,
@@ -366,23 +420,23 @@ const styles = StyleSheet.create({
   },
   noteAuthor: {
     fontSize: 13,
-    color: '#8a9bae',
+    color: '#9e9282',
   },
   metaDot: {
     width: 3,
     height: 3,
     borderRadius: 1.5,
-    backgroundColor: '#3a4a5a',
+    backgroundColor: 'rgba(201,169,110,0.25)',
     marginHorizontal: 8,
   },
   noteDate: {
     fontSize: 13,
-    color: '#8a9bae',
+    color: '#9e9282',
     marginLeft: 4,
   },
   notePreview: {
     fontSize: 14,
-    color: '#6b7c8e',
+    color: '#9e9282',
     lineHeight: 20,
   },
   fab: {

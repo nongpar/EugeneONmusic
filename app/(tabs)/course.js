@@ -1,11 +1,16 @@
 import { useState, useCallback, useEffect } from 'react';
 import {
   View, Text, StyleSheet, ScrollView, TouchableOpacity, Image, Linking,
-  RefreshControl, ActivityIndicator,
+  RefreshControl, ActivityIndicator, Platform,
 } from 'react-native';
 import Svg, { Path, Circle } from 'react-native-svg';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
+
+let Haptics = null;
+if (Platform.OS !== 'web') {
+  try { Haptics = require('expo-haptics'); } catch {}
+}
 
 // ── WordPress REST API ──
 const WP_API = 'https://eon-music.com/wp-json/eon/v1';
@@ -89,7 +94,7 @@ function PlayIcon({ size = 16, color = '#C9A96E' }) {
   );
 }
 
-function BookIcon({ size = 14, color = '#6b7b8d' }) {
+function BookIcon({ size = 14, color = '#9e9282' }) {
   return (
     <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
       <Path d="M4 19.5A2.5 2.5 0 016.5 17H20" stroke={color} strokeWidth={2} strokeLinecap="round" />
@@ -106,7 +111,7 @@ function ExternalIcon({ size = 16, color = '#C9A96E' }) {
   );
 }
 
-function MusicNoteIcon({ size = 14, color = '#6b7b8d' }) {
+function MusicNoteIcon({ size = 14, color = '#9e9282' }) {
   return (
     <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
       <Path d="M9 18V5l12-2v13" stroke={color} strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" />
@@ -116,7 +121,7 @@ function MusicNoteIcon({ size = 14, color = '#6b7b8d' }) {
   );
 }
 
-function UserIcon({ size = 14, color = '#6b7b8d' }) {
+function UserIcon({ size = 14, color = '#9e9282' }) {
   return (
     <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
       <Path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2" stroke={color} strokeWidth={2} strokeLinecap="round" />
@@ -128,8 +133,8 @@ function UserIcon({ size = 14, color = '#6b7b8d' }) {
 // ── 배지 컴포넌트 ──
 function CategoryBadge({ category }) {
   const colors = {
-    '피아노': { bg: '#1a2a3a', text: '#60a5fa' },
-    '작곡·음악이론': { bg: '#2a2a1a', text: '#C9A96E' },
+    '피아노': { bg: 'rgba(201,169,110,0.1)', text: '#C9A96E' },
+    '작곡·음악이론': { bg: 'rgba(201,169,110,0.1)', text: '#C9A96E' },
   };
   const c = colors[category] || colors['피아노'];
   return (
@@ -142,7 +147,7 @@ function CategoryBadge({ category }) {
 function StatusBadge({ status }) {
   if (status === 'none') return null;
   const config = {
-    new: { bg: '#C9A96E', text: '#0f1923', label: 'NEW' },
+    new: { bg: '#C9A96E', text: '#0C0A08', label: 'NEW' },
     popular: { bg: '#2C5F8A', text: '#ffffff', label: 'BEST' },
   };
   const c = config[status];
@@ -262,7 +267,7 @@ export default function CourseScreen() {
       <View style={styles.header}>
         <View>
           <Text style={styles.headerTitle}>강좌</Text>
-          <Text style={styles.headerSub}>원격평생교육원</Text>
+          <Text style={styles.headerSub}>PIANO  ·  COMPOSITION  ·  THEORY</Text>
         </View>
       </View>
 
@@ -273,7 +278,7 @@ export default function CourseScreen() {
             <TouchableOpacity
               key={cat}
               style={[styles.categoryBtn, activeCategory === cat && styles.categoryBtnActive]}
-              onPress={() => setActiveCategory(cat)}
+              onPress={() => { if (Haptics) Haptics.selectionAsync(); setActiveCategory(cat); }}
             >
               <Text style={[styles.categoryLabel, activeCategory === cat && styles.categoryLabelActive]}>
                 {cat}
@@ -322,7 +327,7 @@ export default function CourseScreen() {
 
         {!loading && filtered.length === 0 && (
           <View style={styles.emptyWrap}>
-            <BookIcon size={40} color="#3a4a5a" />
+            <BookIcon size={40} color="rgba(201,169,110,0.3)" />
             <Text style={styles.emptyText}>해당 카테고리의 강좌가 없습니다</Text>
           </View>
         )}
@@ -353,27 +358,27 @@ export default function CourseScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#0f1923' },
+  container: { flex: 1, backgroundColor: '#110E0B' },
 
   /* 헤더 */
   header: {
     flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center',
-    paddingHorizontal: 24, paddingTop: 16, paddingBottom: 12,
-    borderBottomWidth: 1, borderBottomColor: '#1a2530',
+    paddingHorizontal: 24, paddingTop: 16, paddingBottom: 14,
+    borderBottomWidth: 0.5, borderBottomColor: 'rgba(201,169,110,0.15)',
   },
-  headerTitle: { fontSize: 22, fontWeight: '700', color: '#ffffff', letterSpacing: -0.5 },
-  headerSub: { fontSize: 12, color: '#C9A96E', marginTop: 2, fontWeight: '500', letterSpacing: 0.5 },
+  headerTitle: { fontSize: 22, fontWeight: '300', color: '#F5F0E8', letterSpacing: 1 },
+  headerSub: { fontSize: 10, color: '#C9A96E', marginTop: 4, fontWeight: '400', letterSpacing: 2.5 },
 
   /* 카테고리 */
-  categoryWrap: { borderBottomWidth: 1, borderBottomColor: '#1a2530' },
+  categoryWrap: { borderBottomWidth: 0.5, borderBottomColor: 'rgba(201,169,110,0.15)' },
   categoryRow: { paddingHorizontal: 20, paddingVertical: 12, gap: 8 },
   categoryBtn: {
     paddingHorizontal: 16, paddingVertical: 8,
-    borderRadius: 20, backgroundColor: '#1a2530',
-    borderWidth: 1, borderColor: '#1a2530',
+    borderRadius: 4, backgroundColor: 'rgba(201,169,110,0.07)',
+    borderWidth: 0.5, borderColor: 'rgba(201,169,110,0.18)',
   },
   categoryBtnActive: { backgroundColor: 'transparent', borderColor: '#C9A96E' },
-  categoryLabel: { fontSize: 13, fontWeight: '600', color: '#5a6a7a' },
+  categoryLabel: { fontSize: 13, fontWeight: '400', color: '#9e9282', letterSpacing: 0.3 },
   categoryLabelActive: { color: '#C9A96E' },
 
   /* 리스트 */
@@ -382,26 +387,26 @@ const styles = StyleSheet.create({
     flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center',
     paddingVertical: 10,
   },
-  statsText: { fontSize: 12, color: '#4a5a6a', fontWeight: '500' },
+  statsText: { fontSize: 12, color: '#9e9282', fontWeight: '400' },
   sourceIndicator: { flexDirection: 'row', alignItems: 'center', gap: 5 },
-  sourceDot: { width: 6, height: 6, borderRadius: 3, backgroundColor: '#4ade80' },
-  sourceText: { fontSize: 11, color: '#4a5a6a' },
+  sourceDot: { width: 6, height: 6, borderRadius: 3, backgroundColor: '#C9A96E' },
+  sourceText: { fontSize: 11, color: '#9e9282' },
 
   /* 강좌 카드 */
   courseCard: {
-    backgroundColor: '#1a2530', borderRadius: 14,
+    backgroundColor: 'rgba(201,169,110,0.07)', borderRadius: 4,
     marginBottom: 14, overflow: 'hidden',
-    borderWidth: 1, borderColor: '#222f3a',
+    borderWidth: 0.5, borderColor: 'rgba(201,169,110,0.18)',
   },
-  cardThumbnail: { height: 190, backgroundColor: '#0d1520', position: 'relative' },
+  cardThumbnail: { height: 190, backgroundColor: '#0C0A08', position: 'relative' },
   cardImage: { width: '100%', height: '100%' },
   cardPlaceholder: {
     flex: 1, alignItems: 'center', justifyContent: 'center',
-    backgroundColor: '#141f2b',
+    backgroundColor: 'rgba(201,169,110,0.04)',
   },
   statusOverlay: { position: 'absolute', top: 10, left: 10 },
-  statusBadge: { paddingHorizontal: 8, paddingVertical: 3, borderRadius: 4 },
-  statusText: { fontSize: 10, fontWeight: '800', letterSpacing: 0.5 },
+  statusBadge: { paddingHorizontal: 8, paddingVertical: 3, borderRadius: 2 },
+  statusText: { fontSize: 10, fontWeight: '700', letterSpacing: 1.5 },
   playOverlay: {
     position: 'absolute', right: 12, bottom: 12,
   },
@@ -413,26 +418,26 @@ const styles = StyleSheet.create({
 
   cardBody: { padding: 16, gap: 6 },
   cardTopRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
-  categoryBadge: { paddingHorizontal: 8, paddingVertical: 3, borderRadius: 4 },
-  categoryBadgeText: { fontSize: 11, fontWeight: '700' },
-  cardTitle: { fontSize: 16, fontWeight: '700', color: '#ffffff', lineHeight: 23, letterSpacing: -0.3, marginTop: 2 },
+  categoryBadge: { paddingHorizontal: 8, paddingVertical: 3, borderRadius: 2 },
+  categoryBadgeText: { fontSize: 11, fontWeight: '600', letterSpacing: 0.5 },
+  cardTitle: { fontSize: 16, fontWeight: '400', color: '#F5F0E8', lineHeight: 23, letterSpacing: 0.3, marginTop: 2 },
   metaRow: { flexDirection: 'row', alignItems: 'center', gap: 5 },
-  metaText: { fontSize: 13, color: '#6b7b8d', fontWeight: '500' },
+  metaText: { fontSize: 13, color: '#9e9282', fontWeight: '400' },
 
   /* 로딩 */
   loadingWrap: { alignItems: 'center', paddingVertical: 60, gap: 12 },
-  loadingText: { fontSize: 14, color: '#5a6a7a' },
+  loadingText: { fontSize: 14, color: '#9e9282' },
 
   /* 빈 상태 */
   emptyWrap: { alignItems: 'center', paddingVertical: 60, gap: 12 },
-  emptyText: { fontSize: 14, color: '#4a5a6a' },
+  emptyText: { fontSize: 14, color: '#9e9282' },
 
   /* CTA */
   cta: {
     flexDirection: 'row', alignItems: 'center', justifyContent: 'center',
     gap: 8, paddingVertical: 16, marginTop: 8,
-    borderWidth: 1, borderColor: '#C9A96E30', borderRadius: 12,
-    backgroundColor: '#C9A96E08',
+    borderWidth: 0.5, borderColor: 'rgba(201,169,110,0.25)', borderRadius: 4,
+    backgroundColor: 'rgba(201,169,110,0.07)',
   },
-  ctaText: { fontSize: 14, fontWeight: '600', color: '#C9A96E' },
+  ctaText: { fontSize: 14, fontWeight: '400', color: '#C9A96E', letterSpacing: 0.5 },
 });

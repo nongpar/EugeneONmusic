@@ -8,7 +8,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 const STORAGE_KEY = '@eon_notification_settings';
 
 // ── SVG Icons ──
-function BackIcon({ size = 24, color = '#ffffff' }) {
+function BackIcon({ size = 24, color = '#F5F0E8' }) {
   return (
     <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
       <Path d="M15 18l-6-6 6-6" stroke={color} strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" />
@@ -16,7 +16,7 @@ function BackIcon({ size = 24, color = '#ffffff' }) {
   );
 }
 
-function ChatIcon({ size = 22, color = '#8a9bae' }) {
+function ChatIcon({ size = 22, color = '#C9A96E' }) {
   return (
     <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
       <Path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z" stroke={color} strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round" />
@@ -24,7 +24,7 @@ function ChatIcon({ size = 22, color = '#8a9bae' }) {
   );
 }
 
-function CalendarIcon({ size = 22, color = '#8a9bae' }) {
+function CalendarIcon({ size = 22, color = '#C9A96E' }) {
   return (
     <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
       <Path d="M19 4H5a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2V6a2 2 0 00-2-2zM16 2v4M8 2v4M3 10h18" stroke={color} strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round" />
@@ -32,11 +32,21 @@ function CalendarIcon({ size = 22, color = '#8a9bae' }) {
   );
 }
 
-function MegaphoneIcon({ size = 22, color = '#8a9bae' }) {
+function MegaphoneIcon({ size = 22, color = '#C9A96E' }) {
   return (
     <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
       <Path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9" stroke={color} strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round" />
       <Path d="M13.73 21a2 2 0 01-3.46 0" stroke={color} strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round" />
+    </Svg>
+  );
+}
+
+function UserPlusIcon({ size = 22, color = '#C9A96E' }) {
+  return (
+    <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+      <Path d="M16 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2" stroke={color} strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round" />
+      <Circle cx="8.5" cy="7" r="4" stroke={color} strokeWidth={1.8} />
+      <Path d="M20 8v6M23 11h-6" stroke={color} strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round" />
     </Svg>
   );
 }
@@ -54,8 +64,8 @@ function NotificationRow({ icon, label, description, value, onValueChange }) {
       <Switch
         value={value}
         onValueChange={onValueChange}
-        trackColor={{ false: '#222f3a', true: '#C9A96E' }}
-        thumbColor={value ? '#ffffff' : '#6b7b8d'}
+        trackColor={{ false: 'rgba(201,169,110,0.18)', true: '#C9A96E' }}
+        thumbColor={value ? '#F5F0E8' : '#9e9282'}
       />
     </View>
   );
@@ -68,6 +78,7 @@ export default function NotificationsScreen() {
     chat: true,
     lesson: true,
     announcement: true,
+    mentor: true,
   });
 
   // Load saved settings
@@ -131,6 +142,13 @@ export default function NotificationsScreen() {
             value={settings.announcement}
             onValueChange={(v) => updateSetting('announcement', v)}
           />
+          <NotificationRow
+            icon={<UserPlusIcon />}
+            label="멘토십 알림"
+            description="멘토 배정 및 멘토십 관련 알림"
+            value={settings.mentor}
+            onValueChange={(v) => updateSetting('mentor', v)}
+          />
         </View>
 
         <Text style={styles.footerNote}>
@@ -144,7 +162,7 @@ export default function NotificationsScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#0f1923',
+    backgroundColor: '#110E0B',
   },
   header: {
     flexDirection: 'row',
@@ -158,8 +176,9 @@ const styles = StyleSheet.create({
   },
   headerTitle: {
     fontSize: 18,
-    fontWeight: 'bold',
-    color: '#ffffff',
+    fontWeight: '400',
+    color: '#F5F0E8',
+    letterSpacing: 0.3,
   },
   content: {
     paddingHorizontal: 20,
@@ -168,17 +187,18 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: 14,
     fontWeight: '600',
-    color: '#6b7b8d',
+    color: '#9e9282',
     marginBottom: 10,
     marginTop: 12,
     marginLeft: 4,
+    letterSpacing: 0.5,
   },
   card: {
-    backgroundColor: '#1a2530',
-    borderRadius: 16,
+    backgroundColor: 'rgba(201,169,110,0.07)',
+    borderRadius: 4,
     overflow: 'hidden',
-    borderWidth: 1,
-    borderColor: '#222f3a',
+    borderWidth: 0.5,
+    borderColor: 'rgba(201,169,110,0.18)',
   },
   row: {
     flexDirection: 'row',
@@ -186,8 +206,8 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     paddingVertical: 16,
     paddingHorizontal: 16,
-    borderBottomWidth: 1,
-    borderBottomColor: '#0f1923',
+    borderBottomWidth: 0.5,
+    borderBottomColor: '#110E0B',
   },
   rowLeft: {
     flexDirection: 'row',
@@ -198,8 +218,8 @@ const styles = StyleSheet.create({
   iconWrap: {
     width: 40,
     height: 40,
-    borderRadius: 12,
-    backgroundColor: '#0f1923',
+    borderRadius: 4,
+    backgroundColor: '#110E0B',
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -209,17 +229,17 @@ const styles = StyleSheet.create({
   },
   rowLabel: {
     fontSize: 15,
-    color: '#ffffff',
+    color: '#F5F0E8',
     fontWeight: '500',
   },
   rowDesc: {
     fontSize: 12,
-    color: '#6b7b8d',
+    color: '#9e9282',
     marginTop: 2,
   },
   footerNote: {
     fontSize: 12,
-    color: '#4a5a6a',
+    color: 'rgba(201,169,110,0.3)',
     textAlign: 'center',
     marginTop: 20,
     lineHeight: 18,

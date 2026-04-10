@@ -54,7 +54,7 @@ const CATEGORY_CONFIG = {
   67: { label: '콩쿠르', icon: TrophyIcon, color: '#C9A96E' },
 };
 
-const DEFAULT_CONFIG = { label: '소식', icon: NewsIcon, color: '#8a9bae' };
+const DEFAULT_CONFIG = { label: '소식', icon: NewsIcon, color: '#C9A96E' };
 
 function getCategoryConfig(categoryIds) {
   if (!categoryIds || categoryIds.length === 0) return DEFAULT_CONFIG;
@@ -145,12 +145,12 @@ export default function NewsCard({ post, isHeadline, onPress }) {
 
 const styles = StyleSheet.create({
   headlineCard: {
-    borderRadius: 16,
+    borderRadius: 4,
     marginHorizontal: 20,
     marginBottom: 16,
     overflow: 'hidden',
-    borderWidth: 1,
-    borderColor: '#2C5F8A',
+    borderWidth: 0.5,
+    borderColor: 'rgba(201,169,110,0.3)',
     position: 'relative',
   },
   headlineImage: {
@@ -160,33 +160,36 @@ const styles = StyleSheet.create({
   headlineOverlay: {
     padding: 20,
     gap: 8,
-    backgroundColor: '#1a2a3a',
+    backgroundColor: 'rgba(201,169,110,0.07)',
   },
   headlineOverlayWithImage: {
     position: 'absolute',
     bottom: 0,
     left: 0,
     right: 0,
-    backgroundColor: 'rgba(15,25,35,0.85)',
+    backgroundColor: 'rgba(12,10,8,0.85)',
     padding: 16,
   },
   headlineTitle: {
     fontSize: 17,
-    fontWeight: 'bold',
-    color: '#ffffff',
+    fontWeight: '400',
+    color: '#F5F0E8',
     lineHeight: 24,
+    letterSpacing: 0.3,
   },
   headlineSummary: {
     fontSize: 13,
-    color: '#8a9bae',
+    color: '#9e9282',
     lineHeight: 19,
   },
   card: {
-    backgroundColor: '#1a2530',
-    borderRadius: 12,
+    backgroundColor: 'rgba(201,169,110,0.07)',
+    borderRadius: 4,
     marginHorizontal: 20,
     marginBottom: 10,
     padding: 14,
+    borderWidth: 0.5,
+    borderColor: 'rgba(201,169,110,0.15)',
   },
   cardContent: {
     flexDirection: 'row',
@@ -200,20 +203,21 @@ const styles = StyleSheet.create({
   },
   cardTitle: {
     fontSize: 14,
-    fontWeight: '600',
-    color: '#ffffff',
+    fontWeight: '400',
+    color: '#F5F0E8',
     lineHeight: 20,
+    letterSpacing: 0.3,
   },
   cardThumb: {
     width: 56,
     height: 56,
-    borderRadius: 10,
-    backgroundColor: '#222f3a',
+    borderRadius: 4,
+    backgroundColor: 'rgba(201,169,110,0.18)',
   },
   cardIcon: {
     width: 52,
     height: 52,
-    borderRadius: 12,
+    borderRadius: 4,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -223,16 +227,17 @@ const styles = StyleSheet.create({
     alignSelf: 'flex-start',
     paddingHorizontal: 8,
     paddingVertical: 3,
-    borderRadius: 6,
+    borderRadius: 4,
     gap: 4,
   },
   categoryText: {
     fontSize: 10,
-    fontWeight: 'bold',
-    color: '#ffffff',
+    fontWeight: '400',
+    color: '#F5F0E8',
+    letterSpacing: 0.5,
   },
   dateText: {
     fontSize: 11,
-    color: '#5a6a7a',
+    color: '#9e9282',
   },
 });

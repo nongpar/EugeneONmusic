@@ -28,7 +28,7 @@ const showAlert = (title, message, buttons) => {
 };
 
 // ── SVG 아이콘 ──
-function BackIcon({ size = 22, color = '#8a9bae' }) {
+function BackIcon({ size = 22, color = '#9e9282' }) {
   return (
     <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
       <Path d="M19 12H5M5 12l7 7M5 12l7-7" stroke={color} strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" />
@@ -54,7 +54,7 @@ function PlayIcon({ size = 32, color = '#ffffff' }) {
   );
 }
 
-function VideoEmptyIcon({ size = 56, color = '#2a3a4a' }) {
+function VideoEmptyIcon({ size = 56, color = 'rgba(201,169,110,0.3)' }) {
   return (
     <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
       <Rect x="2" y="5" width="15" height="14" rx="2" stroke={color} strokeWidth={1.5} />
@@ -87,7 +87,7 @@ function VideoCard({ item, onDelete, onPlay, canDelete }) {
     <TouchableOpacity style={styles.videoCard} activeOpacity={0.8} onPress={() => onPlay(item)}>
       <View style={styles.thumbnailWrap}>
         <View style={[styles.thumbnail, styles.thumbnailPlaceholder]}>
-          <VideoEmptyIcon size={32} color="#3a4a5a" />
+          <VideoEmptyIcon size={32} color="rgba(201,169,110,0.3)" />
         </View>
         <View style={styles.playOverlay}>
           <PlayIcon />
@@ -354,45 +354,45 @@ export default function LessonVideosScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#0f1923' },
+  container: { flex: 1, backgroundColor: '#110E0B' },
   center: { flex: 1, alignItems: 'center', justifyContent: 'center' },
 
   header: {
     flexDirection: 'row', alignItems: 'center',
     paddingHorizontal: 16, paddingVertical: 12,
-    borderBottomWidth: 1, borderBottomColor: '#1a2530', gap: 12,
+    borderBottomWidth: 0.5, borderBottomColor: 'rgba(201,169,110,0.15)', gap: 12,
   },
-  headerBtn: { width: 36, height: 36, borderRadius: 18, alignItems: 'center', justifyContent: 'center' },
+  headerBtn: { width: 36, height: 36, borderRadius: 4, alignItems: 'center', justifyContent: 'center' },
   headerCenter: { flex: 1, alignItems: 'center' },
-  headerTitle: { fontSize: 17, fontWeight: '700', color: '#ffffff' },
-  headerSub: { fontSize: 11, color: '#5a6a7a', marginTop: 1 },
+  headerTitle: { fontSize: 17, fontWeight: '300', color: '#F5F0E8', letterSpacing: 1 },
+  headerSub: { fontSize: 11, color: '#9e9282', marginTop: 1, letterSpacing: 0.5 },
 
-  uploadBar: { height: 28, backgroundColor: '#1a2530', justifyContent: 'center' },
-  uploadProgress: { position: 'absolute', left: 0, top: 0, bottom: 0, backgroundColor: '#fb923c30' },
-  uploadText: { fontSize: 11, color: '#fb923c', textAlign: 'center', fontWeight: '600' },
+  uploadBar: { height: 28, backgroundColor: 'rgba(201,169,110,0.07)', justifyContent: 'center' },
+  uploadProgress: { position: 'absolute', left: 0, top: 0, bottom: 0, backgroundColor: 'rgba(201,169,110,0.15)' },
+  uploadText: { fontSize: 11, color: '#C9A96E', textAlign: 'center', fontWeight: '400' },
 
-  infoBar: { paddingVertical: 8, paddingHorizontal: 20, backgroundColor: '#1a2530' },
-  infoText: { fontSize: 11, color: '#4a5a6a', textAlign: 'center' },
+  infoBar: { paddingVertical: 8, paddingHorizontal: 20, backgroundColor: 'rgba(201,169,110,0.07)' },
+  infoText: { fontSize: 11, color: '#9e9282', textAlign: 'center' },
 
   emptyWrap: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: 12, paddingHorizontal: 40, paddingTop: 100 },
-  emptyTitle: { fontSize: 18, fontWeight: '700', color: '#ffffff', marginTop: 8 },
-  emptyDesc: { fontSize: 13, color: '#5a6a7a', textAlign: 'center', lineHeight: 20 },
+  emptyTitle: { fontSize: 18, fontWeight: '300', color: '#F5F0E8', marginTop: 8, letterSpacing: 0.5 },
+  emptyDesc: { fontSize: 13, color: '#9e9282', textAlign: 'center', lineHeight: 20 },
   emptyUploadBtn: {
     flexDirection: 'row', alignItems: 'center', gap: 8,
     backgroundColor: '#C9A96E', paddingVertical: 14, paddingHorizontal: 28,
-    borderRadius: 12, marginTop: 12,
+    borderRadius: 4, marginTop: 12,
   },
-  emptyUploadText: { fontSize: 15, fontWeight: '700', color: '#0f1923' },
+  emptyUploadText: { fontSize: 15, fontWeight: '400', color: '#110E0B' },
 
   listContent: { paddingHorizontal: 16, paddingTop: 12, paddingBottom: 20 },
 
   videoCard: {
-    flexDirection: 'row', backgroundColor: '#1a2530', borderRadius: 12,
+    flexDirection: 'row', backgroundColor: 'rgba(201,169,110,0.07)', borderRadius: 4,
     marginBottom: 10, overflow: 'hidden',
-    borderWidth: 1, borderColor: '#222f3a',
+    borderWidth: 1, borderColor: 'rgba(201,169,110,0.18)',
   },
   thumbnailWrap: {
-    width: 140, height: 90, backgroundColor: '#0f1923',
+    width: 140, height: 90, backgroundColor: '#110E0B',
     position: 'relative',
   },
   thumbnail: { width: '100%', height: '100%' },
@@ -403,15 +403,15 @@ const styles = StyleSheet.create({
   },
 
   videoInfo: { flex: 1, padding: 12, justifyContent: 'center', gap: 6 },
-  videoTitle: { fontSize: 14, fontWeight: '600', color: '#ffffff', lineHeight: 20 },
+  videoTitle: { fontSize: 14, fontWeight: '400', color: '#F5F0E8', lineHeight: 20 },
   videoMeta: { flexDirection: 'row', alignItems: 'center', gap: 4, flexWrap: 'wrap' },
-  videoMetaText: { fontSize: 11, color: '#5a6a7a' },
-  videoMetaDot: { fontSize: 11, color: '#3a4a5a' },
+  videoMetaText: { fontSize: 11, color: '#9e9282' },
+  videoMetaDot: { fontSize: 11, color: 'rgba(201,169,110,0.3)' },
 
   deleteBtn: {
     position: 'absolute', top: 8, right: 8,
-    width: 28, height: 28, borderRadius: 14,
-    backgroundColor: 'rgba(15,25,35,0.8)', alignItems: 'center', justifyContent: 'center',
+    width: 28, height: 28, borderRadius: 4,
+    backgroundColor: 'rgba(17,14,11,0.8)', alignItems: 'center', justifyContent: 'center',
     borderWidth: 1, borderColor: '#e74c3c30',
   },
 });
