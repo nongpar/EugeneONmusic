@@ -10,6 +10,14 @@ import { db } from '../config/firebase';
 import InAppNotification from '../components/InAppNotification';
 import Svg, { Path, Circle as SvgCircle, Line } from 'react-native-svg';
 
+// 앱 시작 시 세로 고정 (특정 화면에서만 가로 허용)
+if (Platform.OS !== 'web') {
+  try {
+    const ScreenOrientation = require('expo-screen-orientation');
+    ScreenOrientation.lockAsync(ScreenOrientation.OrientationLock.PORTRAIT_UP);
+  } catch {}
+}
+
 // 네이티브 스플래시 스크린 유지 (앱 준비 전까지)
 SplashScreen.preventAutoHideAsync().catch(() => {});
 

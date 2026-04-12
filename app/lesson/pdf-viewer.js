@@ -1,8 +1,14 @@
+import { useEffect } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, ActivityIndicator, Platform } from 'react-native';
 import { useLocalSearchParams, router } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Svg, { Path } from 'react-native-svg';
 import WebView from 'react-native-webview';
+
+let ScreenOrientation = null;
+if (Platform.OS !== 'web') {
+  try { ScreenOrientation = require('expo-screen-orientation'); } catch {}
+}
 
 function BackIcon({ size = 22, color = '#9e9282' }) {
   return (
@@ -15,6 +21,18 @@ function BackIcon({ size = 22, color = '#9e9282' }) {
 export default function PDFViewerScreen() {
   const insets = useSafeAreaInsets();
   const { url, title } = useLocalSearchParams();
+
+  // 이 화면에서만 가로 회전 허용
+  useEffect(() => {
+    if (ScreenOrientation) {
+      ScreenOrientation.unlockAsync();
+    }
+    return () => {
+      if (ScreenOrientation) {
+        ScreenOrientation.lockAsync(ScreenOrientation.OrientationLock.PORTRAIT_UP);
+      }
+    };
+  }, []);
 
   const displayTitle = title
     ? decodeURIComponent(title).replace(/&#8211;/g, '-').replace(/&amp;/g, '&')

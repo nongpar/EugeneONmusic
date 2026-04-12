@@ -8,6 +8,11 @@ import Svg, { Path } from 'react-native-svg';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAuth } from '../../hooks/useAuth';
 
+let ScreenOrientation = null;
+if (Platform.OS !== 'web') {
+  try { ScreenOrientation = require('expo-screen-orientation'); } catch {}
+}
+
 // 웹에서는 iframe, 네이티브에서는 WebView 사용
 let WebView = null;
 if (Platform.OS !== 'web') {
@@ -64,6 +69,18 @@ export default function CourseDetailScreen() {
   const [loading, setLoading] = useState(true);
   const [canGoBack, setCanGoBack] = useState(false);
   const [webViewSource, setWebViewSource] = useState(null);
+
+  // 이 화면에서만 가로 회전 허용
+  useEffect(() => {
+    if (ScreenOrientation) {
+      ScreenOrientation.unlockAsync();
+    }
+    return () => {
+      if (ScreenOrientation) {
+        ScreenOrientation.lockAsync(ScreenOrientation.OrientationLock.PORTRAIT_UP);
+      }
+    };
+  }, []);
 
   const rawUrl = url || 'https://www.eon-music.com';
   const courseTitle = title || '강좌';
