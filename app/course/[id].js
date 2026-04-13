@@ -166,6 +166,14 @@ export default function CourseDetailScreen() {
 
       {/* WebView / iframe */}
       <View style={styles.webviewWrap}>
+        {/* 로그인 단계에서 WebView 가리는 오버레이 */}
+        {phase === 'login' && loginCred && Platform.OS !== 'web' && (
+          <View style={styles.loginOverlay}>
+            <ActivityIndicator size="large" color="#C9A96E" />
+            <Text style={styles.loginOverlayTitle}>강좌 연결 중...</Text>
+            <Text style={styles.loginOverlayDesc}>자동 로그인 후 강좌로 이동합니다</Text>
+          </View>
+        )}
         {Platform.OS === 'web' ? (
           // 웹 플랫폼: iframe으로 강좌 페이지 표시
           <View style={{ flex: 1 }}>
@@ -267,6 +275,22 @@ const styles = StyleSheet.create({
   loadingProgress: {
     height: 2, width: '60%',
     backgroundColor: '#C9A96E',
+  },
+
+  /* 로그인 오버레이 */
+  loginOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    zIndex: 10,
+    backgroundColor: '#110E0B',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 12,
+  },
+  loginOverlayTitle: {
+    fontSize: 16, fontWeight: '300', color: '#F5F0E8', letterSpacing: 0.5, marginTop: 4,
+  },
+  loginOverlayDesc: {
+    fontSize: 13, color: '#9e9282',
   },
 
   /* WebView */
