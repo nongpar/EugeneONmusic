@@ -21,8 +21,10 @@
         "NSPhotoLibraryUsageDescription": "프로필 사진 선택을 위해 사진 접근이 필요합니다.",
         "UIBackgroundModes": [
           "remote-notification"
-        ]
-      }
+        ],
+        "ITSAppUsesNonExemptEncryption": false
+      },
+      "buildNumber": "2"
     },
     "android": {
       "package": "com.eugeneonmusic.app",

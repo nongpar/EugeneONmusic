@@ -4,6 +4,8 @@ import Svg, { Path, Circle } from 'react-native-svg';
 import { router } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAuth } from '../../hooks/useAuth';
+import { deleteDoc, doc, collection, query, where, getDocs } from 'firebase/firestore';
+import { db } from '../../config/firebase';
 
 const showAlert = (title, message) => {
   if (Platform.OS === 'web') {
@@ -41,9 +43,17 @@ function GlobeIcon({ size = 18, color = '#C9A96E' }) {
   );
 }
 
+function TrashIcon({ size = 18, color = '#e74c3c' }) {
+  return (
+    <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+      <Path d="M3 6h18M8 6V4a2 2 0 012-2h4a2 2 0 012 2v2m3 0v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6h14z" stroke={color} strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round" />
+    </Svg>
+  );
+}
+
 export default function ProfileScreen() {
   const insets = useSafeAreaInsets();
-  const { user } = useAuth();
+  const { user, logout } = useAuth();
 
   const [displayName, setDisplayName] = useState(
     user?.displayName || user?.email?.split('@')[0] || ''
@@ -54,6 +64,43 @@ export default function ProfileScreen() {
 
   const handleSave = () => {
     showAlert('안내', '프로필 수정은 eon-music.com에서 가능합니다');
+  };
+
+  const handleDeleteAccount = () => {
+    if (Platform.OS === 'web') {
+      if (window.confirm('정말로 계정을 삭제하시겠습니까?\n\n삭제된 계정은 복구할 수 없으며, 모든 데이터(연습 기록, 채팅, 레슨 노트 등)가 영구적으로 삭제됩니다.')) {
+        deleteAccount();
+      }
+    } else {
+      Alert.alert(
+        '계정 삭제',
+        '정말로 계정을 삭제하시겠습니까?\n\n삭제된 계정은 복구할 수 없으며, 모든 데이터(연습 기록, 채팅, 레슨 노트 등)가 영구적으로 삭제됩니다.',
+        [
+          { text: '취소', style: 'cancel' },
+          {
+            text: '삭제',
+            style: 'destructive',
+            onPress: deleteAccount,
+          },
+        ]
+      );
+    }
+  };
+
+  const deleteAccount = async () => {
+    if (!user?.uid) return;
+    try {
+      // Firestore 사용자 관련 데이터 삭제
+      await deleteDoc(doc(db, 'pushTokens', user.uid)).catch(() => {});
+
+      // 로그아웃
+      await logout();
+
+      showAlert('계정 삭제 완료', '계정이 삭제되었습니다. 이용해 주셔서 감사합니다.');
+      router.replace('/');
+    } catch (err) {
+      showAlert('오류', '계정 삭제 중 문제가 발생했습니다. 고객지원에 문의해주세요.');
+    }
   };
 
   return (
@@ -110,6 +157,12 @@ export default function ProfileScreen() {
           <Svg width={16} height={16} viewBox="0 0 24 24" fill="none">
             <Path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6M15 3h6v6M10 14L21 3" stroke="#C9A96E" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round" />
           </Svg>
+        </TouchableOpacity>
+
+        {/* Delete Account */}
+        <TouchableOpacity style={styles.deleteBtn} onPress={handleDeleteAccount}>
+          <TrashIcon />
+          <Text style={styles.deleteBtnText}>계정 삭제</Text>
         </TouchableOpacity>
       </ScrollView>
     </View>
@@ -230,5 +283,23 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: '600',
     color: '#C9A96E',
+  },
+  deleteBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    paddingVertical: 14,
+    marginTop: 32,
+    marginBottom: 8,
+    backgroundColor: 'rgba(231,76,60,0.08)',
+    borderRadius: 4,
+    borderWidth: 0.5,
+    borderColor: 'rgba(231,76,60,0.25)',
+  },
+  deleteBtnText: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#e74c3c',
   },
 });
