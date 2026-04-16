@@ -28,7 +28,7 @@
     },
     "android": {
       "package": "com.eugeneonmusic.app",
-      "versionCode": 8,
+      "versionCode": 9,
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#FFFFFF"

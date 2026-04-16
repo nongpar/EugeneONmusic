@@ -4,8 +4,36 @@ import Svg, { Path, Circle } from 'react-native-svg';
 import { router } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAuth } from '../../hooks/useAuth';
-import { deleteDoc, doc, collection, query, where, getDocs } from 'firebase/firestore';
+import * as Haptics from 'expo-haptics';
+import { deleteDoc, doc, collection, query, where, getDocs, writeBatch } from 'firebase/firestore';
 import { db } from '../../config/firebase';
+
+// 컬렉션에서 쿼리 결과를 일괄 삭제하는 헬퍼
+async function deleteQueryResults(q) {
+  const snapshot = await getDocs(q);
+  if (snapshot.empty) return;
+  const batch = writeBatch(db);
+  snapshot.docs.forEach((d) => batch.delete(d.ref));
+  await batch.commit();
+}
+
+// 서브컬렉션 문서까지 삭제하는 헬퍼
+async function deleteDocsWithSubcollection(q, subcollectionName) {
+  const snapshot = await getDocs(q);
+  for (const docSnap of snapshot.docs) {
+    // 서브컬렉션 삭제
+    if (subcollectionName) {
+      const subRef = collection(docSnap.ref, subcollectionName);
+      const subSnap = await getDocs(subRef);
+      if (!subSnap.empty) {
+        const batch = writeBatch(db);
+        subSnap.docs.forEach((d) => batch.delete(d.ref));
+        await batch.commit();
+      }
+    }
+    await deleteDoc(docSnap.ref);
+  }
+}
 
 const showAlert = (title, message) => {
   if (Platform.OS === 'web') {
@@ -53,7 +81,7 @@ function TrashIcon({ size = 18, color = '#e74c3c' }) {
 
 export default function ProfileScreen() {
   const insets = useSafeAreaInsets();
-  const { user, logout } = useAuth();
+  const { user, logout, getToken } = useAuth();
 
   const [displayName, setDisplayName] = useState(
     user?.displayName || user?.email?.split('@')[0] || ''
@@ -63,10 +91,12 @@ export default function ProfileScreen() {
   const initial = displayName ? displayName.charAt(0).toUpperCase() : '?';
 
   const handleSave = () => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     showAlert('안내', '프로필 수정은 eon-music.com에서 가능합니다');
   };
 
   const handleDeleteAccount = () => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy);
     if (Platform.OS === 'web') {
       if (window.confirm('정말로 계정을 삭제하시겠습니까?\n\n삭제된 계정은 복구할 수 없으며, 모든 데이터(연습 기록, 채팅, 레슨 노트 등)가 영구적으로 삭제됩니다.')) {
         deleteAccount();
@@ -90,15 +120,98 @@ export default function ProfileScreen() {
   const deleteAccount = async () => {
     if (!user?.uid) return;
     try {
-      // Firestore 사용자 관련 데이터 삭제
-      await deleteDoc(doc(db, 'pushTokens', user.uid)).catch(() => {});
+      const uid = user.uid;
+
+      // WordPress 계정 삭제 API 호출
+      const token = getToken();
+      if (token) {
+        const wpRes = await fetch('https://www.eon-music.com/wp-json/eon/v1/delete-account', {
+          method: 'DELETE',
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json',
+          },
+        });
+        if (!wpRes.ok) {
+          const wpErr = await wpRes.json().catch(() => ({}));
+          console.warn('WP account deletion failed:', wpErr);
+        }
+      }
+
+      // 1. pushTokens (단일 문서)
+      await deleteDoc(doc(db, 'pushTokens', uid)).catch(() => {});
+
+      // 2. 연습 기록 (users/{uid}/practiceSessions 서브컬렉션)
+      const practiceRef = collection(db, 'users', uid, 'practiceSessions');
+      const practiceSnap = await getDocs(practiceRef).catch(() => ({ empty: true, docs: [] }));
+      if (!practiceSnap.empty) {
+        const batch = writeBatch(db);
+        practiceSnap.docs.forEach((d) => batch.delete(d.ref));
+        await batch.commit();
+      }
+
+      // 3. users 문서 자체
+      await deleteDoc(doc(db, 'users', uid)).catch(() => {});
+
+      // 4. 채팅방 (참여자로 포함된 채팅 + 메시지 서브컬렉션)
+      await deleteDocsWithSubcollection(
+        query(collection(db, 'chatRooms'), where('participants', 'array-contains', uid)),
+        'messages'
+      ).catch(() => {});
+
+      // 5. 멘토십
+      await deleteQueryResults(
+        query(collection(db, 'mentorships'), where('studentId', '==', uid))
+      ).catch(() => {});
+      await deleteQueryResults(
+        query(collection(db, 'mentorships'), where('instructorId', '==', uid))
+      ).catch(() => {});
+
+      // 6. 알림
+      await deleteQueryResults(
+        query(collection(db, 'notifications'), where('userId', '==', uid))
+      ).catch(() => {});
+
+      // 7. 레슨 스케줄
+      await deleteQueryResults(
+        query(collection(db, 'lessonSchedules'), where('studentId', '==', uid))
+      ).catch(() => {});
+
+      // 8. 과제
+      await deleteQueryResults(
+        query(collection(db, 'assignments'), where('studentId', '==', uid))
+      ).catch(() => {});
+
+      // 9. 레슨 노트
+      await deleteQueryResults(
+        query(collection(db, 'lessonNotes'), where('studentId', '==', uid))
+      ).catch(() => {});
+
+      // 10. 커뮤니티 게시물 (+ 댓글 서브컬렉션)
+      await deleteDocsWithSubcollection(
+        query(collection(db, 'posts'), where('authorId', '==', uid)),
+        'comments'
+      ).catch(() => {});
+
+      // 11. 신고 내역
+      await deleteQueryResults(
+        query(collection(db, 'reports'), where('reporterId', '==', uid))
+      ).catch(() => {});
+
+      // 12. 차단 목록
+      await deleteQueryResults(
+        query(collection(db, 'blockedUsers'), where('userId', '==', uid))
+      ).catch(() => {});
 
       // 로그아웃
       await logout();
 
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
       showAlert('계정 삭제 완료', '계정이 삭제되었습니다. 이용해 주셔서 감사합니다.');
       router.replace('/');
     } catch (err) {
+      console.error('Account deletion error:', err);
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
       showAlert('오류', '계정 삭제 중 문제가 발생했습니다. 고객지원에 문의해주세요.');
     }
   };
@@ -150,7 +263,7 @@ export default function ProfileScreen() {
         {/* Website Link */}
         <TouchableOpacity
           style={styles.webLink}
-          onPress={() => Linking.openURL('https://eon-music.com/my-account/')}
+          onPress={() => router.push({ pathname: '/webview', params: { url: 'https://eon-music.com/my-account/', title: '프로필 관리' } })}
         >
           <GlobeIcon />
           <Text style={styles.webLinkText}>eon-music.com에서 프로필 관리</Text>

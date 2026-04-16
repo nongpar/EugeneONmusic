@@ -101,7 +101,7 @@ export default function AppInfoScreen() {
           <LinkRow
             icon={<GlobeIcon />}
             label="공식 웹사이트"
-            onPress={() => Linking.openURL('https://www.eugeneonmusic.com')}
+            onPress={() => router.push({ pathname: '/webview', params: { url: 'https://www.eugeneonmusic.com', title: '공식 웹사이트' } })}
           />
           <LinkRow
             icon={<ShieldIcon />}

@@ -4,6 +4,7 @@ import { router } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAuth } from '../../hooks/useAuth';
 import { usePracticeStats } from '../../hooks/usePracticeStats';
+import * as Haptics from 'expo-haptics';
 
 const showAlert = (title, message) => {
   if (Platform.OS === 'web') {
@@ -35,6 +36,14 @@ function LogoutIcon({ size = 20, color = '#e74c3c' }) {
   return (
     <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
       <Path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4M16 17l5-5-5-5M21 12H9" stroke={color} strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" />
+    </Svg>
+  );
+}
+
+function TrashIcon({ size = 18, color = '#e74c3c' }) {
+  return (
+    <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+      <Path d="M3 6h18M8 6V4a2 2 0 012-2h4a2 2 0 012 2v2m3 0v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6h14z" stroke={color} strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round" />
     </Svg>
   );
 }
@@ -91,7 +100,7 @@ function LoggedOutView() {
       </TouchableOpacity>
       <TouchableOpacity
         style={styles.signUpBtn}
-        onPress={() => Linking.openURL('https://eon-music.com/user-registration/')}
+        onPress={() => router.push('/auth/register')}
       >
         <Text style={styles.signUpBtnText}>회원가입</Text>
       </TouchableOpacity>
@@ -258,6 +267,18 @@ function LoggedInView({ user, onLogout }) {
         <Text style={styles.logoutText}>로그아웃</Text>
       </TouchableOpacity>
 
+      {/* 계정 삭제 */}
+      <TouchableOpacity
+        style={styles.deleteAccountBtn}
+        onPress={() => {
+          Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy);
+          router.push('/settings/profile');
+        }}
+      >
+        <TrashIcon />
+        <Text style={styles.deleteAccountText}>계정 삭제</Text>
+      </TouchableOpacity>
+
       <View style={{ height: 30 }} />
     </ScrollView>
   );
@@ -268,6 +289,7 @@ export default function MyScreen() {
   const insets = useSafeAreaInsets();
 
   const handleLogout = () => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy);
     if (Platform.OS === 'web') {
       if (window.confirm('로그아웃 하시겠습니까?')) {
         logout().catch(() => showAlert('오류', '로그아웃에 실패했습니다.'));
@@ -283,8 +305,10 @@ export default function MyScreen() {
             style: 'destructive',
             onPress: async () => {
               try {
+                Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
                 await logout();
               } catch {
+                Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
                 showAlert('오류', '로그아웃에 실패했습니다.');
               }
             },
@@ -418,4 +442,12 @@ const styles = StyleSheet.create({
     borderWidth: 0.5, borderColor: 'rgba(201,169,110,0.18)',
   },
   logoutText: { fontSize: 15, fontWeight: '400', color: '#e74c3c' },
+
+  deleteAccountBtn: {
+    flexDirection: 'row', alignItems: 'center', justifyContent: 'center',
+    gap: 8, marginHorizontal: 20, marginTop: 12,
+    paddingVertical: 14, backgroundColor: 'rgba(231,76,60,0.08)', borderRadius: 4,
+    borderWidth: 0.5, borderColor: 'rgba(231,76,60,0.25)',
+  },
+  deleteAccountText: { fontSize: 14, fontWeight: '600', color: '#e74c3c' },
 });

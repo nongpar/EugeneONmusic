@@ -6,6 +6,7 @@ import {
 import Svg, { Path, Circle, Rect } from 'react-native-svg';
 import { router } from 'expo-router';
 import { useAuth } from '../../hooks/useAuth';
+import * as Haptics from 'expo-haptics';
 
 // ── SVG 아이콘 ──
 function BackIcon({ size = 22, color = '#C9A96E' }) {
@@ -62,6 +63,7 @@ export default function LoginScreen() {
 
   const handleLogin = async () => {
     if (!username || !password) {
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
       Alert.alert('알림', '아이디와 비밀번호를 입력해주세요.');
       return;
     }
@@ -69,8 +71,10 @@ export default function LoginScreen() {
     setLoading(true);
     try {
       await login(username, password);
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
       router.replace('/(tabs)/my');
     } catch (error) {
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
       Alert.alert('로그인 실패', error.message || '아이디 또는 비밀번호를 확인해주세요.');
     } finally {
       setLoading(false);
@@ -78,7 +82,8 @@ export default function LoginScreen() {
   };
 
   const handleSignUp = () => {
-    Linking.openURL('https://eon-music.com/user-registration/');
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    router.push('/auth/register');
   };
 
   return (
