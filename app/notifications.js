@@ -1,10 +1,11 @@
 import { useState, useEffect } from 'react';
 import {
   View, Text, StyleSheet, FlatList, TouchableOpacity,
-  ActivityIndicator, Platform,
+  ActivityIndicator, Platform, Alert,
 } from 'react-native';
 import Svg, { Path, Circle as SvgCircle } from 'react-native-svg';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { Swipeable } from 'react-native-gesture-handler';
 import { useRouter } from 'expo-router';
 import {
   collection, query, where, orderBy, onSnapshot, updateDoc, doc, arrayUnion,
@@ -62,6 +63,24 @@ function UserPlusIcon({ size = 20, color = '#C9A96E' }) {
   );
 }
 
+function CurationIcon({ size = 20, color = '#C9A96E' }) {
+  return (
+    <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+      <Path d="M9 18V5l12-2v13" stroke={color} strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round" />
+      <SvgCircle cx="6" cy="18" r="3" stroke={color} strokeWidth={1.5} />
+      <SvgCircle cx="18" cy="16" r="3" stroke={color} strokeWidth={1.5} />
+    </Svg>
+  );
+}
+
+function TrashIcon({ size = 14, color = 'rgba(201,169,110,0.7)' }) {
+  return (
+    <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+      <Path d="M3 6h18M8 6V4a2 2 0 012-2h4a2 2 0 012 2v2M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6" stroke={color} strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round" />
+    </Svg>
+  );
+}
+
 function EmptyBellIcon({ size = 56, color = 'rgba(201,169,110,0.2)' }) {
   return (
     <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
@@ -106,6 +125,7 @@ const NOTIF_ICONS = {
   schedule: CalendarIcon,
   announcement: MegaphoneIcon,
   mentor: UserPlusIcon,
+  experienceInquiry: CurationIcon,
 };
 
 const NOTIF_TYPE_LABELS = {
@@ -113,23 +133,34 @@ const NOTIF_TYPE_LABELS = {
   schedule: '레슨',
   announcement: '공지',
   mentor: '멘토십',
+  experienceInquiry: 'AI 상담',
 };
 
 
 // ── Notification Card ──
 
-function NotificationCard({ item, onPress }) {
+function NotificationCard({ item, onPress, onDelete }) {
   const IconComp = NOTIF_ICONS[item.type] || MegaphoneIcon;
   const typeLabel = NOTIF_TYPE_LABELS[item.type] || '알림';
 
-  return (
+  const renderRightActions = () => (
+    <TouchableOpacity
+      style={styles.swipeDeleteAction}
+      activeOpacity={0.8}
+      onPress={() => onDelete(item)}
+    >
+      <TrashIcon size={20} color="#F5F0E8" />
+      <Text style={styles.swipeDeleteText}>삭제</Text>
+    </TouchableOpacity>
+  );
+
+  const cardInner = (
     <TouchableOpacity
       style={[styles.card, !item.read && styles.cardUnread]}
       activeOpacity={0.7}
       onPress={() => onPress(item)}
     >
       <StaffLines />
-      {/* 읽지 않은 알림 표시 */}
       {!item.read && <View style={styles.unreadDot} />}
 
       <View style={styles.cardIconWrap}>
@@ -149,6 +180,23 @@ function NotificationCard({ item, onPress }) {
         <Text style={styles.cardBody} numberOfLines={2}>{item.body}</Text>
       </View>
     </TouchableOpacity>
+  );
+
+  // 읽은 알림만 스와이프 삭제 가능
+  if (!item.read) return cardInner;
+
+  return (
+    <Swipeable
+      renderRightActions={renderRightActions}
+      overshootRight={false}
+      friction={2}
+      rightThreshold={40}
+      onSwipeableWillOpen={() => {
+        Haptics?.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+      }}
+    >
+      {cardInner}
+    </Swipeable>
   );
 }
 
@@ -190,14 +238,16 @@ export default function NotificationsScreen() {
           body: data.body || '',
           read: data.readBy?.includes(user.uid) || false,
           readBy: data.readBy || [],
+          deletedBy: data.deletedBy || [],
           createdAt: data.createdAt,
           data: data.data || {},
           audience: data.audience || 'all',
         };
       });
 
-      // 대상 필터: audience가 있으면 해당 역할만
+      // 대상 필터: audience + 삭제한 본인 제외
       const filtered = firestoreNotifs.filter((n) => {
+        if (n.deletedBy?.includes(user.uid)) return false;
         if (!n.audience || n.audience === 'all') return true;
         return n.audience === user.role;
       });
@@ -236,6 +286,61 @@ export default function NotificationsScreen() {
     }
   };
 
+  const handleDelete = (item) => {
+    Alert.alert(
+      '알림 삭제',
+      '이 알림을 삭제할까요? 내 목록에서만 제거됩니다.',
+      [
+        { text: '취소', style: 'cancel' },
+        {
+          text: '삭제',
+          style: 'destructive',
+          onPress: async () => {
+            Haptics?.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+            setNotifications(prev => prev.filter(n => n.id !== item.id));
+            if (user?.uid) {
+              try {
+                await updateDoc(doc(db, 'notifications', item.id), {
+                  deletedBy: arrayUnion(user.uid),
+                });
+              } catch {}
+            }
+          },
+        },
+      ]
+    );
+  };
+
+  const handleDeleteAllRead = () => {
+    const readItems = notifications.filter(n => n.read);
+    if (readItems.length === 0) return;
+    Alert.alert(
+      '읽은 알림 모두 삭제',
+      `읽은 알림 ${readItems.length}개를 삭제할까요? 내 목록에서만 제거됩니다.`,
+      [
+        { text: '취소', style: 'cancel' },
+        {
+          text: '삭제',
+          style: 'destructive',
+          onPress: async () => {
+            Haptics?.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+            const ids = new Set(readItems.map(n => n.id));
+            setNotifications(prev => prev.filter(n => !ids.has(n.id)));
+            if (user?.uid) {
+              await Promise.all(
+                readItems.map((item) =>
+                  updateDoc(doc(db, 'notifications', item.id), {
+                    deletedBy: arrayUnion(user.uid),
+                  }).catch(() => {})
+                )
+              );
+            }
+          },
+        },
+      ]
+    );
+  };
+
   const handleMarkAllRead = async () => {
     Haptics?.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     setNotifications(prev => prev.map(n => ({ ...n, read: true })));
@@ -251,12 +356,14 @@ export default function NotificationsScreen() {
     }
   };
 
+  const isTeacher = user?.role === 'teacher';
   const FILTERS = [
     { key: 'all', label: '전체' },
     { key: 'chat', label: '채팅' },
     { key: 'schedule', label: '레슨' },
     { key: 'announcement', label: '공지' },
     { key: 'mentor', label: '멘토십' },
+    ...(isTeacher ? [{ key: 'experienceInquiry', label: 'AI 상담' }] : []),
   ];
 
   const filtered = activeFilter === 'all'
@@ -278,9 +385,18 @@ export default function NotificationsScreen() {
             </View>
           )}
         </View>
-        <TouchableOpacity onPress={handleMarkAllRead} style={styles.markReadBtn}>
-          <Text style={styles.markReadText}>모두 읽음</Text>
-        </TouchableOpacity>
+        <View style={styles.headerActions}>
+          {unreadCount > 0 && (
+            <TouchableOpacity onPress={handleMarkAllRead} style={styles.markReadBtn}>
+              <Text style={styles.markReadText}>모두 읽음</Text>
+            </TouchableOpacity>
+          )}
+          {notifications.some(n => n.read) && (
+            <TouchableOpacity onPress={handleDeleteAllRead} style={styles.markReadBtn}>
+              <Text style={styles.deleteAllText}>모두 삭제</Text>
+            </TouchableOpacity>
+          )}
+        </View>
       </View>
 
       {/* Filter tabs */}
@@ -301,6 +417,24 @@ export default function NotificationsScreen() {
         ))}
       </View>
 
+      {/* 관리자용 — AI 상담 필터 활성 시 전체 신청서 관리 화면으로 */}
+      {isTeacher && activeFilter === 'experienceInquiry' && (
+        <TouchableOpacity
+          style={styles.inquiriesBanner}
+          activeOpacity={0.7}
+          onPress={() => {
+            Haptics?.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+            router.push('/admin/inquiries');
+          }}
+        >
+          <View style={{ flex: 1 }}>
+            <Text style={styles.inquiriesBannerTitle}>신청서 관리 전체 보기</Text>
+            <Text style={styles.inquiriesBannerSub}>상태별 필터 · 대화 이력 · 상태 변경</Text>
+          </View>
+          <Text style={styles.inquiriesBannerArrow}>→</Text>
+        </TouchableOpacity>
+      )}
+
       {/* Notification list */}
       {loading ? (
         <View style={styles.center}>
@@ -311,7 +445,7 @@ export default function NotificationsScreen() {
           data={filtered}
           keyExtractor={item => item.id}
           renderItem={({ item }) => (
-            <NotificationCard item={item} onPress={handlePress} />
+            <NotificationCard item={item} onPress={handlePress} onDelete={handleDelete} />
           )}
           contentContainerStyle={styles.listContent}
           showsVerticalScrollIndicator={false}
@@ -377,9 +511,13 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     color: '#110E0B',
   },
+  headerActions: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
   markReadBtn: {
     paddingVertical: 6,
-    paddingHorizontal: 10,
+    paddingHorizontal: 8,
   },
   markReadText: {
     fontSize: 13,
@@ -387,15 +525,65 @@ const styles = StyleSheet.create({
     fontWeight: '400',
     letterSpacing: 0.3,
   },
+  deleteAllText: {
+    fontSize: 13,
+    color: 'rgba(220,140,140,0.9)',
+    fontWeight: '400',
+    letterSpacing: 0.3,
+  },
+  swipeDeleteAction: {
+    backgroundColor: 'rgba(180,60,60,0.85)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    width: 80,
+    marginBottom: 10,
+    borderRadius: 4,
+    gap: 4,
+  },
+  swipeDeleteText: {
+    color: '#F5F0E8',
+    fontSize: 12,
+    fontWeight: '500',
+    letterSpacing: 0.5,
+  },
 
   // Filters
   filterRow: {
     flexDirection: 'row',
+    flexWrap: 'wrap',
     paddingHorizontal: 16,
     paddingVertical: 12,
     gap: 8,
     borderBottomWidth: 0.5,
     borderBottomColor: 'rgba(201,169,110,0.1)',
+  },
+  inquiriesBanner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginHorizontal: 16,
+    marginTop: 12,
+    paddingHorizontal: 14,
+    paddingVertical: 12,
+    backgroundColor: 'rgba(201,169,110,0.1)',
+    borderWidth: 0.5,
+    borderColor: 'rgba(201,169,110,0.35)',
+    borderRadius: 4,
+    gap: 10,
+  },
+  inquiriesBannerTitle: {
+    fontSize: 14,
+    color: '#F5F0E8',
+    fontWeight: '500',
+    letterSpacing: 0.3,
+  },
+  inquiriesBannerSub: {
+    fontSize: 11,
+    color: '#9e9282',
+    marginTop: 2,
+  },
+  inquiriesBannerArrow: {
+    fontSize: 18,
+    color: '#C9A96E',
   },
   filterBtn: {
     paddingHorizontal: 14,

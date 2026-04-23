@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { Platform, Alert } from 'react-native';
+import { Platform, Alert, AppState } from 'react-native';
 import { router } from 'expo-router';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
@@ -134,7 +134,7 @@ export async function sendPushNotification(expoPushToken, title, body, data = {}
         data,
         priority: 'high',
         channelId,             // Android: 유형별 알림 채널
-        badge: 1,              // iOS: 앱 아이콘 뱃지
+        // iOS 뱃지는 앱에서 읽음 처리 기반으로 관리 (하드코딩 제거)
         categoryId: type,      // 알림 카테고리 (액션 버튼용)
       }),
     });
@@ -228,6 +228,13 @@ export function useNotifications(user) {
     Notifications.setNotificationHandler({
       handleNotification: async (notification) => {
         const data = notification.request.content.data;
+
+        // 본인이 보낸 알림 suppress — 같은 디바이스에 다른 계정 토큰이 남아있을 때
+        // 자기 메시지 푸시가 자기에게 오는 버그 방지
+        if (data?.senderId && user?.uid && String(data.senderId) === String(user.uid)) {
+          return { shouldShowAlert: false, shouldPlaySound: false, shouldSetBadge: false };
+        }
+
         const settings = await getNotificationSettings();
         const allowed = isNotificationAllowed(settings, data?.type);
 
@@ -243,6 +250,16 @@ export function useNotifications(user) {
     registerForPushNotifications().then((token) => {
       if (token) {
         setExpoPushToken(token);
+      }
+    });
+
+    // 앱 시작 시 뱃지 카운트 초기화
+    try { Notifications.setBadgeCountAsync(0); } catch {}
+
+    // 앱이 포그라운드로 돌아올 때마다 뱃지 초기화
+    const appStateSub = AppState.addEventListener('change', (state) => {
+      if (state === 'active') {
+        try { Notifications.setBadgeCountAsync(0); } catch {}
       }
     });
 
@@ -280,6 +297,9 @@ export function useNotifications(user) {
         } else if (typeof responseListener.current?.remove === 'function') {
           responseListener.current.remove();
         }
+      }
+      if (appStateSub && typeof appStateSub.remove === 'function') {
+        appStateSub.remove();
       }
     };
   }, [user]);

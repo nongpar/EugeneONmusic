@@ -1,7 +1,7 @@
 import { useEffect, useState, useRef } from 'react';
 import {
   View, Text, StyleSheet, TouchableOpacity, ActivityIndicator,
-  Platform, Linking,
+  Platform,
 } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import Svg, { Path } from 'react-native-svg';
@@ -19,8 +19,6 @@ if (Platform.OS !== 'web') {
   WebView = require('react-native-webview').default;
 }
 
-const WP_HOME = 'https://www.eon-music.com';
-
 // ── SVG 아이콘 ──
 function BackIcon({ size = 22, color = '#F5F0E8' }) {
   return (
@@ -30,10 +28,10 @@ function BackIcon({ size = 22, color = '#F5F0E8' }) {
   );
 }
 
-function ExternalIcon({ size = 18, color = '#C9A96E' }) {
+function CloseIcon({ size = 22, color = '#F5F0E8' }) {
   return (
     <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
-      <Path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6M15 3h6v6M10 14L21 3" stroke={color} strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" />
+      <Path d="M18 6L6 18M6 6l12 12" stroke={color} strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" />
     </Svg>
   );
 }
@@ -47,23 +45,11 @@ function RefreshIcon({ size = 18, color = '#C9A96E' }) {
   );
 }
 
-/**
- * JWT 토큰을 이용해 WordPress 자동 로그인 URL 생성
- * eon-music.com/?eon_autologin=TOKEN&redirect=TARGET_URL
- * → WordPress가 쿠키 설정 후 TARGET_URL로 리다이렉트
- */
-function buildAutoLoginUrl(token, targetUrl) {
-  if (!token) return targetUrl;
-  // www 불일치 방지: eon-music.com → www.eon-music.com 으로 통일
-  const normalizedUrl = targetUrl.replace('https://eon-music.com', 'https://www.eon-music.com');
-  return `${WP_HOME}/?eon_autologin=${encodeURIComponent(token)}&redirect=${encodeURIComponent(normalizedUrl)}`;
-}
-
 export default function CourseDetailScreen() {
   const { id, title, url } = useLocalSearchParams();
   const router = useRouter();
   const insets = useSafeAreaInsets();
-  const { user, getToken, getCredentials } = useAuth();
+  const { user, getCredentials } = useAuth();
   const webViewRef = useRef(null);
   const iframeRef = useRef(null);
   const [loading, setLoading] = useState(true);
@@ -90,6 +76,37 @@ export default function CourseDetailScreen() {
   // 네이티브: 2단계 로그인 → 강좌 페이지
   const [phase, setPhase] = useState('login');
   const [loginCred, setLoginCred] = useState(null);
+  const [hasReachedCourse, setHasReachedCourse] = useState(false);
+  const [loginTimedOut, setLoginTimedOut] = useState(false);
+
+  // 오버레이 안전장치: 15초 후 자동 해제 (무한 로딩 방지)
+  useEffect(() => {
+    if (Platform.OS === 'web') return;
+    if (hasReachedCourse) return;
+    const timer = setTimeout(() => setLoginTimedOut(true), 15000);
+    return () => clearTimeout(timer);
+  }, [hasReachedCourse]);
+
+  // 강좌 페이지 도달 여부 판단 (WP 로그인 페이지 아닌 실제 강좌 URL)
+  const isCoursePage = (url) => {
+    if (!url) return false;
+    if (url.includes('wp-login.php')) return false;
+    if (url.includes('wp-admin')) return false;
+    if (url.includes('lostpassword')) return false;
+    return (
+      url.includes('/product/') ||
+      url.includes('/courses/') ||
+      url.includes('/course/') ||
+      url.includes('/lessons/') ||
+      url.includes('/topic/') ||
+      url.includes('/quizzes/') ||
+      url.includes('%ec%88%98%ea%b0%95%ec%8b%a0%ec%b2%ad') || // 수강신청
+      url.includes('%ea%b0%95%ec%a2%8c')                        // 강좌
+    );
+  };
+
+  // 오버레이 표시 조건: 네이티브 + 강좌 페이지 미도달 + 타임아웃 안 됨
+  const showLoginOverlay = Platform.OS !== 'web' && !hasReachedCourse && !loginTimedOut;
 
   useEffect(() => {
     if (Platform.OS === 'web') {
@@ -109,10 +126,6 @@ export default function CourseDetailScreen() {
     })();
   }, [user, rawUrl]);
 
-  const handleOpenExternal = () => {
-    Linking.openURL(rawUrl);
-  };
-
   const handleRefresh = () => {
     if (Platform.OS === 'web') {
       setLoading(true);
@@ -120,14 +133,23 @@ export default function CourseDetailScreen() {
         iframeRef.current.src = iframeRef.current.src;
       }
     } else if (webViewRef.current) {
+      // 새로고침 시 로그인 페이지 노출 방지를 위해 오버레이 다시 표시
+      setHasReachedCourse(false);
+      setLoginTimedOut(false);
       webViewRef.current.reload();
     }
   };
 
-  const handleBack = () => {
+  // 웹뷰 이전 페이지로 이동 (웹뷰 내에서만)
+  const handleWebBack = () => {
     if (canGoBack && webViewRef.current && Platform.OS !== 'web') {
       webViewRef.current.goBack();
-    } else if (router.canGoBack()) {
+    }
+  };
+
+  // 한 번에 앱으로 돌아가기
+  const handleCloseToApp = () => {
+    if (router.canGoBack()) {
       router.back();
     } else {
       router.replace('/(tabs)/course');
@@ -138,8 +160,14 @@ export default function CourseDetailScreen() {
     <View style={[styles.container, { paddingTop: insets.top }]}>
       {/* 헤더 */}
       <View style={styles.header}>
-        <TouchableOpacity style={styles.headerBtn} onPress={handleBack}>
-          <BackIcon />
+        {/* 왼쪽: 앱으로 돌아가기 (한 번에 종료) */}
+        <TouchableOpacity
+          style={styles.closeBtn}
+          onPress={handleCloseToApp}
+          accessibilityLabel="앱으로 돌아가기"
+          hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+        >
+          <CloseIcon size={20} />
         </TouchableOpacity>
 
         <View style={styles.headerCenter}>
@@ -148,11 +176,18 @@ export default function CourseDetailScreen() {
         </View>
 
         <View style={styles.headerRight}>
+          {/* 웹 이전 페이지 (웹뷰 내부 탐색용) */}
+          {canGoBack && Platform.OS !== 'web' && (
+            <TouchableOpacity
+              style={styles.headerBtn}
+              onPress={handleWebBack}
+              accessibilityLabel="웹 이전 페이지"
+            >
+              <BackIcon />
+            </TouchableOpacity>
+          )}
           <TouchableOpacity style={styles.headerBtn} onPress={handleRefresh}>
             <RefreshIcon />
-          </TouchableOpacity>
-          <TouchableOpacity style={styles.headerBtn} onPress={handleOpenExternal}>
-            <ExternalIcon />
           </TouchableOpacity>
         </View>
       </View>
@@ -167,7 +202,7 @@ export default function CourseDetailScreen() {
       {/* WebView / iframe */}
       <View style={styles.webviewWrap}>
         {/* 로그인 단계에서 WebView 가리는 오버레이 */}
-        {phase === 'login' && loginCred && Platform.OS !== 'web' && (
+        {showLoginOverlay && (
           <View style={styles.loginOverlay}>
             <ActivityIndicator size="large" color="#C9A96E" />
             <Text style={styles.loginOverlayTitle}>강좌 연결 중...</Text>
@@ -206,6 +241,10 @@ export default function CourseDetailScreen() {
                 if (phase === 'login' && loginCred && !navState.url.includes('wp-login.php')) {
                   setPhase('course');
                   setWebViewSource({ uri: coursePageUrl });
+                }
+                // 강좌 페이지 도달 감지 → 오버레이 해제
+                if (!hasReachedCourse && isCoursePage(navState.url)) {
+                  setHasReachedCourse(true);
                 }
               }}
               injectedJavaScriptBeforeContentLoaded={
@@ -262,6 +301,12 @@ const styles = StyleSheet.create({
   headerBtn: {
     width: 36, height: 36, borderRadius: 4,
     alignItems: 'center', justifyContent: 'center',
+  },
+  closeBtn: {
+    width: 36, height: 36, borderRadius: 18,
+    alignItems: 'center', justifyContent: 'center',
+    backgroundColor: 'rgba(201,169,110,0.1)',
+    borderWidth: 0.5, borderColor: 'rgba(201,169,110,0.22)',
   },
   headerCenter: { flex: 1, alignItems: 'center' },
   headerTitle: { fontSize: 15, fontWeight: '400', color: '#F5F0E8', letterSpacing: 0.3 },

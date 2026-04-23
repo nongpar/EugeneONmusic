@@ -108,7 +108,7 @@ export default function LoginScreen() {
             resizeMode="contain"
           />
           <Text style={styles.logoText}>EON International</Text>
-          <Text style={styles.logoAccent}>Music Academy</Text>
+          <Text style={styles.logoAccent}>Music</Text>
           <Text style={styles.subtitle}>eon-music.com 계정으로 로그인</Text>
         </View>
 

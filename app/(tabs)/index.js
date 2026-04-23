@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import {
   View, Text, StyleSheet, ScrollView, Image, TouchableOpacity,
-  ActivityIndicator, Dimensions, Animated, Platform,
+  ActivityIndicator, Dimensions, Platform,
 } from 'react-native';
 import Svg, { Path, Circle, Line } from 'react-native-svg';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -19,7 +19,9 @@ if (Platform.OS !== 'web') {
   try { Haptics = require('expo-haptics'); } catch {}
 }
 
-const { width: SCREEN_W } = Dimensions.get('window');
+const { width: RAW_SCREEN_W } = Dimensions.get('window');
+// iPad/태블릿 등 큰 화면에서 콘텐츠가 과하게 넓어지지 않도록 제한
+const SCREEN_W = Math.min(RAW_SCREEN_W, 540);
 const WP_API = 'https://www.eugeneonmusic.com/wp-json/wp/v2';
 
 // ── SVG Icons ──
@@ -43,15 +45,6 @@ function RefreshIcon({ size = 16, color = '#9e9282' }) {
     <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
       <Path d="M1 4v6h6M23 20v-6h-6" stroke={color} strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" />
       <Path d="M20.49 9A9 9 0 005.64 5.64L1 10m22 4l-4.64 4.36A9 9 0 013.51 15" stroke={color} strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" />
-    </Svg>
-  );
-}
-function StaffLines({ width = 100, color = 'rgba(201,169,110,0.08)' }) {
-  return (
-    <Svg width={width} height={24} viewBox={`0 0 ${width} 24`}>
-      {[4, 8, 12, 16, 20].map((y) => (
-        <Line key={y} x1="0" y1={y} x2={width} y2={y} stroke={color} strokeWidth={1} />
-      ))}
     </Svg>
   );
 }

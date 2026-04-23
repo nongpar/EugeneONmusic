@@ -40,3 +40,11 @@ yarn-error.*
 # generated native folders
 /ios
 /android
+
+# Claude Code (local state)
+.claude/
+
+# Firebase (local debug logs)
+firebase-debug.log
+firestore-debug.log
+ui-debug.log

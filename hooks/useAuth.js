@@ -1,6 +1,10 @@
 import { useState, useEffect, createContext, useContext, useCallback } from 'react';
 import { Platform as RNPlatform } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { doc, deleteDoc } from 'firebase/firestore';
+import { signInWithCustomToken, signOut as firebaseSignOut } from 'firebase/auth';
+import { httpsCallable } from 'firebase/functions';
+import { db, auth, functions } from '../config/firebase';
 
 // 네이티브에서만 SecureStore 사용 (웹에서는 AsyncStorage 폴백)
 let SecureStore = null;
@@ -89,6 +93,16 @@ export function AuthProvider({ children }) {
         if (isValid) {
           setToken(savedToken);
           setUser(savedUser);
+          // Firebase Auth 세션 복원 (AI 기능용)
+          try {
+            const exchange = httpsCallable(functions, 'exchangeWpToken');
+            const result = await exchange({ wpToken: savedToken });
+            if (result.data?.customToken) {
+              await signInWithCustomToken(auth, result.data.customToken);
+            }
+          } catch (fbErr) {
+            console.warn('Firebase Auth 복원 실패 (WP 세션은 정상):', fbErr?.message || fbErr);
+          }
         } else {
           await AsyncStorage.removeItem(AUTH_STORAGE_KEY);
         }
@@ -168,6 +182,18 @@ export function AuthProvider({ children }) {
       JSON.stringify({ token: newToken, user: wpUser })
     );
 
+    // Firebase Auth 세션도 연결 (AI 기능용 — WP JWT → Firebase Custom Token 교환)
+    // 실패해도 WP 로그인은 성공 처리 (AI 기능만 일시적으로 비활성)
+    try {
+      const exchange = httpsCallable(functions, 'exchangeWpToken');
+      const result = await exchange({ wpToken: newToken });
+      if (result.data?.customToken) {
+        await signInWithCustomToken(auth, result.data.customToken);
+      }
+    } catch (fbErr) {
+      console.warn('Firebase Auth 연동 실패 (WP 로그인은 정상):', fbErr?.message || fbErr);
+    }
+
     // WebView 자동 로그인용 자격증명 보안 저장 (실패해도 로그인은 유지)
     try {
       await secureStorage.setItem(
@@ -182,11 +208,22 @@ export function AuthProvider({ children }) {
   }, []);
 
   const logout = useCallback(async () => {
+    // 현재 사용자의 푸시 토큰을 Firestore에서 삭제 (이 기기로 더 이상 푸시 오지 않도록)
+    // 같은 기기에서 다른 계정으로 로그인할 때 푸시가 이전 계정으로 가는 문제 방지
+    try {
+      const currentUid = user?.uid;
+      if (currentUid) {
+        await deleteDoc(doc(db, 'pushTokens', currentUid)).catch(() => {});
+      }
+    } catch {}
+
     setUser(null);
     setToken(null);
     await AsyncStorage.removeItem(AUTH_STORAGE_KEY);
     await secureStorage.removeItem(CRED_STORAGE_KEY);
-  }, []);
+    // Firebase Auth 세션도 해제 (실패해도 WP 로그아웃은 진행)
+    try { await firebaseSignOut(auth); } catch {}
+  }, [user]);
 
   const getToken = useCallback(() => token, [token]);
 

@@ -1,7 +1,8 @@
-import { Platform } from 'react-native';
+import { Platform, View } from 'react-native';
 import { Tabs } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { HomeIcon, LessonIcon, CourseIcon, SNSIcon, MyIcon } from '../../components/TabIcons';
+import AIConsultFAB from '../../components/AIConsultFAB';
 
 let Haptics = null;
 if (Platform.OS !== 'web') {
@@ -12,7 +13,8 @@ export default function TabLayout() {
   const insets = useSafeAreaInsets();
 
   return (
-    <Tabs
+    <View style={{ flex: 1 }}>
+      <Tabs
       screenListeners={{
         tabPress: () => {
           if (Haptics) Haptics.selectionAsync();
@@ -75,6 +77,10 @@ export default function TabLayout() {
       {/* 숨김 탭들 */}
       <Tabs.Screen name="practice" options={{ href: null }} />
       <Tabs.Screen name="chat" options={{ href: null }} />
-    </Tabs>
+      </Tabs>
+
+      {/* AI 음악 상담 플로팅 버튼 — 모든 탭에서 노출 */}
+      <AIConsultFAB bottom={80 + insets.bottom} right={18} />
+    </View>
   );
 }

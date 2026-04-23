@@ -418,7 +418,13 @@ const styles = StyleSheet.create({
   },
   headerTitle: { fontSize: 22, fontWeight: '300', color: '#F5F0E8', letterSpacing: 1 },
   headerSub: { fontSize: 10, color: '#C9A96E', marginTop: 4, fontWeight: '400', letterSpacing: 2.5 },
-  scrollContent: { paddingHorizontal: 20, paddingBottom: 20 },
+  scrollContent: {
+    paddingHorizontal: 20,
+    paddingBottom: 20,
+    alignSelf: 'center',
+    width: '100%',
+    maxWidth: 540,
+  },
 
   channelRow: { gap: 16, paddingVertical: 16 },
   channelChip: { alignItems: 'center', gap: 6, width: 68 },

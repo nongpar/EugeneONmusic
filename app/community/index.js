@@ -6,7 +6,7 @@ import Svg, { Path, Circle } from 'react-native-svg';
 import { router } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import {
-  collection, query, orderBy, onSnapshot, limit,
+  collection, query, orderBy, onSnapshot, limit, where, getDocs,
 } from 'firebase/firestore';
 import { db } from '../../config/firebase';
 import { useAuth } from '../../hooks/useAuth';
@@ -100,6 +100,29 @@ export default function CommunityScreen() {
   const { user } = useAuth();
   const [posts, setPosts] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [blockedIds, setBlockedIds] = useState(new Set());
+
+  // 차단 목록 로드 (로그인 사용자가 차단한 사람들의 UID)
+  useEffect(() => {
+    if (!user?.uid) {
+      setBlockedIds(new Set());
+      return;
+    }
+    const loadBlocked = async () => {
+      try {
+        const blockedQ = query(
+          collection(db, 'blockedUsers'),
+          where('blockerUid', '==', user.uid)
+        );
+        const snap = await getDocs(blockedQ);
+        const ids = new Set(snap.docs.map((d) => d.data().blockedUid));
+        setBlockedIds(ids);
+      } catch (err) {
+        console.warn('차단 목록 로드 실패:', err);
+      }
+    };
+    loadBlocked();
+  }, [user?.uid]);
 
   useEffect(() => {
     const q = query(
@@ -115,6 +138,9 @@ export default function CommunityScreen() {
 
     return unsubscribe;
   }, []);
+
+  // 차단 사용자 게시글 제외
+  const visiblePosts = posts.filter((p) => !blockedIds.has(p.authorId));
 
   return (
     <View style={[styles.container, { paddingTop: insets.top }]}>
@@ -140,7 +166,7 @@ export default function CommunityScreen() {
         <View style={styles.center}>
           <ActivityIndicator color="#C9A96E" size="large" />
         </View>
-      ) : posts.length === 0 ? (
+      ) : visiblePosts.length === 0 ? (
         <View style={styles.center}>
           <EmptyDocIcon />
           <Text style={styles.emptyText}>아직 게시글이 없습니다</Text>
@@ -148,7 +174,7 @@ export default function CommunityScreen() {
         </View>
       ) : (
         <FlatList
-          data={posts}
+          data={visiblePosts}
           keyExtractor={(item) => item.id}
           renderItem={({ item }) => <PostItem item={item} />}
           contentContainerStyle={styles.listContent}

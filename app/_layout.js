@@ -1,14 +1,17 @@
 import { useEffect, useState, useRef, useCallback } from 'react';
 import { View, Animated, StyleSheet, Dimensions, Platform, Easing } from 'react-native';
-import { Stack } from 'expo-router';
+import { Stack, router, usePathname } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import * as SplashScreen from 'expo-splash-screen';
+import { useAudioPlayer, useAudioPlayerStatus, setAudioModeAsync } from 'expo-audio';
+import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { AuthProvider, useAuth } from '../hooks/useAuth';
 import { useNotifications } from '../hooks/useNotifications';
-import { doc, setDoc } from 'firebase/firestore';
+import { doc, setDoc, collection, query, where, getDocs, deleteDoc } from 'firebase/firestore';
 import { db } from '../config/firebase';
 import InAppNotification from '../components/InAppNotification';
 import Svg, { Path, Circle as SvgCircle, Line } from 'react-native-svg';
+import { hasUserConsented } from './consent';
 
 // 앱 시작 시 세로 고정 (특정 화면에서만 가로 허용)
 if (Platform.OS !== 'web') {
@@ -66,20 +69,6 @@ function SharpSign({ size = 18, color = '#C9A96E' }) {
   );
 }
 
-function PianoKeys({ width = 200, color = '#C9A96E' }) {
-  return (
-    <Svg width={width} height={8} viewBox="0 0 200 8" fill="none">
-      {/* 건반 느낌의 라인들 */}
-      {[0, 28, 56, 84, 100, 128, 156, 184].map((x, i) => (
-        <Line key={i} x1={x} y1="0" x2={x} y2="8" stroke={color} strokeWidth={0.8} opacity={0.3} />
-      ))}
-      {/* 상단/하단 라인 */}
-      <Line x1="0" y1="0" x2="200" y2="0" stroke={color} strokeWidth={1} opacity={0.5} />
-      <Line x1="0" y1="8" x2="200" y2="8" stroke={color} strokeWidth={1} opacity={0.5} />
-    </Svg>
-  );
-}
-
 // ── 떠다니는 파티클 (골드 반짝임) ──
 function FloatingParticle({ anim, x, y, size = 3 }) {
   return (
@@ -121,6 +110,12 @@ function StaffLines({ opacity, width: lineW, align = 'flex-end' }) {
 
 // ── 애니메이션 스플래시 화면 ──
 function AnimatedSplash({ onFinish }) {
+  // 오프닝 음원 (무음 모드에서는 재생되지 않음)
+  const openingPlayer = useAudioPlayer(require('../assets/audio/eon_opening.mp3'));
+  const audioStatus = useAudioPlayerStatus(openingPlayer);
+  const [audioTimedOut, setAudioTimedOut] = useState(false);
+  const startedRef = useRef(false);
+
   // 메인 요소 애니메이션
   const logoOpacity = useRef(new Animated.Value(0)).current;
   const logoScale = useRef(new Animated.Value(0.6)).current;
@@ -191,8 +186,25 @@ function AnimatedSplash({ onFinish }) {
     };
   });
 
+  // 음원 로드가 너무 오래 걸리면 2초 후 음원 없이 진행 (폴백)
   useEffect(() => {
+    const t = setTimeout(() => setAudioTimedOut(true), 2000);
+    return () => clearTimeout(t);
+  }, []);
+
+  useEffect(() => {
+    // 음원 로드 완료되거나 폴백 타임아웃이 떨어질 때까지 네이티브 스플래시 유지
+    if (startedRef.current) return;
+    const loaded = !!audioStatus?.isLoaded;
+    if (!loaded && !audioTimedOut) return;
+    startedRef.current = true;
+
     SplashScreen.hideAsync().catch(() => {});
+
+    // ── 오프닝 음원 재생 (iOS 무음 스위치 ON이면 자동 스킵) ──
+    // 로드 완료 상태에서 play()를 호출하므로 애니메이션과 프레임 단위로 동기화됨
+    setAudioModeAsync({ playsInSilentMode: false }).catch(() => {});
+    try { openingPlayer.play(); } catch {}
 
     // ── 음표 애니메이션 생성 ──
     const noteAnimations = noteAnims.map((anim, i) => {
@@ -291,8 +303,8 @@ function AnimatedSplash({ onFinish }) {
           ]),
         ]),
 
-        // 5단계: 잠시 대기
-        Animated.delay(600),
+        // 5단계: 페이드아웃 전 대기 (음원 6.92초 중 뒷부분 1초 컷 → 총 스플래시 ~5.92초)
+        Animated.delay(3072),
 
         // 6단계: 페이드아웃 + 살짝 확대
         Animated.parallel([
@@ -309,7 +321,7 @@ function AnimatedSplash({ onFinish }) {
     ]).start(() => {
       onFinish();
     });
-  }, []);
+  }, [audioStatus.isLoaded, audioTimedOut]);
 
   // 보간값
   const animLineLeft = lineLeftWidth.interpolate({ inputRange: [0, 1], outputRange: [0, 40] });
@@ -440,7 +452,7 @@ function AnimatedSplash({ onFinish }) {
           },
         ]}
       >
-        EON International Music Academy
+        EON International Music
       </Animated.Text>
     </Animated.View>
   );
@@ -509,13 +521,66 @@ const splashStyles = StyleSheet.create({
   },
 });
 
+// 로그인 상태 + 약관 동의 체크 게이트
+// - 로그인했지만 약관 미동의 → /consent로 이동
+function ConsentGate() {
+  const { user, loading } = useAuth();
+  const pathname = usePathname();
+  const checkedRef = useRef(null);
+
+  useEffect(() => {
+    if (loading) return;
+    if (!user?.uid) {
+      checkedRef.current = null;
+      return;
+    }
+
+    // 이미 체크된 사용자면 건너뛰기
+    if (checkedRef.current === user.uid) return;
+
+    // consent 페이지와 로그인 페이지는 체크 제외
+    if (pathname === '/consent' || pathname?.startsWith('/auth')) return;
+
+    hasUserConsented(user.uid).then((consented) => {
+      checkedRef.current = user.uid;
+      if (!consented) {
+        router.replace('/consent');
+      }
+    }).catch((err) => {
+      console.warn('[ConsentGate] error:', err);
+    });
+  }, [user?.uid, loading, pathname]);
+
+  return null;
+}
+
 // 앱 시작 시 푸시 토큰을 Firestore에 저장하는 컴포넌트
 function NotificationInit() {
   const { user } = useAuth();
   const { expoPushToken } = useNotifications(user);
 
   useEffect(() => {
-    if (user?.uid && expoPushToken) {
+    if (!user?.uid || !expoPushToken) return;
+
+    (async () => {
+      try {
+        // 같은 디바이스 토큰이 다른 uid 아래 남아있다면 삭제
+        // (이전 계정 로그아웃 없이 새 계정으로 전환한 경우 등)
+        // 그대로 두면 채팅 푸시가 엉뚱한 계정으로 가거나 본인에게 되돌아옴
+        const staleQ = query(
+          collection(db, 'pushTokens'),
+          where('token', '==', expoPushToken)
+        );
+        const stale = await getDocs(staleQ);
+        await Promise.all(
+          stale.docs
+            .filter((d) => d.id !== user.uid)
+            .map((d) => deleteDoc(d.ref).catch(() => {}))
+        );
+      } catch (err) {
+        console.warn('Stale push token cleanup failed:', err);
+      }
+
       // Firestore에 유저별 푸시 토큰 저장
       setDoc(
         doc(db, 'pushTokens', user.uid),
@@ -527,7 +592,7 @@ function NotificationInit() {
         },
         { merge: true }
       ).catch((err) => console.warn('Push token save failed:', err));
-    }
+    })();
   }, [user, expoPushToken]);
 
   return null;
@@ -541,9 +606,11 @@ export default function RootLayout() {
   }, []);
 
   return (
+    <GestureHandlerRootView style={{ flex: 1 }}>
     <AuthProvider>
       <StatusBar style="light" />
       <NotificationInit />
+      <ConsentGate />
       <InAppNotification />
       <Stack
         screenOptions={{
@@ -555,6 +622,10 @@ export default function RootLayout() {
         <Stack.Screen
           name="auth/login"
           options={{ presentation: 'modal' }}
+        />
+        <Stack.Screen
+          name="consent"
+          options={{ gestureEnabled: false }}
         />
         <Stack.Screen name="community/index" />
         <Stack.Screen name="community/write" options={{ presentation: 'modal' }} />
@@ -579,8 +650,12 @@ export default function RootLayout() {
         <Stack.Screen name="settings/privacy" />
         <Stack.Screen name="settings/terms" />
         <Stack.Screen name="admin/send-notification" />
+        <Stack.Screen name="admin/inquiries/index" />
+        <Stack.Screen name="admin/inquiries/[id]" />
+        <Stack.Screen name="ai-consult" options={{ presentation: 'modal', gestureEnabled: false }} />
       </Stack>
       {!splashDone && <AnimatedSplash onFinish={handleSplashFinish} />}
     </AuthProvider>
+    </GestureHandlerRootView>
   );
 }

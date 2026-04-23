@@ -1,7 +1,11 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Platform, Alert, Animated } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Platform, Alert, Animated, AppState } from 'react-native';
 import Svg, { Circle, Path, Line } from 'react-native-svg';
 import { savePracticeSession, loadGoalMinutes } from '../hooks/usePracticeStats';
+
+// 화면 켜짐 유지 (Android/iOS 동일)
+let KeepAwake = null;
+try { KeepAwake = require('expo-keep-awake'); } catch {}
 
 // SVG 아이콘
 function RefreshSvg({ size = 24, color = '#C9A96E' }) {
@@ -67,6 +71,26 @@ export default function PracticeTimer({ userId, todaySeconds: externalTodaySecon
   const autoStarted = useRef(false);
   const celebrateAnim = useRef(new Animated.Value(0)).current;
   const intervalRef = useRef(null);
+  const backgroundTimeRef = useRef(null); // 백그라운드 진입 시각
+  const keepAwakeActive = useRef(false); // KeepAwake 활성화 상태 추적
+
+  // KeepAwake 안전 활성화/비활성화 헬퍼
+  const safeActivateKeepAwake = () => {
+    if (!KeepAwake || keepAwakeActive.current) return;
+    try {
+      const result = KeepAwake.activateKeepAwakeAsync?.('practice-timer');
+      if (result?.catch) result.catch(() => {});
+      keepAwakeActive.current = true;
+    } catch {}
+  };
+  const safeDeactivateKeepAwake = () => {
+    if (!KeepAwake || !keepAwakeActive.current) return;
+    try {
+      const result = KeepAwake.deactivateKeepAwake?.('practice-timer');
+      if (result?.catch) result.catch(() => {});
+    } catch {}
+    keepAwakeActive.current = false;
+  };
 
   // 목표 로드
   useEffect(() => {
@@ -86,8 +110,39 @@ export default function PracticeTimer({ userId, todaySeconds: externalTodaySecon
       intervalRef.current = setInterval(() => {
         setSeconds((s) => s + 1);
       }, 1000);
+      // 타이머 실행 중에는 화면 꺼짐 방지
+      safeActivateKeepAwake();
+    } else {
+      safeDeactivateKeepAwake();
     }
-    return () => clearInterval(intervalRef.current);
+    return () => {
+      clearInterval(intervalRef.current);
+      safeDeactivateKeepAwake();
+    };
+  }, [isRunning]);
+
+  // 백그라운드 ↔ 포그라운드 전환 시 시간 정확히 유지
+  useEffect(() => {
+    const sub = AppState.addEventListener('change', (nextState) => {
+      if (!isRunning) return;
+      if (nextState === 'background' || nextState === 'inactive') {
+        // 백그라운드 진입: 시각 저장, interval 정리
+        backgroundTimeRef.current = Date.now();
+        clearInterval(intervalRef.current);
+      } else if (nextState === 'active' && backgroundTimeRef.current) {
+        // 포그라운드 복귀: 경과 시간 계산 후 추가
+        const elapsed = Math.floor((Date.now() - backgroundTimeRef.current) / 1000);
+        if (elapsed > 0) {
+          setSeconds((s) => s + elapsed);
+        }
+        backgroundTimeRef.current = null;
+        // 재시작 (isRunning effect 에서 자동 처리되도록 interval 새로 설정)
+        intervalRef.current = setInterval(() => {
+          setSeconds((s) => s + 1);
+        }, 1000);
+      }
+    });
+    return () => sub.remove();
   }, [isRunning]);
 
   // 목표 달성 실시간 감지

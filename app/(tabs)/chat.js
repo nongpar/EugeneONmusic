@@ -341,7 +341,12 @@ const styles = StyleSheet.create({
 
   center: { flex: 1, alignItems: 'center', justifyContent: 'center' },
   loadingText: { color: '#9e9282', fontSize: 16 },
-  listContent: { paddingHorizontal: 20 },
+  listContent: {
+    paddingHorizontal: 20,
+    alignSelf: 'center',
+    width: '100%',
+    maxWidth: 540,
+  },
 
   /* 멘토 신청 */
   mentorBtn: {

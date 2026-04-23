@@ -238,7 +238,13 @@ const styles = StyleSheet.create({
   headerSub: {
     fontSize: 10, color: GOLD, marginTop: 4, fontWeight: '400', letterSpacing: 2.5,
   },
-  scrollContent: { paddingHorizontal: 20, paddingBottom: 20 },
+  scrollContent: {
+    paddingHorizontal: 20,
+    paddingBottom: 20,
+    alignSelf: 'center',
+    width: '100%',
+    maxWidth: 540,
+  },
   sectionTitle: {
     fontSize: 10, fontWeight: '500', color: GOLD_DIM,
     textTransform: 'uppercase', letterSpacing: 2.5,

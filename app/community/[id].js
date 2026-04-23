@@ -8,6 +8,7 @@ import { router, useLocalSearchParams } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import {
   doc, getDoc, collection, query, orderBy, onSnapshot, addDoc, serverTimestamp, setDoc,
+  where, getDocs,
 } from 'firebase/firestore';
 import { db } from '../../config/firebase';
 import { useAuth } from '../../hooks/useAuth';
@@ -113,15 +114,46 @@ export default function PostDetailScreen() {
   const [loading, setLoading] = useState(true);
   const [sending, setSending] = useState(false);
   const [showMoreMenu, setShowMoreMenu] = useState(false);
+  const [blockedIds, setBlockedIds] = useState(new Set());
+  const [isBlockedAuthor, setIsBlockedAuthor] = useState(false);
+
+  // 차단 목록 로드
+  useEffect(() => {
+    if (!user?.uid) {
+      setBlockedIds(new Set());
+      return;
+    }
+    const loadBlocked = async () => {
+      try {
+        const blockedQ = query(
+          collection(db, 'blockedUsers'),
+          where('blockerUid', '==', user.uid)
+        );
+        const snap = await getDocs(blockedQ);
+        const ids = new Set(snap.docs.map((d) => d.data().blockedUid));
+        setBlockedIds(ids);
+      } catch (err) {
+        console.warn('차단 목록 로드 실패:', err);
+      }
+    };
+    loadBlocked();
+  }, [user?.uid]);
 
   useEffect(() => {
     const fetchPost = async () => {
       const snap = await getDoc(doc(db, 'posts', id));
-      if (snap.exists()) setPost({ id: snap.id, ...snap.data() });
+      if (snap.exists()) {
+        const postData = { id: snap.id, ...snap.data() };
+        setPost(postData);
+        // 차단한 작성자인지 확인
+        if (blockedIds.has(postData.authorId)) {
+          setIsBlockedAuthor(true);
+        }
+      }
       setLoading(false);
     };
     fetchPost();
-  }, [id]);
+  }, [id, blockedIds]);
 
   useEffect(() => {
     const q = query(
@@ -132,6 +164,9 @@ export default function PostDetailScreen() {
       setComments(snapshot.docs.map((d) => ({ id: d.id, ...d.data() })));
     });
   }, [id]);
+
+  // 차단된 사용자의 댓글 필터링
+  const visibleComments = comments.filter((c) => !blockedIds.has(c.authorId));
 
   const handleSendComment = async () => {
     if (!commentText.trim() || !user) return;
@@ -251,6 +286,27 @@ export default function PostDetailScreen() {
     );
   }
 
+  // 차단한 사용자의 게시글이면 접근 차단
+  if (isBlockedAuthor) {
+    return (
+      <View style={[styles.container, { paddingTop: insets.top }]}>
+        <View style={styles.header}>
+          <TouchableOpacity onPress={() => router.back()}>
+            <BackIcon />
+          </TouchableOpacity>
+          <Text style={styles.headerTitle}>게시글</Text>
+          <View style={{ width: 24 }} />
+        </View>
+        <View style={styles.center}>
+          <Text style={styles.emptyText}>차단한 사용자의 게시글입니다</Text>
+          <Text style={[styles.emptyText, { fontSize: 13, marginTop: 8, color: '#9e9282' }]}>
+            차단을 해제하려면 MY 페이지에서 관리할 수 있습니다
+          </Text>
+        </View>
+      </View>
+    );
+  }
+
   const postTime = getTimeAgo(post.createdAt?.toDate?.() || new Date());
 
   return (
@@ -288,7 +344,7 @@ export default function PostDetailScreen() {
       </Modal>
 
       <FlatList
-        data={comments}
+        data={visibleComments}
         keyExtractor={(item) => item.id}
         ListHeaderComponent={() => (
           <View style={styles.postSection}>
@@ -299,7 +355,7 @@ export default function PostDetailScreen() {
             </View>
             <Text style={styles.postBody}>{post.body}</Text>
             <View style={styles.divider} />
-            <Text style={styles.commentTitle}>댓글 {comments.length}</Text>
+            <Text style={styles.commentTitle}>댓글 {visibleComments.length}</Text>
           </View>
         )}
         renderItem={({ item }) => <CommentItem item={item} currentUid={user?.uid} onReportComment={handleReportComment} />}

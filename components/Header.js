@@ -56,7 +56,7 @@ export default function Header() {
         />
         <View>
           <Text style={styles.logoText}>EON International</Text>
-          <Text style={styles.logoAccent}>Music Academy</Text>
+          <Text style={styles.logoAccent}>Music</Text>
         </View>
       </View>
       <TouchableOpacity

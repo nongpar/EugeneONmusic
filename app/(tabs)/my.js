@@ -183,7 +183,10 @@ function LoggedInView({ user, onLogout }) {
   } = usePracticeStats(user?.uid);
 
   return (
-    <ScrollView showsVerticalScrollIndicator={false}>
+    <ScrollView
+      showsVerticalScrollIndicator={false}
+      contentContainerStyle={styles.scrollContent}
+    >
       {/* 프로필 */}
       <View style={styles.profileSection}>
         <View style={styles.avatar}>
@@ -242,6 +245,7 @@ function LoggedInView({ user, onLogout }) {
       {user?.role === 'teacher' && (
         <View style={[styles.menuSection, { marginTop: 12 }]}>
           <MenuItem iconKey="bell" label="알림 전송" subtitle="공지 / 알림 보내기" onPress={() => router.push('/admin/send-notification')} />
+          <MenuItem iconKey="music" label="AI 상담 신청서" subtitle="예술 경험 신청서 관리" onPress={() => router.push('/admin/inquiries')} />
         </View>
       )}
 
@@ -336,6 +340,11 @@ export default function MyScreen() {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#110E0B' },
+  scrollContent: {
+    alignSelf: 'center',
+    width: '100%',
+    maxWidth: 540,
+  },
   center: { alignItems: 'center', justifyContent: 'center' },
   screenTitle: {
     fontSize: 22, fontWeight: '300', color: '#F5F0E8',

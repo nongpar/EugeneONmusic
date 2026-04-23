@@ -1,9 +1,10 @@
 import { useState, useEffect, useRef } from 'react';
 import {
   View, Text, StyleSheet, ScrollView, Image, TouchableOpacity,
-  ActivityIndicator, Linking, Platform, useWindowDimensions,
+  ActivityIndicator, Platform, useWindowDimensions,
 } from 'react-native';
 import Svg, { Path, Circle, Rect } from 'react-native-svg';
+import { LinearGradient } from 'expo-linear-gradient';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -24,16 +25,6 @@ function ExternalIcon({ size = 18, color = '#C9A96E' }) {
     </Svg>
   );
 }
-function ShareIcon({ size = 18, color = '#C9A96E' }) {
-  return (
-    <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
-      <Circle cx="18" cy="5" r="3" stroke={color} strokeWidth={2} />
-      <Circle cx="6" cy="12" r="3" stroke={color} strokeWidth={2} />
-      <Circle cx="18" cy="19" r="3" stroke={color} strokeWidth={2} />
-      <Path d="M8.59 13.51l6.83 3.98M15.41 6.51l-6.82 3.98" stroke={color} strokeWidth={2} />
-    </Svg>
-  );
-}
 function CalendarIcon({ size = 14, color = '#9e9282' }) {
   return (
     <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
@@ -42,22 +33,37 @@ function CalendarIcon({ size = 14, color = '#9e9282' }) {
     </Svg>
   );
 }
+function QuaverIcon({ size = 12, color = '#C9A96E' }) {
+  return (
+    <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+      <Path d="M9 18V5l9-2v4" stroke={color} strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round" />
+      <Circle cx="6" cy="18" r="3" fill={color} opacity={0.4} stroke={color} strokeWidth={1} />
+    </Svg>
+  );
+}
+function ChevronRightIcon({ size = 14, color = '#C9A96E' }) {
+  return (
+    <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+      <Path d="M9 18l6-6-6-6" stroke={color} strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round" />
+    </Svg>
+  );
+}
 
-// 카테고리 설정
+// 카테고리 설정 — 통일된 골드 톤, 라벨 텍스트로만 구분
 const CATEGORY_CONFIG = {
-  2:  { label: 'NEWS', color: '#3498db' },
-  30: { label: '공연', color: '#e74c3c' },
-  31: { label: '대관', color: '#2ecc71' },
-  32: { label: '강좌', color: '#9b59b6' },
-  66: { label: '콩쿠르', color: '#C9A96E' },
-  67: { label: '콩쿠르', color: '#C9A96E' },
+  2:  { label: 'NEWS' },
+  30: { label: '공연' },
+  31: { label: '대관' },
+  32: { label: '강좌' },
+  66: { label: '콩쿠르' },
+  67: { label: '콩쿠르' },
 };
 
 function getCategoryInfo(categoryIds) {
   for (const id of (categoryIds || [])) {
     if (CATEGORY_CONFIG[id]) return CATEGORY_CONFIG[id];
   }
-  return { label: '소식', color: '#C9A96E' };
+  return { label: '소식' };
 }
 
 function formatDate(dateStr) {
@@ -189,7 +195,10 @@ function ContentBlock({ block, screenWidth }) {
   if (block.type === 'heading') {
     const fontSize = block.level === 1 ? 22 : block.level === 2 ? 19 : 16;
     return (
-      <Text style={[styles.contentHeading, { fontSize }]}>{block.text}</Text>
+      <View style={styles.contentHeadingWrap}>
+        <View style={styles.contentHeadingAccent} />
+        <Text style={[styles.contentHeading, { fontSize }]}>{block.text}</Text>
+      </View>
     );
   }
 
@@ -212,7 +221,7 @@ function ContentBlock({ block, screenWidth }) {
   if (block.type === 'listItem') {
     return (
       <View style={styles.contentListItem}>
-        <Text style={styles.contentBullet}>•</Text>
+        <Text style={styles.contentBullet}>◆</Text>
         <Text style={styles.contentListText}>{block.text}</Text>
       </View>
     );
@@ -253,9 +262,13 @@ export default function NewsDetailScreen() {
     if (!post?.link) return;
     if (Platform.OS === 'web') {
       window.open(post.link, '_blank');
-    } else {
-      Linking.openURL(post.link);
+      return;
     }
+    // Apple/Google 심사 대응: 외부 브라우저 대신 앱 내 WebView 사용
+    router.push({
+      pathname: '/webview',
+      params: { url: post.link, title: stripHtml(post.title?.rendered || '') },
+    });
   };
 
   const handleBack = () => {
@@ -322,29 +335,46 @@ export default function NewsDetailScreen() {
       </View>
 
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
-        {/* 대표 이미지 */}
+        {/* 대표 이미지 + 하단 그라디언트 페이드 */}
         {featuredImage && (
-          <Image
-            source={{ uri: featuredImage }}
-            style={[styles.featuredImage, { width: screenWidth }]}
-            resizeMode="cover"
-          />
+          <View style={[styles.featuredWrap, { width: screenWidth }]}>
+            <Image
+              source={{ uri: featuredImage }}
+              style={[styles.featuredImage, { width: screenWidth }]}
+              resizeMode="cover"
+            />
+            <LinearGradient
+              pointerEvents="none"
+              colors={['rgba(17,14,11,0)', 'rgba(17,14,11,0.6)', '#110E0B']}
+              locations={[0, 0.6, 1]}
+              style={styles.featuredFade}
+            />
+          </View>
         )}
 
         {/* 메타 정보 */}
         <View style={styles.metaSection}>
-          <View style={[styles.categoryBadge, { backgroundColor: categoryInfo.color }]}>
+          <View style={styles.categoryBadge}>
             <Text style={styles.categoryText}>{categoryInfo.label}</Text>
           </View>
 
           <Text style={styles.title}>{title}</Text>
+
+          {/* 골드 장식 — 선 ◇ 선 */}
+          <View style={styles.titleOrnament}>
+            <View style={styles.goldLine} />
+            <View style={styles.goldDiamond} />
+            <View style={styles.goldLine} />
+          </View>
 
           <View style={styles.metaRow}>
             <CalendarIcon />
             <Text style={styles.metaText}>{date}</Text>
             {authorName ? (
               <>
-                <Text style={styles.metaDot}>·</Text>
+                <View style={styles.metaSep}>
+                  <QuaverIcon size={11} color="rgba(201,169,110,0.5)" />
+                </View>
                 <Text style={styles.metaText}>{authorName}</Text>
               </>
             ) : null}
@@ -368,10 +398,14 @@ export default function NewsDetailScreen() {
         </View>
 
         {/* 원본 링크 */}
-        <TouchableOpacity style={styles.originalLink} onPress={handleOpenExternal}>
-          <ExternalIcon size={16} />
-          <Text style={styles.originalLinkText}>원본 글 보기 (eugeneonmusic.com)</Text>
+        <TouchableOpacity style={styles.originalLink} onPress={handleOpenExternal} activeOpacity={0.8}>
+          <View style={styles.originalLinkLeft}>
+            <ExternalIcon size={15} />
+            <Text style={styles.originalLinkText}>원본 글 보기</Text>
+          </View>
+          <ChevronRightIcon size={14} />
         </TouchableOpacity>
+        <Text style={styles.originalLinkSub}>eugeneonmusic.com</Text>
 
         <View style={{ height: 40 }} />
       </ScrollView>
@@ -405,66 +439,124 @@ const styles = StyleSheet.create({
   scrollContent: { paddingBottom: 20 },
 
   /* 대표 이미지 */
+  featuredWrap: {
+    position: 'relative',
+    backgroundColor: '#110E0B',
+  },
   featuredImage: {
-    height: 220,
+    height: 260,
     backgroundColor: 'rgba(201,169,110,0.07)',
+  },
+  featuredFade: {
+    position: 'absolute',
+    left: 0, right: 0, bottom: 0,
+    height: 120,
   },
 
   /* 메타 */
   metaSection: {
-    paddingHorizontal: 20, paddingTop: 20, gap: 12,
+    paddingHorizontal: 22, paddingTop: 6, gap: 14,
   },
   categoryBadge: {
     alignSelf: 'flex-start',
-    paddingHorizontal: 10, paddingVertical: 4, borderRadius: 4,
+    paddingHorizontal: 11, paddingVertical: 4,
+    borderRadius: 2,
+    borderWidth: 0.5,
+    borderColor: 'rgba(201,169,110,0.55)',
+    backgroundColor: 'rgba(201,169,110,0.06)',
   },
-  categoryText: { fontSize: 11, fontWeight: '400', color: '#fff', letterSpacing: 0.5 },
+  categoryText: {
+    fontSize: 10, fontWeight: '500', color: '#C9A96E',
+    letterSpacing: 2,
+  },
   title: {
-    fontSize: 22, fontWeight: '400', color: '#F5F0E8',
-    lineHeight: 30, letterSpacing: 0.3,
+    fontSize: 23, fontWeight: '300', color: '#F5F0E8',
+    lineHeight: 32, letterSpacing: 0.4,
+  },
+  titleOrnament: {
+    flexDirection: 'row', alignItems: 'center', gap: 8,
+    marginTop: -2, marginBottom: 2,
+  },
+  goldLine: {
+    height: 0.5, width: 28,
+    backgroundColor: 'rgba(201,169,110,0.55)',
+  },
+  goldDiamond: {
+    width: 5, height: 5,
+    backgroundColor: '#C9A96E',
+    transform: [{ rotate: '45deg' }],
   },
   metaRow: {
-    flexDirection: 'row', alignItems: 'center', gap: 6,
+    flexDirection: 'row', alignItems: 'center', gap: 8,
   },
-  metaText: { fontSize: 13, color: '#9e9282' },
-  metaDot: { fontSize: 13, color: 'rgba(201,169,110,0.3)' },
+  metaText: {
+    fontSize: 12, color: '#9e9282', letterSpacing: 0.4,
+  },
+  metaSep: {
+    paddingHorizontal: 2,
+  },
 
   /* 구분선 */
   divider: {
-    height: 0.5, backgroundColor: 'rgba(201,169,110,0.15)',
-    marginHorizontal: 20, marginVertical: 20,
+    height: 0.5, backgroundColor: 'rgba(201,169,110,0.12)',
+    marginHorizontal: 22, marginVertical: 22,
   },
 
   /* 본문 */
   contentSection: {
-    paddingHorizontal: 20, gap: 14,
+    paddingHorizontal: 22, gap: 16,
+  },
+  contentHeadingWrap: {
+    flexDirection: 'row', alignItems: 'flex-start',
+    gap: 10, marginTop: 10, paddingLeft: 2,
+  },
+  contentHeadingAccent: {
+    width: 2, alignSelf: 'stretch',
+    backgroundColor: '#C9A96E',
+    marginTop: 6, marginBottom: 6,
+    borderRadius: 1,
   },
   contentHeading: {
-    fontWeight: '400', color: '#F5F0E8',
-    lineHeight: 28, marginTop: 8, letterSpacing: 0.3,
+    flex: 1, fontWeight: '400', color: '#F5F0E8',
+    lineHeight: 28, letterSpacing: 0.3,
   },
   contentParagraph: {
-    fontSize: 15, color: '#b0c0d0', lineHeight: 26,
+    fontSize: 15, color: '#C9BEAC', lineHeight: 27, letterSpacing: 0.2,
   },
   contentImageWrap: {
-    marginVertical: 8, borderRadius: 4, overflow: 'hidden',
+    marginVertical: 10, borderRadius: 4, overflow: 'hidden',
     alignSelf: 'center',
+    borderWidth: 0.5, borderColor: 'rgba(201,169,110,0.25)',
   },
   contentImage: {
     borderRadius: 4, backgroundColor: 'rgba(201,169,110,0.07)',
   },
   contentListItem: {
-    flexDirection: 'row', gap: 8, paddingLeft: 4,
+    flexDirection: 'row', gap: 10, paddingLeft: 4,
   },
-  contentBullet: { fontSize: 15, color: '#C9A96E', lineHeight: 26 },
-  contentListText: { fontSize: 15, color: '#b0c0d0', lineHeight: 26, flex: 1 },
+  contentBullet: {
+    fontSize: 10, color: '#C9A96E', lineHeight: 27,
+    paddingTop: 1,
+  },
+  contentListText: { fontSize: 15, color: '#C9BEAC', lineHeight: 27, flex: 1 },
 
   /* 원본 링크 */
   originalLink: {
-    flexDirection: 'row', alignItems: 'center', justifyContent: 'center',
-    gap: 8, marginTop: 24, marginHorizontal: 20,
-    paddingVertical: 14, borderRadius: 4,
-    backgroundColor: 'rgba(201,169,110,0.07)', borderWidth: 0.5, borderColor: 'rgba(201,169,110,0.18)',
+    flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
+    marginTop: 28, marginHorizontal: 22,
+    paddingVertical: 14, paddingHorizontal: 16,
+    borderRadius: 2,
+    borderWidth: 0.5, borderColor: 'rgba(201,169,110,0.3)',
+    backgroundColor: 'rgba(201,169,110,0.04)',
   },
-  originalLinkText: { fontSize: 14, color: '#C9A96E', fontWeight: '400', letterSpacing: 0.3 },
+  originalLinkLeft: {
+    flexDirection: 'row', alignItems: 'center', gap: 10,
+  },
+  originalLinkText: {
+    fontSize: 13, color: '#C9A96E', fontWeight: '400', letterSpacing: 1.2,
+  },
+  originalLinkSub: {
+    fontSize: 11, color: '#6d6558', letterSpacing: 0.8,
+    textAlign: 'center', marginTop: 8,
+  },
 });

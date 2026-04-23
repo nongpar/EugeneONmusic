@@ -93,7 +93,7 @@ export default function AppInfoScreen() {
         {/* Developer */}
         <View style={styles.card}>
           <Text style={styles.cardTitle}>개발사</Text>
-          <Text style={styles.cardValue}>EON International Music Academy</Text>
+          <Text style={styles.cardValue}>EON International Music</Text>
         </View>
 
         {/* Links */}
@@ -116,7 +116,7 @@ export default function AppInfoScreen() {
         </View>
 
         {/* Copyright */}
-        <Text style={styles.copyright}>{'\u00A9'} 2025 EON International Music Academy</Text>
+        <Text style={styles.copyright}>{'\u00A9'} 2025 EON International Music</Text>
       </ScrollView>
     </View>
   );

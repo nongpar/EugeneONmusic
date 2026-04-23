@@ -47,5 +47,8 @@ const styles = StyleSheet.create({
   },
   scrollContent: {
     paddingBottom: 20,
+    alignSelf: 'center',
+    width: '100%',
+    maxWidth: 540,
   },
 });

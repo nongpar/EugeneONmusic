@@ -193,15 +193,28 @@ export default function ProfileScreen() {
         'comments'
       ).catch(() => {});
 
-      // 11. 신고 내역
+      // 11. 신고 내역 (내가 한 신고)
       await deleteQueryResults(
-        query(collection(db, 'reports'), where('reporterId', '==', uid))
+        query(collection(db, 'reports'), where('reporterUserId', '==', uid))
       ).catch(() => {});
 
-      // 12. 차단 목록
+      // 12. 차단 목록 (내가 차단한 사용자)
       await deleteQueryResults(
-        query(collection(db, 'blockedUsers'), where('userId', '==', uid))
+        query(collection(db, 'blockedUsers'), where('blockerUid', '==', uid))
       ).catch(() => {});
+
+      // 13. AI 상담 대화 이력
+      await deleteQueryResults(
+        query(collection(db, 'aiConsultations'), where('userId', '==', uid))
+      ).catch(() => {});
+
+      // 14. AI 상담 신청서
+      await deleteQueryResults(
+        query(collection(db, 'experiencePlans'), where('userId', '==', uid))
+      ).catch(() => {});
+
+      // 15. AI 일일 사용량 카운터 (단일 문서, uid로 키)
+      await deleteDoc(doc(db, 'aiRateLimits', uid)).catch(() => {});
 
       // 로그아웃
       await logout();
@@ -263,7 +276,7 @@ export default function ProfileScreen() {
         {/* Website Link */}
         <TouchableOpacity
           style={styles.webLink}
-          onPress={() => router.push({ pathname: '/webview', params: { url: 'https://eon-music.com/my-account/', title: '프로필 관리' } })}
+          onPress={() => router.push({ pathname: '/webview', params: { url: 'https://www.eon-music.com/my-account/', title: '프로필 관리', autoLogin: 'true' } })}
         >
           <GlobeIcon />
           <Text style={styles.webLinkText}>eon-music.com에서 프로필 관리</Text>

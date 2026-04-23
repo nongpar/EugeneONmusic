@@ -389,7 +389,13 @@ const styles = StyleSheet.create({
   categoryLabelActive: { color: '#C9A96E' },
 
   /* 리스트 */
-  listContent: { paddingHorizontal: 20, paddingTop: 8 },
+  listContent: {
+    paddingHorizontal: 20,
+    paddingTop: 8,
+    alignSelf: 'center',
+    width: '100%',
+    maxWidth: 540,
+  },
   statsBar: {
     flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center',
     paddingVertical: 10,

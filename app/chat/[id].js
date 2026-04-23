@@ -37,15 +37,6 @@ function SendIcon({ size = 18, color = '#fff' }) {
   );
 }
 
-function PlusIcon({ size = 22, color = '#9e9282' }) {
-  return (
-    <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
-      <Circle cx="12" cy="12" r="10" stroke={color} strokeWidth={1.8} />
-      <Path d="M12 8v8M8 12h8" stroke={color} strokeWidth={2} strokeLinecap="round" />
-    </Svg>
-  );
-}
-
 function MoreIcon({ size = 20, color = '#C9A96E' }) {
   return (
     <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
@@ -150,19 +141,23 @@ export default function ChatDetailScreen() {
         }
         await updateDoc(doc(db, 'chatRooms', id), updates);
 
-        // 상대방에게 푸시 알림 전송
-        if (otherId) {
+        // 상대방에게 푸시 알림 전송 — 본인 uid 이면 절대 전송 안 함
+        if (otherId && otherId !== user.uid) {
           try {
             const tokenSnap = await getDoc(doc(db, 'pushTokens', otherId));
             if (tokenSnap.exists()) {
-              const pushToken = tokenSnap.data().token;
-              const senderName = user.displayName || user.email?.split('@')[0] || '알 수 없음';
-              sendPushNotification(
-                pushToken,
-                `${senderName}님의 메시지`,
-                text.length > 50 ? text.substring(0, 50) + '...' : text,
-                { type: 'chat', chatRoomId: id, senderId: user.uid }
-              );
+              const tokenData = tokenSnap.data();
+              const pushToken = tokenData.token;
+              // 토큰 문서의 uid가 실제로 otherId와 일치하는지 확인 (교차된 stale 토큰 방어)
+              if (pushToken && (!tokenData.uid || tokenData.uid === otherId)) {
+                const senderName = user.displayName || user.email?.split('@')[0] || '알 수 없음';
+                sendPushNotification(
+                  pushToken,
+                  `${senderName}님의 메시지`,
+                  text.length > 50 ? text.substring(0, 50) + '...' : text,
+                  { type: 'chat', chatRoomId: id, senderId: user.uid }
+                );
+              }
             }
           } catch (pushErr) {
             console.warn('푸시 알림 전송 실패:', pushErr);
@@ -364,9 +359,6 @@ export default function ChatDetailScreen() {
 
       {/* 입력 바 */}
       <View style={[styles.inputBar, { paddingBottom: Math.max(insets.bottom, 8) }]}>
-        <TouchableOpacity style={styles.attachBtn}>
-          <PlusIcon />
-        </TouchableOpacity>
         <TextInput
           style={styles.input}
           placeholder="메시지를 입력하세요"
@@ -421,7 +413,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12, paddingTop: 8,
     backgroundColor: 'rgba(201,169,110,0.07)', borderTopWidth: 0.5, borderTopColor: 'rgba(201,169,110,0.18)',
   },
-  attachBtn: { padding: 4 },
   input: {
     flex: 1, backgroundColor: '#110E0B', borderRadius: 4,
     paddingHorizontal: 16, paddingVertical: 10, fontSize: 14, color: '#F5F0E8',
