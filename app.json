@@ -2,11 +2,11 @@
   "expo": {
     "name": "유진온뮤직",
     "slug": "EugeneONmusic",
-    "version": "1.0.5",
+    "version": "1.0.6",
     "orientation": "default",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "dark",
-    "newArchEnabled": true,
+    "newArchEnabled": false,
     "scheme": "eugeneonmusic",
     "splash": {
       "image": "./assets/splash-icon.png",
@@ -24,7 +24,7 @@
         ],
         "ITSAppUsesNonExemptEncryption": false
       },
-      "buildNumber": "16"
+      "buildNumber": "17"
     },
     "android": {
       "package": "com.eugeneonmusic.app",

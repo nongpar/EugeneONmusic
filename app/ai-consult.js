@@ -14,6 +14,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import {
   View,
   Text,
+  Image,
   StyleSheet,
   TextInput,
   TouchableOpacity,
@@ -28,10 +29,7 @@ import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { httpsCallable } from 'firebase/functions';
 import { signInWithCustomToken, onAuthStateChanged } from 'firebase/auth';
-import { useAudioPlayer } from 'expo-audio';
 import { LinearGradient } from 'expo-linear-gradient';
-import { captureRef } from 'react-native-view-shot';
-import * as Sharing from 'expo-sharing';
 import {
   useFonts,
   NotoSerifKR_400Regular,
@@ -204,31 +202,9 @@ export default function AIConsultScreen() {
 
   const aiConsult = httpsCallable(functions, 'aiConsult');
 
-  // 배경음악 플레이어 — 낮은 볼륨으로 잔잔하게 재생
-  const bgPlayer = useAudioPlayer(require('../assets/audio/ai_consult_bg.mp3'));
-
-  // 배경음악 초기 설정 (루프·저볼륨)
-  useEffect(() => {
-    try {
-      bgPlayer.loop = true;
-      bgPlayer.volume = 0.15; // 아주 잔잔한 레벨
-    } catch {}
-    return () => {
-      try { bgPlayer.pause(); } catch {}
-    };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
-  // 대화 시작/완료/음소거 상태에 따라 재생 토글
-  useEffect(() => {
-    try {
-      if (started && !completed && !muted) {
-        bgPlayer.play();
-      } else {
-        bgPlayer.pause();
-      }
-    } catch {}
-  }, [started, completed, muted, bgPlayer]);
+  // 배경음악은 대화 시작(started=true) 후에만 BackgroundMusic 컴포넌트로 마운트.
+  // 이유: useAudioPlayer가 native 에러를 던지면 hook 단계에서 앱이 크래시할 수 있어
+  //       진입 즉시 호출하지 않고 사용자가 상담을 시작한 시점에만 로드.
 
   // Firebase Auth 상태를 구독 — 나중에 세션이 붙으면 자동 반영
   useEffect(() => {
@@ -408,21 +384,25 @@ export default function AIConsultScreen() {
   return (
     <View style={[styles.container, { paddingTop: insets.top }]}>
       {/* 배경 이미지 — EON HALL 공연장 실루엣이 분위기로만 남도록 블러·저투명 처리
-          모달 진입 시 디코딩 지연으로 깜빡이는 것을 피하려고 onLoad 후 fade-in */}
-      <Animated.Image
-        source={require('../assets/images/eon-hall-bg.jpg')}
+          Animated.Image 대신 일반 Image를 Animated.View로 감싸서 new arch 호환성 향상 */}
+      <Animated.View
         style={[styles.bgImage, { opacity: bgOpacity }]}
-        blurRadius={4}
-        resizeMode="cover"
         pointerEvents="none"
-        onLoad={() => {
-          Animated.timing(bgOpacity, {
-            toValue: 0.55,
-            duration: 500,
-            useNativeDriver: true,
-          }).start();
-        }}
-      />
+      >
+        <Image
+          source={require('../assets/images/eon-hall-bg.jpg')}
+          style={StyleSheet.absoluteFillObject}
+          blurRadius={4}
+          resizeMode="cover"
+          onLoad={() => {
+            Animated.timing(bgOpacity, {
+              toValue: 0.55,
+              duration: 500,
+              useNativeDriver: true,
+            }).start();
+          }}
+        />
+      </Animated.View>
       {/* 어두운 오버레이 — 이미지를 배경으로 물러나게 하고 말풍선 글씨에 집중 */}
       <LinearGradient
         colors={[
@@ -435,6 +415,11 @@ export default function AIConsultScreen() {
         style={styles.bgOverlay}
         pointerEvents="none"
       />
+
+      {/* 배경음악 — 대화 시작 후에만 마운트해서 native 오류 시 초기 크래시 방지 */}
+      {started && !completed && (
+        <BackgroundMusic muted={muted} />
+      )}
 
       {/* 폰트 로드 전엔 배경만 노출해 깜빡임 방지 — 로드 완료 시 UI 전체 페이드인 */}
       {fontsLoaded && (
@@ -594,6 +579,48 @@ export default function AIConsultScreen() {
   );
 }
 
+// ────────────── 배경음악 컴포넌트 ──────────────
+// useAudioPlayer가 native 초기화 실패 시 앱 전체를 크래시시킬 수 있어
+// 대화 시작 후에만 이 컴포넌트를 마운트 (지연 로드 + 격리)
+function BackgroundMusic({ muted }) {
+  // 동적으로 expo-audio 로드 — import 자체의 side effect 실패 가능성 회피
+  let useAudioPlayer;
+  try {
+    useAudioPlayer = require('expo-audio').useAudioPlayer;
+  } catch (e) {
+    // expo-audio를 로드할 수 없으면 조용히 무음 처리
+    return null;
+  }
+  let bgPlayer;
+  try {
+    bgPlayer = useAudioPlayer(require('../assets/audio/ai_consult_bg.mp3'));
+  } catch (e) {
+    return null;
+  }
+
+  useEffect(() => {
+    if (!bgPlayer) return;
+    try {
+      bgPlayer.loop = true;
+      bgPlayer.volume = 0.15;
+    } catch {}
+    return () => {
+      try { bgPlayer.pause(); } catch {}
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  useEffect(() => {
+    if (!bgPlayer) return;
+    try {
+      if (muted) bgPlayer.pause();
+      else bgPlayer.play();
+    } catch {}
+  }, [muted, bgPlayer]);
+
+  return null;
+}
+
 // ────────────── 접수증(티켓) 컴포넌트 ──────────────
 // 상담 완료 후 표시되는 음악회 티켓 형태의 receipt — 제출의 무게감과 기념품 느낌
 // captureRef로 이미지 캡처 후 Sharing으로 저장·공유 가능
@@ -611,6 +638,9 @@ function TicketReceipt({ consultationId, onClose }) {
   const handleShare = async () => {
     Haptics?.selectionAsync();
     try {
+      // Lazy import — 네이티브 모듈을 실제 버튼 탭 시점에만 로드해 초기 번들에서 제외
+      const { captureRef } = require('react-native-view-shot');
+      const Sharing = require('expo-sharing');
       const uri = await captureRef(ticketRef, {
         format: 'png',
         quality: 1,

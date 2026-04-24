@@ -5,6 +5,12 @@ import { StatusBar } from 'expo-status-bar';
 import * as SplashScreen from 'expo-splash-screen';
 import { useAudioPlayer, useAudioPlayerStatus, setAudioModeAsync } from 'expo-audio';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
+import {
+  useFonts as useNotoSerifFonts,
+  NotoSerifKR_400Regular,
+  NotoSerifKR_500Medium,
+  NotoSerifKR_600SemiBold,
+} from '@expo-google-fonts/noto-serif-kr';
 import { AuthProvider, useAuth } from '../hooks/useAuth';
 import { useNotifications } from '../hooks/useNotifications';
 import { doc, setDoc, collection, query, where, getDocs, deleteDoc } from 'firebase/firestore';
@@ -600,6 +606,14 @@ function NotificationInit() {
 
 export default function RootLayout() {
   const [splashDone, setSplashDone] = useState(false);
+
+  // Serif 명조체 — 앱 시작 시 루트에서 한 번만 로드 (개별 화면에서 재로드로 인한 메모리 피크 방지)
+  // 로드 실패해도 앱은 동작 — 시스템 폰트로 fallback
+  useNotoSerifFonts({
+    NotoSerifKR_400Regular,
+    NotoSerifKR_500Medium,
+    NotoSerifKR_600SemiBold,
+  });
 
   const handleSplashFinish = useCallback(() => {
     setSplashDone(true);
