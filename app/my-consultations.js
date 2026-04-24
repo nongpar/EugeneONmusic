@@ -23,12 +23,6 @@ import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { httpsCallable } from 'firebase/functions';
 import { signInWithCustomToken } from 'firebase/auth';
-import {
-  useFonts,
-  NotoSerifKR_400Regular,
-  NotoSerifKR_500Medium,
-  NotoSerifKR_600SemiBold,
-} from '@expo-google-fonts/noto-serif-kr';
 import Svg, { Path } from 'react-native-svg';
 import { functions, auth } from '../config/firebase';
 import { useAuth } from '../hooks/useAuth';
@@ -92,11 +86,6 @@ export default function MyConsultationsScreen() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
   const { user, getToken } = useAuth();
-  const [fontsLoaded] = useFonts({
-    NotoSerifKR_400Regular,
-    NotoSerifKR_500Medium,
-    NotoSerifKR_600SemiBold,
-  });
 
   const [items, setItems] = useState(null); // null = 로딩중, [] = 비었음
   const [error, setError] = useState(null);
@@ -190,10 +179,6 @@ export default function MyConsultationsScreen() {
       },
     ]);
   };
-
-  if (!fontsLoaded) {
-    return <View style={[styles.container, { paddingTop: insets.top }]} />;
-  }
 
   return (
     <View style={[styles.container, { paddingTop: insets.top }]}>
@@ -352,13 +337,11 @@ const styles = StyleSheet.create({
   headerTitle: {
     fontSize: 15,
     color: '#F5F0E8',
-    fontFamily: 'NotoSerifKR_500Medium',
     letterSpacing: 0.5,
   },
   headerSub: {
     fontSize: 10,
     color: '#9e9282',
-    fontFamily: 'NotoSerifKR_400Regular',
     letterSpacing: 1,
     marginTop: 2,
   },
@@ -376,14 +359,12 @@ const styles = StyleSheet.create({
   emptyTitle: {
     fontSize: 15,
     color: '#C9BEAC',
-    fontFamily: 'NotoSerifKR_500Medium',
     marginTop: 10,
     textAlign: 'center',
   },
   emptyDesc: {
     fontSize: 13,
     color: 'rgba(201,169,110,0.55)',
-    fontFamily: 'NotoSerifKR_400Regular',
     lineHeight: 22,
     textAlign: 'center',
   },
@@ -398,7 +379,6 @@ const styles = StyleSheet.create({
   startBtnText: {
     fontSize: 13,
     color: '#C9A96E',
-    fontFamily: 'NotoSerifKR_500Medium',
     letterSpacing: 2,
   },
 
@@ -426,7 +406,6 @@ const styles = StyleSheet.create({
     flex: 1,
     fontSize: 11,
     color: 'rgba(201,169,110,0.7)',
-    fontFamily: 'NotoSerifKR_400Regular',
     letterSpacing: 1.2,
   },
   statusDot: {
@@ -437,20 +416,17 @@ const styles = StyleSheet.create({
   },
   cardStatus: {
     fontSize: 11,
-    fontFamily: 'NotoSerifKR_500Medium',
     letterSpacing: 0.5,
   },
   cardCategory: {
     fontSize: 15,
     color: '#F5F0E8',
-    fontFamily: 'NotoSerifKR_500Medium',
     letterSpacing: 0.3,
     marginBottom: 6,
   },
   cardSummary: {
     fontSize: 13,
     color: '#C9BEAC',
-    fontFamily: 'NotoSerifKR_400Regular',
     lineHeight: 21,
   },
   cardDivider: {
@@ -468,19 +444,16 @@ const styles = StyleSheet.create({
   cardNoLabel: {
     fontSize: 10,
     color: 'rgba(201,169,110,0.55)',
-    fontFamily: 'NotoSerifKR_400Regular',
     letterSpacing: 1.5,
   },
   cardNo: {
     fontSize: 13,
     color: '#C9A96E',
-    fontFamily: 'NotoSerifKR_600SemiBold',
     letterSpacing: 2,
   },
   listFooter: {
     fontSize: 10,
     color: 'rgba(158,146,130,0.55)',
-    fontFamily: 'NotoSerifKR_400Regular',
     textAlign: 'center',
     letterSpacing: 1,
     marginTop: 12,
@@ -497,7 +470,6 @@ const styles = StyleSheet.create({
   swipeActionText: {
     fontSize: 12,
     color: '#F5F0E8',
-    fontFamily: 'NotoSerifKR_500Medium',
     letterSpacing: 2,
   },
 });

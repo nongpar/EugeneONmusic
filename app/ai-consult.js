@@ -30,12 +30,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { httpsCallable } from 'firebase/functions';
 import { signInWithCustomToken, onAuthStateChanged } from 'firebase/auth';
 import { LinearGradient } from 'expo-linear-gradient';
-import {
-  useFonts,
-  NotoSerifKR_400Regular,
-  NotoSerifKR_500Medium,
-  NotoSerifKR_600SemiBold,
-} from '@expo-google-fonts/noto-serif-kr';
+import { useAudioPlayer } from 'expo-audio';
 import Svg, { Path, Circle } from 'react-native-svg';
 import ChopinAvatar, { ChopinAvatarSmall } from '../components/ChopinAvatar';
 import { functions, auth } from '../config/firebase';
@@ -179,11 +174,8 @@ export default function AIConsultScreen() {
   const router = useRouter();
   const { user, getToken } = useAuth();
   // Serif 명조체 — 클래식·프리미엄 느낌을 위해 Noto Serif KR 3가지 weight 로드
-  const [fontsLoaded] = useFonts({
-    NotoSerifKR_400Regular,
-    NotoSerifKR_500Medium,
-    NotoSerifKR_600SemiBold,
-  });
+  // Noto Serif KR 폰트는 production 크래시 원인으로 의심되어 일시 제거.
+  // 시스템 기본 폰트 사용. 안정화 후 expo-font 로컬 번들 방식으로 재도입 예정.
   const [messages, setMessages] = useState([]); // { role: 'user'|'assistant', text }
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
@@ -416,14 +408,15 @@ export default function AIConsultScreen() {
         pointerEvents="none"
       />
 
-      {/* 배경음악 — 대화 시작 후에만 마운트해서 native 오류 시 초기 크래시 방지 */}
+      {/* 배경음악 — 대화 시작 후에만 마운트 + ErrorBoundary로 격리
+          오디오 초기화 실패가 앱 전체를 크래시시키지 않도록 에러를 차단 */}
       {started && !completed && (
-        <BackgroundMusic muted={muted} />
+        <AudioErrorBoundary>
+          <BackgroundMusic muted={muted} />
+        </AudioErrorBoundary>
       )}
 
-      {/* 폰트 로드 전엔 배경만 노출해 깜빡임 방지 — 로드 완료 시 UI 전체 페이드인 */}
-      {fontsLoaded && (
-        <>
+      <>
       {/* 헤더 */}
       <View style={styles.header}>
         <View style={styles.headerLeft}>
@@ -579,40 +572,46 @@ export default function AIConsultScreen() {
   );
 }
 
+// ────────────── 배경음악 에러 바운더리 ──────────────
+// BackgroundMusic의 렌더·마운트 오류를 앱 전체로 전파하지 않고 격리
+class AudioErrorBoundary extends React.Component {
+  constructor(props) {
+    super(props);
+    this.state = { hasError: false };
+  }
+  static getDerivedStateFromError() {
+    return { hasError: true };
+  }
+  componentDidCatch(error) {
+    console.warn('[BackgroundMusic] error:', error?.message || error);
+  }
+  render() {
+    if (this.state.hasError) return null;
+    return this.props.children;
+  }
+}
+
 // ────────────── 배경음악 컴포넌트 ──────────────
-// useAudioPlayer가 native 초기화 실패 시 앱 전체를 크래시시킬 수 있어
-// 대화 시작 후에만 이 컴포넌트를 마운트 (지연 로드 + 격리)
+// React 규칙을 지키며 hook을 조건 없이 호출. 실제 player 접근은 try/catch로 가드.
 function BackgroundMusic({ muted }) {
-  // 동적으로 expo-audio 로드 — import 자체의 side effect 실패 가능성 회피
-  let useAudioPlayer;
-  try {
-    useAudioPlayer = require('expo-audio').useAudioPlayer;
-  } catch (e) {
-    // expo-audio를 로드할 수 없으면 조용히 무음 처리
-    return null;
-  }
-  let bgPlayer;
-  try {
-    bgPlayer = useAudioPlayer(require('../assets/audio/ai_consult_bg.mp3'));
-  } catch (e) {
-    return null;
-  }
+  const bgPlayer = useAudioPlayer(require('../assets/audio/ai_consult_bg.mp3'));
 
   useEffect(() => {
-    if (!bgPlayer) return;
     try {
-      bgPlayer.loop = true;
-      bgPlayer.volume = 0.15;
+      if (bgPlayer) {
+        bgPlayer.loop = true;
+        bgPlayer.volume = 0.15;
+      }
     } catch {}
     return () => {
-      try { bgPlayer.pause(); } catch {}
+      try { bgPlayer && bgPlayer.pause(); } catch {}
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   useEffect(() => {
-    if (!bgPlayer) return;
     try {
+      if (!bgPlayer) return;
       if (muted) bgPlayer.pause();
       else bgPlayer.play();
     } catch {}
@@ -770,13 +769,11 @@ const styles = StyleSheet.create({
   headerTitle: {
     fontSize: 16,
     color: '#F5F0E8',
-    fontFamily: 'NotoSerifKR_500Medium',
     letterSpacing: 0.5,
   },
   headerSub: {
     fontSize: 11,
     color: '#9e9282',
-    fontFamily: 'NotoSerifKR_400Regular',
     letterSpacing: 0.8,
   },
   closeBtn: { padding: 4 },
@@ -797,7 +794,6 @@ const styles = StyleSheet.create({
     fontSize: 11,
     color: '#C9A96E',
     letterSpacing: 2,
-    fontFamily: 'NotoSerifKR_500Medium',
     textTransform: 'uppercase',
     marginTop: 8,
     marginBottom: 2,
@@ -826,14 +822,12 @@ const styles = StyleSheet.create({
     flex: 1,
     fontSize: 13,
     color: '#F5F0E8',
-    fontFamily: 'NotoSerifKR_400Regular',
     letterSpacing: 0.3,
     lineHeight: 20,
   },
   introTitle: {
     fontSize: 22,
     color: '#F5F0E8',
-    fontFamily: 'NotoSerifKR_500Medium',
     letterSpacing: 0.5,
     marginTop: 20,
     textAlign: 'center',
@@ -858,7 +852,6 @@ const styles = StyleSheet.create({
   introDesc: {
     fontSize: 14,
     color: '#C9BEAC',
-    fontFamily: 'NotoSerifKR_400Regular',
     lineHeight: 24,
     textAlign: 'center',
     marginTop: 4,
@@ -876,20 +869,17 @@ const styles = StyleSheet.create({
   startBtnText: {
     fontSize: 14,
     color: '#110E0B',
-    fontFamily: 'NotoSerifKR_500Medium',
     letterSpacing: 1,
   },
   introHint: {
     fontSize: 11,
     color: 'rgba(201,169,110,0.5)',
-    fontFamily: 'NotoSerifKR_400Regular',
     marginTop: 12,
     letterSpacing: 0.5,
   },
   introDisclaimer: {
     fontSize: 10,
     color: 'rgba(158,146,130,0.7)',
-    fontFamily: 'NotoSerifKR_400Regular',
     lineHeight: 16,
     textAlign: 'center',
     marginTop: 24,
@@ -927,7 +917,6 @@ const styles = StyleSheet.create({
   assistantText: {
     fontSize: 15,
     color: '#F5F0E8',
-    fontFamily: 'NotoSerifKR_400Regular',
     lineHeight: 26,
     letterSpacing: 0.2,
   },
@@ -947,7 +936,6 @@ const styles = StyleSheet.create({
   userText: {
     fontSize: 15,
     color: '#F5F0E8',
-    fontFamily: 'NotoSerifKR_400Regular',
     lineHeight: 24,
   },
 
@@ -965,7 +953,6 @@ const styles = StyleSheet.create({
   systemText: {
     fontSize: 13,
     color: 'rgba(220,140,140,0.9)',
-    fontFamily: 'NotoSerifKR_400Regular',
     lineHeight: 20,
     textAlign: 'center',
   },
@@ -1001,7 +988,6 @@ const styles = StyleSheet.create({
     fontSize: 10,
     color: '#C9A96E',
     letterSpacing: 3,
-    fontFamily: 'NotoSerifKR_500Medium',
     marginBottom: 14,
   },
   ticketOrnament: {
@@ -1013,14 +999,12 @@ const styles = StyleSheet.create({
   ticketCurator: {
     fontSize: 17,
     color: '#F5F0E8',
-    fontFamily: 'NotoSerifKR_600SemiBold',
     letterSpacing: 0.5,
     marginBottom: 6,
   },
   ticketDateTime: {
     fontSize: 12,
     color: '#C9BEAC',
-    fontFamily: 'NotoSerifKR_400Regular',
     letterSpacing: 1.2,
     marginBottom: 10,
   },
@@ -1035,19 +1019,16 @@ const styles = StyleSheet.create({
     fontSize: 9,
     color: 'rgba(201,169,110,0.75)',
     letterSpacing: 2,
-    fontFamily: 'NotoSerifKR_400Regular',
     marginBottom: 6,
   },
   ticketNoValue: {
     fontSize: 20,
     color: '#C9A96E',
-    fontFamily: 'NotoSerifKR_600SemiBold',
     letterSpacing: 3,
   },
   ticketMessage: {
     fontSize: 13,
     color: '#C9BEAC',
-    fontFamily: 'NotoSerifKR_400Regular',
     lineHeight: 22,
     textAlign: 'center',
     marginTop: 4,
@@ -1077,7 +1058,6 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: '#C9A96E',
     letterSpacing: 2.5,
-    fontFamily: 'NotoSerifKR_500Medium',
   },
   ticketActionPrimaryText: {
     color: '#110E0B',
@@ -1106,7 +1086,6 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
     fontSize: 15,
     color: '#F5F0E8',
-    fontFamily: 'NotoSerifKR_400Regular',
     lineHeight: 22,
   },
   // 입력 지우기 버튼 — 전송 버튼 왼쪽에 아이콘만 놓음
