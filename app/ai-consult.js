@@ -22,12 +22,23 @@ import {
   Platform,
   ActivityIndicator,
   Alert,
+  Animated,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { httpsCallable } from 'firebase/functions';
 import { signInWithCustomToken, onAuthStateChanged } from 'firebase/auth';
-import Svg, { Path } from 'react-native-svg';
+import { useAudioPlayer } from 'expo-audio';
+import { LinearGradient } from 'expo-linear-gradient';
+import { captureRef } from 'react-native-view-shot';
+import * as Sharing from 'expo-sharing';
+import {
+  useFonts,
+  NotoSerifKR_400Regular,
+  NotoSerifKR_500Medium,
+  NotoSerifKR_600SemiBold,
+} from '@expo-google-fonts/noto-serif-kr';
+import Svg, { Path, Circle } from 'react-native-svg';
 import ChopinAvatar, { ChopinAvatarSmall } from '../components/ChopinAvatar';
 import { functions, auth } from '../config/firebase';
 import { useAuth } from '../hooks/useAuth';
@@ -37,13 +48,105 @@ if (Platform.OS !== 'web') {
   try { Haptics = require('expo-haptics'); } catch {}
 }
 
+// 시간대별 동적 인사말 — 방문한 시각에 맞는 톤으로 첫 메시지 구성
+function getTimeBasedGreeting() {
+  const hour = new Date().getHours();
+  let period;
+  if (hour >= 5 && hour < 12) {
+    period = '오늘 아침의 하루에 어울릴';
+  } else if (hour >= 12 && hour < 17) {
+    period = '오늘 한낮의 시간 속에 어울릴';
+  } else if (hour >= 17 && hour < 22) {
+    period = '하루의 끝에 닿을';
+  } else {
+    period = '밤의 녹턴처럼 잔잔한 시간에 어울릴';
+  }
+  return `안녕하세요, 유진온뮤직 음악 큐레이터 가온입니다.\n${period} 음악을 함께 가늠해보려 합니다.\n\n어떤 마음으로 오셨는지, 편히 들려주세요.`;
+}
+
+// 대화 가이드 칩 — 사용자가 어떤 주제로 상담할 수 있는지 보여줌
+// 탭하면 상담이 시작되면서 해당 문구가 입력창에 자동 채워짐 (사용자가 수정 후 전송)
+const GUIDE_CHIPS = [
+  { iconKey: 'moon', label: '오늘의 마음에 어울리는 공연', prefill: '오늘 마음이 조금 지쳐 있어요. 저에게 어울릴 만한 공연을 추천해주시겠어요?' },
+  { iconKey: 'piano', label: '처음 시작하는 피아노 레슨', prefill: '피아노를 처음 배워보고 싶어요. 성인 취미반에 대해 알고 싶습니다.' },
+  { iconKey: 'spark', label: '특별한 날을 위한 음악 기획', prefill: '특별한 날을 기념할 음악 경험을 찾고 있어요. 어떤 기획이 가능한지 궁금합니다.' },
+  { iconKey: 'hall', label: 'EON HALL 발표회·행사 문의', prefill: 'EON HALL에서 발표회(또는 행사)를 열어보고 싶어요. 대관 가능한지 궁금합니다.' },
+];
+
 // SVG 아이콘
+function SpeakerOnIcon({ size = 20, color = '#F5F0E8' }) {
+  return (
+    <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+      <Path d="M11 5L6 9H2v6h4l5 4V5z" stroke={color} strokeWidth={1.6} strokeLinejoin="round" />
+      <Path d="M15.54 8.46a5 5 0 010 7.07M19.07 4.93a10 10 0 010 14.14" stroke={color} strokeWidth={1.6} strokeLinecap="round" />
+    </Svg>
+  );
+}
+
+function SpeakerOffIcon({ size = 20, color = '#F5F0E8' }) {
+  return (
+    <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+      <Path d="M11 5L6 9H2v6h4l5 4V5z" stroke={color} strokeWidth={1.6} strokeLinejoin="round" />
+      <Path d="M22 9l-6 6M16 9l6 6" stroke={color} strokeWidth={1.6} strokeLinecap="round" />
+    </Svg>
+  );
+}
+
 function CloseIcon({ size = 22, color = '#F5F0E8' }) {
   return (
     <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
       <Path d="M18 6L6 18M6 6l12 12" stroke={color} strokeWidth={1.8} strokeLinecap="round" />
     </Svg>
   );
+}
+
+// 가이드 칩용 아이콘 — 이모지 대신 골드 라인 아트로 통일감 확보
+function MoonIcon({ size = 18, color = '#C9A96E' }) {
+  return (
+    <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+      <Path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z" stroke={color} strokeWidth={1.4} strokeLinejoin="round" />
+    </Svg>
+  );
+}
+
+function PianoIcon({ size = 18, color = '#C9A96E' }) {
+  return (
+    <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+      <Path d="M4 7h16v10H4z" stroke={color} strokeWidth={1.3} />
+      <Path d="M9 7v5M15 7v5" stroke={color} strokeWidth={1.3} />
+      <Path d="M7 13v4M11 13v4M13 13v4M17 13v4" stroke={color} strokeWidth={0.9} />
+    </Svg>
+  );
+}
+
+function HallIcon({ size = 18, color = '#C9A96E' }) {
+  return (
+    <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+      <Path d="M3 9L12 4l9 5" stroke={color} strokeWidth={1.4} strokeLinecap="round" strokeLinejoin="round" />
+      <Path d="M5 9v10M9 9v10M15 9v10M19 9v10" stroke={color} strokeWidth={1.2} />
+      <Path d="M3 19h18" stroke={color} strokeWidth={1.4} strokeLinecap="round" />
+    </Svg>
+  );
+}
+
+// 입력창 지우기 버튼 아이콘 — 반투명 원형 배경 위 X
+function ClearIcon({ size = 18 }) {
+  return (
+    <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+      <Circle cx={12} cy={12} r={10} fill="rgba(201,169,110,0.35)" />
+      <Path d="M9 9l6 6M15 9l-6 6" stroke="#110E0B" strokeWidth={2} strokeLinecap="round" />
+    </Svg>
+  );
+}
+
+function ChipIcon({ name }) {
+  switch (name) {
+    case 'moon': return <MoonIcon />;
+    case 'piano': return <PianoIcon />;
+    case 'spark': return <SparkIcon size={16} color="#C9A96E" />;
+    case 'hall': return <HallIcon />;
+    default: return null;
+  }
 }
 
 function QuillIcon({ size = 20, color = '#110E0B' }) {
@@ -77,6 +180,12 @@ export default function AIConsultScreen() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
   const { user, getToken } = useAuth();
+  // Serif 명조체 — 클래식·프리미엄 느낌을 위해 Noto Serif KR 3가지 weight 로드
+  const [fontsLoaded] = useFonts({
+    NotoSerifKR_400Regular,
+    NotoSerifKR_500Medium,
+    NotoSerifKR_600SemiBold,
+  });
   const [messages, setMessages] = useState([]); // { role: 'user'|'assistant', text }
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
@@ -87,9 +196,39 @@ export default function AIConsultScreen() {
   const [fbAuthReady, setFbAuthReady] = useState(auth.currentUser ? true : null);
   // 키보드 높이 — iOS modal에서 KeyboardAvoidingView가 부정확해서 직접 관리
   const [keyboardHeight, setKeyboardHeight] = useState(0);
+  // 배경음악 음소거 상태 (기본: 재생)
+  const [muted, setMuted] = useState(false);
   const scrollRef = useRef(null);
+  // 배경 이미지 페이드인 — 모달 진입 시 이미지 로딩 지연으로 깜빡이는 것 방지
+  const bgOpacity = useRef(new Animated.Value(0)).current;
 
   const aiConsult = httpsCallable(functions, 'aiConsult');
+
+  // 배경음악 플레이어 — 낮은 볼륨으로 잔잔하게 재생
+  const bgPlayer = useAudioPlayer(require('../assets/audio/ai_consult_bg.mp3'));
+
+  // 배경음악 초기 설정 (루프·저볼륨)
+  useEffect(() => {
+    try {
+      bgPlayer.loop = true;
+      bgPlayer.volume = 0.15; // 아주 잔잔한 레벨
+    } catch {}
+    return () => {
+      try { bgPlayer.pause(); } catch {}
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // 대화 시작/완료/음소거 상태에 따라 재생 토글
+  useEffect(() => {
+    try {
+      if (started && !completed && !muted) {
+        bgPlayer.play();
+      } else {
+        bgPlayer.pause();
+      }
+    } catch {}
+  }, [started, completed, muted, bgPlayer]);
 
   // Firebase Auth 상태를 구독 — 나중에 세션이 붙으면 자동 반영
   useEffect(() => {
@@ -159,7 +298,7 @@ export default function AIConsultScreen() {
     }
   }, [keyboardHeight]);
 
-  const startConversation = async () => {
+  const startConversation = async (prefillText = '') => {
     // 시작 순간 강한 햅틱 — 의식적인 진입 느낌 부여
     Haptics?.impactAsync(Haptics.ImpactFeedbackStyle.Heavy);
     // 초기 인사 메시지 삽입 (프론트 전용, 백엔드 호출 없음)
@@ -167,10 +306,13 @@ export default function AIConsultScreen() {
     setMessages([
       {
         role: 'assistant',
-        text:
-          '안녕하세요.\n저는 당신의 오늘에 어울리는 예술 경험을 함께 찾아드리는 음악 큐레이터입니다.\n\n공연 감상, 레슨, 행사 대관 등 — 편안하게 원하시는 경험을 말씀해주세요.',
+        text: getTimeBasedGreeting(),
       },
     ]);
+    // 가이드 칩에서 시작한 경우 입력창에 문구 자동 채움
+    if (prefillText) {
+      setInput(prefillText);
+    }
   };
 
   const sendMessage = async () => {
@@ -265,6 +407,38 @@ export default function AIConsultScreen() {
 
   return (
     <View style={[styles.container, { paddingTop: insets.top }]}>
+      {/* 배경 이미지 — EON HALL 공연장 실루엣이 분위기로만 남도록 블러·저투명 처리
+          모달 진입 시 디코딩 지연으로 깜빡이는 것을 피하려고 onLoad 후 fade-in */}
+      <Animated.Image
+        source={require('../assets/images/eon-hall-bg.jpg')}
+        style={[styles.bgImage, { opacity: bgOpacity }]}
+        blurRadius={4}
+        resizeMode="cover"
+        pointerEvents="none"
+        onLoad={() => {
+          Animated.timing(bgOpacity, {
+            toValue: 0.55,
+            duration: 500,
+            useNativeDriver: true,
+          }).start();
+        }}
+      />
+      {/* 어두운 오버레이 — 이미지를 배경으로 물러나게 하고 말풍선 글씨에 집중 */}
+      <LinearGradient
+        colors={[
+          'rgba(17,14,11,0.9)',
+          'rgba(17,14,11,0.65)',
+          'rgba(17,14,11,0.7)',
+          'rgba(17,14,11,0.92)',
+        ]}
+        locations={[0, 0.3, 0.65, 1]}
+        style={styles.bgOverlay}
+        pointerEvents="none"
+      />
+
+      {/* 폰트 로드 전엔 배경만 노출해 깜빡임 방지 — 로드 완료 시 UI 전체 페이드인 */}
+      {fontsLoaded && (
+        <>
       {/* 헤더 */}
       <View style={styles.header}>
         <View style={styles.headerLeft}>
@@ -274,16 +448,36 @@ export default function AIConsultScreen() {
             <Text style={styles.headerSub}>EON 음악 큐레이터</Text>
           </View>
         </View>
-        <TouchableOpacity style={styles.closeBtn} onPress={handleClose} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
-          <CloseIcon />
-        </TouchableOpacity>
+        <View style={styles.headerActions}>
+          {/* 배경음악 음소거 토글 — 대화 시작 후에만 노출 */}
+          {started && !completed && (
+            <TouchableOpacity
+              style={styles.muteBtn}
+              onPress={() => {
+                Haptics?.selectionAsync();
+                setMuted((v) => !v);
+              }}
+              hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+              accessibilityLabel={muted ? '배경음악 켜기' : '배경음악 끄기'}
+            >
+              {muted ? <SpeakerOffIcon /> : <SpeakerOnIcon />}
+            </TouchableOpacity>
+          )}
+          <TouchableOpacity style={styles.closeBtn} onPress={handleClose} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
+            <CloseIcon />
+          </TouchableOpacity>
+        </View>
       </View>
 
       {/* 대화 영역 — 키보드 높이만큼 marginBottom을 입력행에 부여해서 위로 올림 */}
       <View style={{ flex: 1, marginBottom: keyboardHeight }}>
         {!started ? (
           // 초대 화면 (대화 시작 전)
-          <View style={styles.introWrap}>
+          <ScrollView
+            contentContainerStyle={styles.introWrap}
+            showsVerticalScrollIndicator={false}
+            keyboardShouldPersistTaps="handled"
+          >
             <ChopinAvatar size={120} />
             <Text style={styles.introTitle}>오늘의 예술을 함께 찾아볼까요?</Text>
             <View style={styles.ornament}>
@@ -297,7 +491,25 @@ export default function AIConsultScreen() {
               당신에게 어울리는 기획을 준비해드립니다.
             </Text>
 
-            <TouchableOpacity style={styles.startBtn} onPress={startConversation} activeOpacity={0.85}>
+            {/* 대화 가이드 칩 — 예시 주제 선택 */}
+            <Text style={styles.chipsHeading}>이런 대화를 나눌 수 있어요</Text>
+            <View style={styles.chipsWrap}>
+              {GUIDE_CHIPS.map((chip, i) => (
+                <TouchableOpacity
+                  key={i}
+                  style={styles.chip}
+                  activeOpacity={0.75}
+                  onPress={() => startConversation(chip.prefill)}
+                >
+                  <View style={styles.chipIconWrap}>
+                    <ChipIcon name={chip.iconKey} />
+                  </View>
+                  <Text style={styles.chipLabel}>{chip.label}</Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+
+            <TouchableOpacity style={styles.startBtn} onPress={() => startConversation()} activeOpacity={0.85}>
               <SparkIcon size={14} color="#110E0B" />
               <Text style={styles.startBtnText}>상담 시작하기</Text>
             </TouchableOpacity>
@@ -309,7 +521,7 @@ export default function AIConsultScreen() {
               본 대화는 AI가 자동 응답하며, 내용은 서비스 개선 및 신청 처리 목적으로 이용됩니다.
               자세한 사항은 개인정보처리방침을 참고해주세요.
             </Text>
-          </View>
+          </ScrollView>
         ) : (
           <ScrollView
             ref={scrollRef}
@@ -333,12 +545,7 @@ export default function AIConsultScreen() {
               </View>
             )}
             {completed && (
-              <View style={styles.completedBanner}>
-                <Text style={styles.completedText}>✓ 신청서가 관리자에게 전달되었습니다</Text>
-                <TouchableOpacity onPress={() => router.back()}>
-                  <Text style={styles.completedAction}>닫기</Text>
-                </TouchableOpacity>
-              </View>
+              <TicketReceipt consultationId={consultationId} onClose={() => router.back()} />
             )}
           </ScrollView>
         )}
@@ -356,6 +563,20 @@ export default function AIConsultScreen() {
               maxLength={1000}
               editable={!loading}
             />
+            {/* 지우기 버튼 — 입력이 있을 때만 표시, 가이드 칩으로 채워진 문구도 한 번에 비움 */}
+            {input.length > 0 && !loading && (
+              <TouchableOpacity
+                style={styles.clearBtn}
+                onPress={() => {
+                  setInput('');
+                  Haptics?.selectionAsync();
+                }}
+                hitSlop={{ top: 10, bottom: 10, left: 6, right: 6 }}
+                accessibilityLabel="입력 지우기"
+              >
+                <ClearIcon />
+              </TouchableOpacity>
+            )}
             <TouchableOpacity
               style={[styles.sendBtn, (!input.trim() || loading) && styles.sendBtnDisabled]}
               onPress={sendMessage}
@@ -366,6 +587,78 @@ export default function AIConsultScreen() {
             </TouchableOpacity>
           </View>
         )}
+      </View>
+        </>
+      )}
+    </View>
+  );
+}
+
+// ────────────── 접수증(티켓) 컴포넌트 ──────────────
+// 상담 완료 후 표시되는 음악회 티켓 형태의 receipt — 제출의 무게감과 기념품 느낌
+// captureRef로 이미지 캡처 후 Sharing으로 저장·공유 가능
+function TicketReceipt({ consultationId, onClose }) {
+  const ticketRef = useRef(null);
+  const now = new Date();
+  const pad = (n) => String(n).padStart(2, '0');
+  const dateStr = `${now.getFullYear()}.${pad(now.getMonth() + 1)}.${pad(now.getDate())}`;
+  const timeStr = `${pad(now.getHours())}:${pad(now.getMinutes())}`;
+  // consultationId가 있으면 뒤 6자리, 없으면 현재 시각 기반으로 6자리 생성
+  const ticketNo = consultationId
+    ? String(consultationId).slice(-6).toUpperCase()
+    : Date.now().toString(36).toUpperCase().slice(-6);
+
+  const handleShare = async () => {
+    Haptics?.selectionAsync();
+    try {
+      const uri = await captureRef(ticketRef, {
+        format: 'png',
+        quality: 1,
+        result: 'tmpfile',
+      });
+      const ok = await Sharing.isAvailableAsync();
+      if (!ok) {
+        Alert.alert('공유 불가', '이 기기에서 공유 기능을 사용할 수 없어요.');
+        return;
+      }
+      await Sharing.shareAsync(uri, {
+        mimeType: 'image/png',
+        dialogTitle: '가온 큐레이션 접수증',
+      });
+    } catch (err) {
+      console.warn('ticket share failed:', err);
+      Alert.alert('저장 실패', '접수증을 저장하지 못했어요. 잠시 후 다시 시도해주세요.');
+    }
+  };
+
+  return (
+    <View>
+      {/* 캡처 대상 — 버튼은 이 영역 밖에 두어 저장 이미지에는 포함되지 않음 */}
+      <View ref={ticketRef} collapsable={false} style={styles.ticketWrap}>
+        <Text style={styles.ticketLabel}>RECEIPT · 음악 큐레이션 접수증</Text>
+        <View style={styles.ticketOrnament}>
+          <View style={styles.goldLine} />
+          <View style={styles.goldDiamond} />
+          <View style={styles.goldLine} />
+        </View>
+        <Text style={styles.ticketCurator}>가온 · EON HALL</Text>
+        <Text style={styles.ticketDateTime}>{dateStr}  ·  {timeStr}</Text>
+        <View style={styles.ticketDashedLine} />
+        <Text style={styles.ticketNoLabel}>접수번호</Text>
+        <Text style={styles.ticketNoValue}>#{ticketNo}</Text>
+        <View style={styles.ticketDashedLine} />
+        <Text style={styles.ticketMessage}>
+          담당 큐레이터가 1~2일 안에{'\n'}연락드릴 예정입니다.
+        </Text>
+      </View>
+      {/* 액션 버튼들 — 저장·공유와 닫기 */}
+      <View style={styles.ticketActions}>
+        <TouchableOpacity style={styles.ticketActionBtn} onPress={handleShare} activeOpacity={0.85}>
+          <Text style={styles.ticketActionText}>저장·공유</Text>
+        </TouchableOpacity>
+        <TouchableOpacity style={[styles.ticketActionBtn, styles.ticketActionPrimary]} onPress={onClose} activeOpacity={0.85}>
+          <Text style={[styles.ticketActionText, styles.ticketActionPrimaryText]}>닫기</Text>
+        </TouchableOpacity>
       </View>
     </View>
   );
@@ -408,7 +701,24 @@ function MessageBubble({ message }) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#110E0B',
+    // 공연장 조명 톤의 따뜻한 어두운 갈색 — 이미지 로드 전에도 검정과 이질감 최소화
+    backgroundColor: '#1a1410',
+  },
+  // 배경 이미지 (EON HALL 공연장) — opacity는 Animated 값으로 fade-in 제어
+  bgImage: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+  },
+  // 그라디언트 오버레이 — 이미지 위에 상·하단을 어둡게 덮어 텍스트 가독성 확보
+  bgOverlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
   },
 
   // 헤더
@@ -428,30 +738,72 @@ const styles = StyleSheet.create({
   },
   headerTitles: { gap: 2 },
   headerTitle: {
-    fontSize: 15,
+    fontSize: 16,
     color: '#F5F0E8',
-    fontWeight: '400',
+    fontFamily: 'NotoSerifKR_500Medium',
     letterSpacing: 0.5,
   },
   headerSub: {
     fontSize: 11,
     color: '#9e9282',
+    fontFamily: 'NotoSerifKR_400Regular',
     letterSpacing: 0.8,
   },
   closeBtn: { padding: 4 },
+  headerActions: { flexDirection: 'row', alignItems: 'center', gap: 12 },
+  muteBtn: { padding: 4 },
 
-  // 초대 화면
+  // 초대 화면 (ScrollView contentContainer)
   introWrap: {
-    flex: 1,
+    flexGrow: 1,
     alignItems: 'center',
     justifyContent: 'center',
     paddingHorizontal: 32,
+    paddingVertical: 24,
     gap: 16,
   },
-  introTitle: {
-    fontSize: 20,
+  // 대화 가이드 칩
+  chipsHeading: {
+    fontSize: 11,
+    color: '#C9A96E',
+    letterSpacing: 2,
+    fontFamily: 'NotoSerifKR_500Medium',
+    textTransform: 'uppercase',
+    marginTop: 8,
+    marginBottom: 2,
+  },
+  chipsWrap: {
+    width: '100%',
+    gap: 8,
+  },
+  chip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    paddingHorizontal: 14,
+    paddingVertical: 12,
+    borderRadius: 4,
+    backgroundColor: 'rgba(201,169,110,0.06)',
+    borderWidth: 0.5,
+    borderColor: 'rgba(201,169,110,0.3)',
+  },
+  chipIconWrap: {
+    width: 22,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  chipLabel: {
+    flex: 1,
+    fontSize: 13,
     color: '#F5F0E8',
-    fontWeight: '300',
+    fontFamily: 'NotoSerifKR_400Regular',
+    letterSpacing: 0.3,
+    lineHeight: 20,
+  },
+  introTitle: {
+    fontSize: 22,
+    color: '#F5F0E8',
+    fontFamily: 'NotoSerifKR_500Medium',
     letterSpacing: 0.5,
     marginTop: 20,
     textAlign: 'center',
@@ -476,7 +828,8 @@ const styles = StyleSheet.create({
   introDesc: {
     fontSize: 14,
     color: '#C9BEAC',
-    lineHeight: 22,
+    fontFamily: 'NotoSerifKR_400Regular',
+    lineHeight: 24,
     textAlign: 'center',
     marginTop: 4,
   },
@@ -493,19 +846,21 @@ const styles = StyleSheet.create({
   startBtnText: {
     fontSize: 14,
     color: '#110E0B',
-    fontWeight: '500',
+    fontFamily: 'NotoSerifKR_500Medium',
     letterSpacing: 1,
   },
   introHint: {
     fontSize: 11,
     color: 'rgba(201,169,110,0.5)',
+    fontFamily: 'NotoSerifKR_400Regular',
     marginTop: 12,
     letterSpacing: 0.5,
   },
   introDisclaimer: {
     fontSize: 10,
     color: 'rgba(158,146,130,0.7)',
-    lineHeight: 15,
+    fontFamily: 'NotoSerifKR_400Regular',
+    lineHeight: 16,
     textAlign: 'center',
     marginTop: 24,
     paddingHorizontal: 8,
@@ -542,7 +897,8 @@ const styles = StyleSheet.create({
   assistantText: {
     fontSize: 15,
     color: '#F5F0E8',
-    lineHeight: 24,
+    fontFamily: 'NotoSerifKR_400Regular',
+    lineHeight: 26,
     letterSpacing: 0.2,
   },
 
@@ -561,7 +917,8 @@ const styles = StyleSheet.create({
   userText: {
     fontSize: 15,
     color: '#F5F0E8',
-    lineHeight: 22,
+    fontFamily: 'NotoSerifKR_400Regular',
+    lineHeight: 24,
   },
 
   // 시스템 메시지 (에러 등)
@@ -578,7 +935,8 @@ const styles = StyleSheet.create({
   systemText: {
     fontSize: 13,
     color: 'rgba(220,140,140,0.9)',
-    lineHeight: 19,
+    fontFamily: 'NotoSerifKR_400Regular',
+    lineHeight: 20,
     textAlign: 'center',
   },
 
@@ -598,27 +956,101 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
   },
 
-  // 완료 배너
-  completedBanner: {
+  // 접수증(티켓) — 상담 완료 후 기념품 느낌의 카드
+  ticketWrap: {
+    backgroundColor: 'rgba(17,14,11,0.9)',
+    borderWidth: 0.5,
+    borderColor: 'rgba(201,169,110,0.45)',
+    borderRadius: 6,
+    paddingHorizontal: 24,
+    paddingVertical: 28,
+    marginVertical: 16,
+    alignItems: 'center',
+  },
+  ticketLabel: {
+    fontSize: 10,
+    color: '#C9A96E',
+    letterSpacing: 3,
+    fontFamily: 'NotoSerifKR_500Medium',
+    marginBottom: 14,
+  },
+  ticketOrnament: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
-    backgroundColor: 'rgba(160,200,140,0.1)',
-    borderWidth: 0.5,
-    borderColor: 'rgba(160,200,140,0.35)',
-    borderRadius: 4,
-    paddingHorizontal: 14,
-    paddingVertical: 12,
-    marginTop: 10,
+    gap: 8,
+    marginBottom: 18,
   },
-  completedText: {
-    fontSize: 13,
-    color: 'rgba(160,200,140,0.95)',
+  ticketCurator: {
+    fontSize: 17,
+    color: '#F5F0E8',
+    fontFamily: 'NotoSerifKR_600SemiBold',
+    letterSpacing: 0.5,
+    marginBottom: 6,
   },
-  completedAction: {
-    fontSize: 13,
+  ticketDateTime: {
+    fontSize: 12,
+    color: '#C9BEAC',
+    fontFamily: 'NotoSerifKR_400Regular',
+    letterSpacing: 1.2,
+    marginBottom: 10,
+  },
+  ticketDashedLine: {
+    width: '80%',
+    borderBottomWidth: 0.7,
+    borderBottomColor: 'rgba(201,169,110,0.35)',
+    borderStyle: 'dashed',
+    marginVertical: 12,
+  },
+  ticketNoLabel: {
+    fontSize: 9,
+    color: 'rgba(201,169,110,0.75)',
+    letterSpacing: 2,
+    fontFamily: 'NotoSerifKR_400Regular',
+    marginBottom: 6,
+  },
+  ticketNoValue: {
+    fontSize: 20,
     color: '#C9A96E',
-    fontWeight: '500',
+    fontFamily: 'NotoSerifKR_600SemiBold',
+    letterSpacing: 3,
+  },
+  ticketMessage: {
+    fontSize: 13,
+    color: '#C9BEAC',
+    fontFamily: 'NotoSerifKR_400Regular',
+    lineHeight: 22,
+    textAlign: 'center',
+    marginTop: 4,
+    marginBottom: 8,
+  },
+  // 액션 버튼 영역 (캡처 대상 밖)
+  ticketActions: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    gap: 10,
+    marginTop: 14,
+    marginBottom: 16,
+  },
+  ticketActionBtn: {
+    paddingHorizontal: 24,
+    paddingVertical: 11,
+    borderWidth: 0.5,
+    borderColor: '#C9A96E',
+    borderRadius: 4,
+    minWidth: 120,
+    alignItems: 'center',
+  },
+  ticketActionPrimary: {
+    backgroundColor: '#C9A96E',
+  },
+  ticketActionText: {
+    fontSize: 12,
+    color: '#C9A96E',
+    letterSpacing: 2.5,
+    fontFamily: 'NotoSerifKR_500Medium',
+  },
+  ticketActionPrimaryText: {
+    color: '#110E0B',
   },
 
   // 입력 영역
@@ -644,7 +1076,14 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
     fontSize: 15,
     color: '#F5F0E8',
-    lineHeight: 20,
+    fontFamily: 'NotoSerifKR_400Regular',
+    lineHeight: 22,
+  },
+  // 입력 지우기 버튼 — 전송 버튼 왼쪽에 아이콘만 놓음
+  clearBtn: {
+    height: 42,
+    justifyContent: 'center',
+    paddingHorizontal: 4,
   },
   sendBtn: {
     width: 42,

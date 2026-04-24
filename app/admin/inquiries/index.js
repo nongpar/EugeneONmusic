@@ -122,6 +122,8 @@ export default function InquiriesListScreen() {
         }}
       >
         <View style={styles.cardTopRow}>
+          {/* 접수번호 — 사용자 접수증(티켓)과 매칭하기 위해 표시 */}
+          <Text style={styles.cardTicketNo}>#{item.id.slice(-6).toUpperCase()}</Text>
           <View style={styles.typeBadge}>
             <Text style={styles.typeBadgeText}>{typeLabel}</Text>
           </View>
@@ -247,6 +249,13 @@ const styles = StyleSheet.create({
     padding: 14, marginBottom: 10, gap: 8,
   },
   cardTopRow: { flexDirection: 'row', alignItems: 'center', gap: 6 },
+  cardTicketNo: {
+    fontSize: 11,
+    color: '#C9A96E',
+    fontWeight: '600',
+    letterSpacing: 1.5,
+    marginRight: 2,
+  },
   typeBadge: {
     paddingHorizontal: 8, paddingVertical: 2, borderRadius: 2,
     backgroundColor: 'rgba(201,169,110,0.15)',

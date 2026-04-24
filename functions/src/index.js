@@ -13,3 +13,5 @@ admin.initializeApp();
 // === 함수 export ===
 exports.aiConsult = require('./aiConsult').aiConsult;
 exports.exchangeWpToken = require('./authExchange').exchangeWpToken;
+exports.listMyConsultations = require('./listMyConsultations').listMyConsultations;
+exports.cancelMyConsultation = require('./cancelMyConsultation').cancelMyConsultation;

@@ -235,12 +235,15 @@ export default function InquiryDetailScreen() {
 
   return (
     <View style={[styles.container, { paddingTop: insets.top }]}>
-      {/* Header */}
+      {/* Header — 제목에 접수번호를 포함해 사용자 티켓과 즉시 대조 가능 */}
       <View style={styles.header}>
         <TouchableOpacity style={styles.backBtn} onPress={() => router.back()}>
           <BackIcon />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>신청서 상세</Text>
+        <View style={styles.headerTitleWrap}>
+          <Text style={styles.headerTitle}>신청서 상세</Text>
+          <Text style={styles.headerTicketNo}>#{inquiry.id.slice(-6).toUpperCase()}</Text>
+        </View>
         <View style={{ width: 40 }} />
       </View>
 
@@ -249,7 +252,7 @@ export default function InquiryDetailScreen() {
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
       >
-        {/* 상태 + 타입 배지 */}
+        {/* 상태 + 타입 배지 + 접수번호 */}
         <View style={styles.topRow}>
           <View style={styles.typeBadge}>
             <Text style={styles.typeBadgeText}>{typeLabel}</Text>
@@ -261,6 +264,15 @@ export default function InquiryDetailScreen() {
           </View>
           <View style={{ flex: 1 }} />
           <Text style={styles.timeText}>{formatDateTime(inquiry.createdAt)}</Text>
+        </View>
+
+        {/* 접수번호 — 사용자 티켓과 매칭용 전체 ID도 함께 노출 */}
+        <View style={styles.ticketBox}>
+          <Text style={styles.ticketLabel}>접수번호</Text>
+          <Text style={styles.ticketNoBig}>#{inquiry.id.slice(-6).toUpperCase()}</Text>
+          <Text style={styles.ticketFullId} numberOfLines={1} selectable>
+            {inquiry.id}
+          </Text>
         </View>
 
         {/* AI 요약 */}
@@ -457,7 +469,15 @@ const styles = StyleSheet.create({
     borderBottomWidth: 0.5, borderBottomColor: 'rgba(201,169,110,0.15)',
   },
   backBtn: { width: 40, height: 40, alignItems: 'center', justifyContent: 'center' },
+  headerTitleWrap: { alignItems: 'center' },
   headerTitle: { fontSize: 17, fontWeight: '300', color: '#F5F0E8', letterSpacing: 1 },
+  headerTicketNo: {
+    fontSize: 11,
+    color: '#C9A96E',
+    fontWeight: '600',
+    letterSpacing: 2,
+    marginTop: 2,
+  },
   scrollContent: { padding: 16, paddingTop: 14, gap: 14 },
 
   topRow: { flexDirection: 'row', alignItems: 'center', gap: 6 },
@@ -469,6 +489,37 @@ const styles = StyleSheet.create({
   statusBadge: { paddingHorizontal: 8, paddingVertical: 3, borderRadius: 2, borderWidth: 0.5 },
   statusBadgeText: { fontSize: 10, letterSpacing: 1, fontWeight: '500' },
   timeText: { fontSize: 11, color: '#9e9282' },
+
+  // 접수번호 박스 — 사용자 티켓과 1:1 매칭용
+  ticketBox: {
+    marginTop: 12,
+    marginBottom: 4,
+    padding: 14,
+    backgroundColor: 'rgba(201,169,110,0.06)',
+    borderWidth: 0.5,
+    borderColor: 'rgba(201,169,110,0.3)',
+    borderRadius: 4,
+    alignItems: 'center',
+  },
+  ticketLabel: {
+    fontSize: 10,
+    color: 'rgba(201,169,110,0.7)',
+    letterSpacing: 2,
+    fontWeight: '500',
+    marginBottom: 4,
+  },
+  ticketNoBig: {
+    fontSize: 18,
+    color: '#C9A96E',
+    fontWeight: '600',
+    letterSpacing: 3,
+    marginBottom: 4,
+  },
+  ticketFullId: {
+    fontSize: 10,
+    color: '#6e6558',
+    letterSpacing: 0.5,
+  },
 
   summaryBox: {
     backgroundColor: 'rgba(201,169,110,0.08)',

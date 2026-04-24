@@ -65,6 +65,7 @@ const MENU_ICONS = {
   help: ['M12 22a10 10 0 100-20 10 10 0 000 20z', 'M9.09 9a3 3 0 015.83 1c0 2-3 3-3 3', 'M12 17h.01'],
   info: ['M12 22a10 10 0 100-20 10 10 0 000 20z', 'M12 16v-4', 'M12 8h.01'],
   globe: ['M12 22a10 10 0 100-20 10 10 0 000 20z', 'M2 12h20', 'M12 2a15.3 15.3 0 014 10 15.3 15.3 0 01-4 10 15.3 15.3 0 01-4-10 15.3 15.3 0 014-10z'],
+  receipt: ['M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z', 'M14 2v6h6', 'M8 13h8', 'M8 17h8', 'M8 9h2'],
 };
 
 function MenuItem({ iconKey, label, onPress, subtitle }) {
@@ -239,6 +240,12 @@ function LoggedInView({ user, onLogout }) {
         <MenuItem iconKey="bell" label="알림 설정" onPress={() => router.push('/settings/notifications')} />
         <MenuItem iconKey="music" label="연습 목표 설정" onPress={() => router.push('/settings/practice-goal')} />
         <MenuItem iconKey="chart" label="연습 통계" onPress={() => router.push('/settings/practice-stats')} />
+        <MenuItem
+          iconKey="receipt"
+          label="음악 큐레이션 내역"
+          subtitle="가온과의 상담 기록"
+          onPress={() => router.push('/my-consultations')}
+        />
       </View>
 
       {/* 관리자 메뉴 (선생님만) */}
