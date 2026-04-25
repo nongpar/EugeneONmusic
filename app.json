@@ -28,7 +28,7 @@
     },
     "android": {
       "package": "com.eugeneonmusic.app",
-      "versionCode": 17,
+      "versionCode": 19,
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#FFFFFF"
@@ -59,7 +59,12 @@
         }
       ],
       "expo-secure-store",
-      "expo-audio"
+      [
+        "expo-audio",
+        {
+          "microphonePermission": false
+        }
+      ]
     ],
     "extra": {
       "eas": {
