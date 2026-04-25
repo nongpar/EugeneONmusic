@@ -1,4 +1,4 @@
-import { useEffect, useState, useRef, useCallback } from 'react';
+import React, { useEffect, useState, useRef, useCallback } from 'react';
 import { View, Animated, StyleSheet, Dimensions, Platform, Easing } from 'react-native';
 import { Stack, router, usePathname } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
@@ -108,11 +108,39 @@ function StaffLines({ opacity, width: lineW, align = 'flex-end' }) {
   );
 }
 
+// ── 스플래시 오디오 에러 바운더리 ──
+// iOS 26에서 expo-audio 훅이 초기화 중 throw할 경우 앱 전체가 SIGABRT로 죽지 않도록 격리
+class SplashAudioErrorBoundary extends React.Component {
+  constructor(props) { super(props); this.state = { hasError: false }; }
+  static getDerivedStateFromError() { return { hasError: true }; }
+  componentDidCatch(error) { console.warn('[SplashAudio] error:', error?.message || error); }
+  render() { return this.state.hasError ? null : this.props.children; }
+}
+
+// 오프닝 음원 재생을 담당하는 격리 컴포넌트
+// useAudioPlayer 훅이 throw해도 ErrorBoundary가 잡아내고, 부모 스플래시는 2초 타임아웃으로 계속 진행됨
+function SplashOpeningAudio({ onLoaded }) {
+  const player = useAudioPlayer(require('../assets/audio/eon_opening.mp3'));
+  const status = useAudioPlayerStatus(player);
+  const startedRef = useRef(false);
+
+  useEffect(() => {
+    if (startedRef.current) return;
+    if (!status?.isLoaded) return;
+    startedRef.current = true;
+    // 부모에게 로드 완료 알림 → 애니메이션 시퀀스 시작
+    try { onLoaded?.(); } catch {}
+    // iOS 무음 스위치 ON에서 재생되지 않도록 함
+    try { setAudioModeAsync({ playsInSilentMode: false }).catch(() => {}); } catch {}
+    try { player.play(); } catch {}
+  }, [status?.isLoaded]);
+
+  return null;
+}
+
 // ── 애니메이션 스플래시 화면 ──
 function AnimatedSplash({ onFinish }) {
-  // 오프닝 음원 (무음 모드에서는 재생되지 않음)
-  const openingPlayer = useAudioPlayer(require('../assets/audio/eon_opening.mp3'));
-  const audioStatus = useAudioPlayerStatus(openingPlayer);
+  const [audioLoaded, setAudioLoaded] = useState(false);
   const [audioTimedOut, setAudioTimedOut] = useState(false);
   const startedRef = useRef(false);
 
@@ -195,16 +223,11 @@ function AnimatedSplash({ onFinish }) {
   useEffect(() => {
     // 음원 로드 완료되거나 폴백 타임아웃이 떨어질 때까지 네이티브 스플래시 유지
     if (startedRef.current) return;
-    const loaded = !!audioStatus?.isLoaded;
-    if (!loaded && !audioTimedOut) return;
+    if (!audioLoaded && !audioTimedOut) return;
     startedRef.current = true;
 
     SplashScreen.hideAsync().catch(() => {});
-
-    // ── 오프닝 음원 재생 (iOS 무음 스위치 ON이면 자동 스킵) ──
-    // 로드 완료 상태에서 play()를 호출하므로 애니메이션과 프레임 단위로 동기화됨
-    setAudioModeAsync({ playsInSilentMode: false }).catch(() => {});
-    try { openingPlayer.play(); } catch {}
+    // 오디오 재생은 SplashOpeningAudio 서브컴포넌트가 로드 완료 시점에 자체적으로 처리
 
     // ── 음표 애니메이션 생성 ──
     const noteAnimations = noteAnims.map((anim, i) => {
@@ -321,7 +344,7 @@ function AnimatedSplash({ onFinish }) {
     ]).start(() => {
       onFinish();
     });
-  }, [audioStatus.isLoaded, audioTimedOut]);
+  }, [audioLoaded, audioTimedOut]);
 
   // 보간값
   const animLineLeft = lineLeftWidth.interpolate({ inputRange: [0, 1], outputRange: [0, 40] });
@@ -341,6 +364,13 @@ function AnimatedSplash({ onFinish }) {
 
   return (
     <Animated.View style={[splashStyles.container, { opacity: fadeOut, transform: [{ scale: finalScale }] }]}>
+
+      {/* 오프닝 오디오 — ErrorBoundary로 격리. 네이티브 오디오 모듈이 iOS 26에서
+          throw해도 앱 전체가 SIGABRT로 내려가지 않도록 분리되어 있음. 실패 시
+          2초 타임아웃(audioTimedOut)으로 스플래시 애니메이션은 계속 진행됨. */}
+      <SplashAudioErrorBoundary>
+        <SplashOpeningAudio onLoaded={() => setAudioLoaded(true)} />
+      </SplashAudioErrorBoundary>
 
       {/* 오선지 배경 (지그재그 4개) */}
       <View style={{ position: 'absolute', left: 0, right: 0, top: SCREEN_H * 0.15 }}>

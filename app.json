@@ -2,7 +2,7 @@
   "expo": {
     "name": "유진온뮤직",
     "slug": "EugeneONmusic",
-    "version": "1.0.7",
+    "version": "1.0.8",
     "orientation": "default",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "dark",
@@ -24,7 +24,7 @@
         ],
         "ITSAppUsesNonExemptEncryption": false
       },
-      "buildNumber": "18"
+      "buildNumber": "24"
     },
     "android": {
       "package": "com.eugeneonmusic.app",
@@ -59,8 +59,7 @@
         }
       ],
       "expo-secure-store",
-      "expo-audio",
-      "expo-font"
+      "expo-audio"
     ],
     "extra": {
       "eas": {

@@ -169,7 +169,7 @@ function SparkIcon({ size = 14, color = '#C9A96E' }) {
   );
 }
 
-export default function AIConsultScreen() {
+function AIConsultScreenInner() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
   const { user, getToken } = useAuth();
@@ -183,7 +183,8 @@ export default function AIConsultScreen() {
   const [completed, setCompleted] = useState(false);
   const [started, setStarted] = useState(false);
   // Firebase Auth 세션 상태: null=확인중, true=준비완료, false=실패(서비스 준비 중)
-  const [fbAuthReady, setFbAuthReady] = useState(auth.currentUser ? true : null);
+  // auth가 null인 경우(env 누락/초기화 실패)도 안전하게 처리
+  const [fbAuthReady, setFbAuthReady] = useState(auth?.currentUser ? true : null);
   // 키보드 높이 — iOS modal에서 KeyboardAvoidingView가 부정확해서 직접 관리
   const [keyboardHeight, setKeyboardHeight] = useState(0);
   // 배경음악 음소거 상태 (기본: 재생)
@@ -192,7 +193,8 @@ export default function AIConsultScreen() {
   // 배경 이미지 페이드인 — 모달 진입 시 이미지 로딩 지연으로 깜빡이는 것 방지
   const bgOpacity = useRef(new Animated.Value(0)).current;
 
-  const aiConsult = httpsCallable(functions, 'aiConsult');
+  // functions가 null이면 호출 시도 시 가드. httpsCallable은 functions가 null이면 throw함.
+  const aiConsult = functions ? httpsCallable(functions, 'aiConsult') : null;
 
   // 배경음악은 대화 시작(started=true) 후에만 BackgroundMusic 컴포넌트로 마운트.
   // 이유: useAudioPlayer가 native 에러를 던지면 hook 단계에서 앱이 크래시할 수 있어
@@ -200,10 +202,16 @@ export default function AIConsultScreen() {
 
   // Firebase Auth 상태를 구독 — 나중에 세션이 붙으면 자동 반영
   useEffect(() => {
-    const unsub = onAuthStateChanged(auth, (fbUser) => {
-      if (fbUser) setFbAuthReady(true);
-    });
-    return unsub;
+    if (!auth) { setFbAuthReady(false); return; }
+    try {
+      const unsub = onAuthStateChanged(auth, (fbUser) => {
+        if (fbUser) setFbAuthReady(true);
+      });
+      return unsub;
+    } catch (err) {
+      console.warn('[ai-consult] onAuthStateChanged failed:', err?.message || err);
+      setFbAuthReady(false);
+    }
   }, []);
 
   // 키보드 리스너 — iOS에선 Will 이벤트로 애니메이션과 자연스럽게 맞춤
@@ -224,12 +232,14 @@ export default function AIConsultScreen() {
   useEffect(() => {
     let cancelled = false;
     (async () => {
-      if (auth.currentUser) {
-        setFbAuthReady(true);
-        return;
-      }
-      if (!user?.uid) return; // WP 미로그인 — 기존 로그인 필요 플로우
       try {
+        // Firebase 초기화 실패 시(auth/functions null) AI 기능만 비활성 상태로 진행
+        if (!auth || !functions) { setFbAuthReady(false); return; }
+        if (auth.currentUser) {
+          setFbAuthReady(true);
+          return;
+        }
+        if (!user?.uid) return; // WP 미로그인 — 기존 로그인 필요 플로우
         const wpToken = getToken?.();
         if (!wpToken) throw new Error('wp token missing');
         const exchange = httpsCallable(functions, 'exchangeWpToken');
@@ -301,10 +311,11 @@ export default function AIConsultScreen() {
     }
 
     // 2) Firebase 세션이 아직 준비 안 됐으면 안내 (백엔드 미배포 또는 연결 대기)
-    if (!auth.currentUser) {
+    // auth/aiConsult가 null인 경우(Firebase 초기화 실패)도 안전하게 처리
+    if (!auth || !aiConsult || !auth.currentUser) {
       Alert.alert(
         'AI 서비스 연결 중',
-        fbAuthReady === false
+        fbAuthReady === false || !auth || !aiConsult
           ? 'AI 서비스에 연결할 수 없습니다. 잠시 후 다시 시도해주세요.'
           : '세션을 준비 중입니다. 잠시만 기다려주세요.'
       );
@@ -416,7 +427,6 @@ export default function AIConsultScreen() {
         </AudioErrorBoundary>
       )}
 
-      <>
       {/* 헤더 */}
       <View style={styles.header}>
         <View style={styles.headerLeft}>
@@ -566,8 +576,6 @@ export default function AIConsultScreen() {
           </View>
         )}
       </View>
-        </>
-      )}
     </View>
   );
 }
@@ -622,9 +630,8 @@ function BackgroundMusic({ muted }) {
 
 // ────────────── 접수증(티켓) 컴포넌트 ──────────────
 // 상담 완료 후 표시되는 음악회 티켓 형태의 receipt — 제출의 무게감과 기념품 느낌
-// captureRef로 이미지 캡처 후 Sharing으로 저장·공유 가능
+// (저장·공유 기능은 native 모듈 호환성 문제로 일시 제거 — 추후 안정화 후 복원 예정)
 function TicketReceipt({ consultationId, onClose }) {
-  const ticketRef = useRef(null);
   const now = new Date();
   const pad = (n) => String(n).padStart(2, '0');
   const dateStr = `${now.getFullYear()}.${pad(now.getMonth() + 1)}.${pad(now.getDate())}`;
@@ -634,36 +641,9 @@ function TicketReceipt({ consultationId, onClose }) {
     ? String(consultationId).slice(-6).toUpperCase()
     : Date.now().toString(36).toUpperCase().slice(-6);
 
-  const handleShare = async () => {
-    Haptics?.selectionAsync();
-    try {
-      // Lazy import — 네이티브 모듈을 실제 버튼 탭 시점에만 로드해 초기 번들에서 제외
-      const { captureRef } = require('react-native-view-shot');
-      const Sharing = require('expo-sharing');
-      const uri = await captureRef(ticketRef, {
-        format: 'png',
-        quality: 1,
-        result: 'tmpfile',
-      });
-      const ok = await Sharing.isAvailableAsync();
-      if (!ok) {
-        Alert.alert('공유 불가', '이 기기에서 공유 기능을 사용할 수 없어요.');
-        return;
-      }
-      await Sharing.shareAsync(uri, {
-        mimeType: 'image/png',
-        dialogTitle: '가온 큐레이션 접수증',
-      });
-    } catch (err) {
-      console.warn('ticket share failed:', err);
-      Alert.alert('저장 실패', '접수증을 저장하지 못했어요. 잠시 후 다시 시도해주세요.');
-    }
-  };
-
   return (
     <View>
-      {/* 캡처 대상 — 버튼은 이 영역 밖에 두어 저장 이미지에는 포함되지 않음 */}
-      <View ref={ticketRef} collapsable={false} style={styles.ticketWrap}>
+      <View style={styles.ticketWrap}>
         <Text style={styles.ticketLabel}>RECEIPT · 음악 큐레이션 접수증</Text>
         <View style={styles.ticketOrnament}>
           <View style={styles.goldLine} />
@@ -680,11 +660,8 @@ function TicketReceipt({ consultationId, onClose }) {
           담당 큐레이터가 1~2일 안에{'\n'}연락드릴 예정입니다.
         </Text>
       </View>
-      {/* 액션 버튼들 — 저장·공유와 닫기 */}
+      {/* 닫기 버튼만 */}
       <View style={styles.ticketActions}>
-        <TouchableOpacity style={styles.ticketActionBtn} onPress={handleShare} activeOpacity={0.85}>
-          <Text style={styles.ticketActionText}>저장·공유</Text>
-        </TouchableOpacity>
         <TouchableOpacity style={[styles.ticketActionBtn, styles.ticketActionPrimary]} onPress={onClose} activeOpacity={0.85}>
           <Text style={[styles.ticketActionText, styles.ticketActionPrimaryText]}>닫기</Text>
         </TouchableOpacity>
@@ -1106,3 +1083,61 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(201,169,110,0.3)',
   },
 });
+
+// ────────────── 화면 레벨 ErrorBoundary ──────────────
+// ai-consult.js 내부 어디선가 throw되는 경우 앱 전체 SIGABRT를 막고
+// 폴백 UI에 실제 에러 메시지를 노출 — 사용자가 캡처해서 전달하면 근본 원인 확정 가능
+class AIConsultErrorBoundary extends React.Component {
+  constructor(props) {
+    super(props);
+    this.state = { hasError: false, errorMessage: '', errorStack: '' };
+  }
+  static getDerivedStateFromError(error) {
+    return {
+      hasError: true,
+      errorMessage: error?.message || String(error) || 'Unknown error',
+      errorStack: error?.stack || '',
+    };
+  }
+  componentDidCatch(err, info) {
+    console.warn('[ai-consult] crash:', err?.message || err);
+    console.warn('[ai-consult] componentStack:', info?.componentStack || '');
+  }
+  render() {
+    if (this.state.hasError) {
+      return (
+        <View style={{ flex: 1, backgroundColor: '#110E0B', padding: 24, paddingTop: 80 }}>
+          <Text style={{ color: '#C9A96E', fontSize: 20, fontWeight: '300', letterSpacing: 2, marginBottom: 20 }}>
+            AI 상담 준비 중
+          </Text>
+          <Text style={{ color: '#9e9282', fontSize: 14, marginBottom: 28, lineHeight: 22 }}>
+            잠시 후 다시 시도해주세요.{'\n'}
+            문제가 계속되면 아래 메시지를 캡처해서 개발자에게 전달해주세요.
+          </Text>
+          <ScrollView style={{ maxHeight: 320, backgroundColor: 'rgba(255,255,255,0.03)', padding: 14, borderRadius: 6, marginBottom: 24 }}>
+            <Text selectable style={{ color: '#d4c9b3', fontSize: 12, fontFamily: Platform.OS === 'ios' ? 'Courier' : 'monospace', lineHeight: 18 }}>
+              {this.state.errorMessage}
+              {this.state.errorStack ? '\n\n' + this.state.errorStack : ''}
+            </Text>
+          </ScrollView>
+          <TouchableOpacity
+            onPress={() => { try { require('expo-router').router.back(); } catch {} }}
+            style={{ paddingVertical: 12, paddingHorizontal: 28, borderWidth: 1, borderColor: '#C9A96E', alignSelf: 'flex-start', borderRadius: 4 }}
+            activeOpacity={0.8}
+          >
+            <Text style={{ color: '#C9A96E', fontSize: 14, letterSpacing: 1 }}>← 돌아가기</Text>
+          </TouchableOpacity>
+        </View>
+      );
+    }
+    return this.props.children;
+  }
+}
+
+export default function AIConsultScreen() {
+  return (
+    <AIConsultErrorBoundary>
+      <AIConsultScreenInner />
+    </AIConsultErrorBoundary>
+  );
+}
