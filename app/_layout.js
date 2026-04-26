@@ -151,8 +151,6 @@ function AnimatedSplash({ onFinish }) {
   const logoRotate = useRef(new Animated.Value(-0.02)).current;
   const ringScale = useRef(new Animated.Value(0)).current;
   const ringOpacity = useRef(new Animated.Value(0)).current;
-  const titleOpacity = useRef(new Animated.Value(0)).current;
-  const titleTranslateY = useRef(new Animated.Value(20)).current;
   const subtitleOpacity = useRef(new Animated.Value(0)).current;
   const subtitleTranslateY = useRef(new Animated.Value(10)).current;
   const lineWidth = useRef(new Animated.Value(0)).current;
@@ -160,6 +158,23 @@ function AnimatedSplash({ onFinish }) {
   const lineRightWidth = useRef(new Animated.Value(0)).current;
   const fadeOut = useRef(new Animated.Value(1)).current;
   const finalScale = useRef(new Animated.Value(1)).current;
+
+  // 잔잔한 헤일로 — 로고에서 부드럽게 한 번 퍼지는 동심원 (호수 위 파문처럼)
+  // 클라이맥스 시점에 단 한 번, 천천히 큰 폭으로 퍼지며 사라짐
+  const haloScale = useRef(new Animated.Value(0.4)).current;
+  const haloOpacity = useRef(new Animated.Value(0)).current;
+
+  // 로고 호흡 — 로고 안착 후 매우 미세한 scale loop (1.0 ↔ 1.015) — 살아있는 느낌
+  const logoBreath = useRef(new Animated.Value(1)).current;
+
+  // 타이틀 글자별 등장 — '유진온뮤직' 5글자가 한 음씩 타건되듯 순차 페이드인
+  const TITLE_CHARS = ['유', '진', '온', '뮤', '직'];
+  const titleCharAnims = useRef(
+    TITLE_CHARS.map(() => ({
+      opacity: new Animated.Value(0),
+      translateY: new Animated.Value(12),
+    }))
+  ).current;
 
   // 오선지 배경
   const staffOpacity = useRef(new Animated.Value(0)).current;
@@ -180,8 +195,8 @@ function AnimatedSplash({ onFinish }) {
     }))
   ).current;
 
-  // 골드 파티클 (12개)
-  const NUM_PARTICLES = 12;
+  // 골드 파티클 (6개) — 정돈된 여백을 위해 12 → 6으로 감소
+  const NUM_PARTICLES = 6;
   const particleAnims = useRef(
     Array.from({ length: NUM_PARTICLES }, () => ({
       opacity: new Animated.Value(0),
@@ -190,17 +205,19 @@ function AnimatedSplash({ onFinish }) {
     }))
   ).current;
 
-  // 음표 위치/종류 설정
+  // 음표 위치/종류 설정 — delay는 이제 멜로디 박자처럼 순차적으로 분포 (좌→우 교차)
+  // 6.92초 전체 스플래시 중 1.4~3.5초 구간에 8개 음표가 박자감 있게 등장
   const noteConfigs = [
-    { x: SCREEN_W * 0.08, y: SCREEN_H * 0.2, type: 'single', size: 18, delay: 0, floatDist: -25 },
-    { x: SCREEN_W * 0.82, y: SCREEN_H * 0.18, type: 'double', size: 20, delay: 100, floatDist: -30 },
-    { x: SCREEN_W * 0.15, y: SCREEN_H * 0.38, type: 'sharp', size: 14, delay: 200, floatDist: -15 },
-    { x: SCREEN_W * 0.78, y: SCREEN_H * 0.42, type: 'single', size: 16, delay: 150, floatDist: -20 },
-    { x: SCREEN_W * 0.05, y: SCREEN_H * 0.58, type: 'double', size: 22, delay: 300, floatDist: -28 },
-    { x: SCREEN_W * 0.85, y: SCREEN_H * 0.62, type: 'treble', size: 20, delay: 250, floatDist: -22 },
-    { x: SCREEN_W * 0.2, y: SCREEN_H * 0.75, type: 'single', size: 15, delay: 350, floatDist: -18 },
-    { x: SCREEN_W * 0.72, y: SCREEN_H * 0.78, type: 'double', size: 17, delay: 400, floatDist: -24 },
+    { x: SCREEN_W * 0.08, y: SCREEN_H * 0.2,  type: 'single', size: 18, delay: 0,    floatDist: -25 },
+    { x: SCREEN_W * 0.82, y: SCREEN_H * 0.18, type: 'double', size: 20, delay: 280,  floatDist: -30 },
+    { x: SCREEN_W * 0.15, y: SCREEN_H * 0.38, type: 'sharp',  size: 14, delay: 540,  floatDist: -15 },
+    { x: SCREEN_W * 0.78, y: SCREEN_H * 0.42, type: 'single', size: 16, delay: 820,  floatDist: -20 },
+    { x: SCREEN_W * 0.05, y: SCREEN_H * 0.58, type: 'double', size: 22, delay: 1100, floatDist: -28 },
+    { x: SCREEN_W * 0.85, y: SCREEN_H * 0.62, type: 'treble', size: 20, delay: 1380, floatDist: -22 },
+    { x: SCREEN_W * 0.2,  y: SCREEN_H * 0.75, type: 'single', size: 15, delay: 1660, floatDist: -18 },
+    { x: SCREEN_W * 0.72, y: SCREEN_H * 0.78, type: 'double', size: 17, delay: 1940, floatDist: -24 },
   ];
+
 
   // 파티클 위치 (로고 주변 원형 배치)
   const particleConfigs = Array.from({ length: NUM_PARTICLES }, (_, i) => {
@@ -269,6 +286,32 @@ function AnimatedSplash({ onFinish }) {
       ]);
     });
 
+    // ── 헤일로 애니메이션 (클라이맥스, ~3.0초 시점) — 단 한 번 부드럽게 퍼짐 ──
+    const haloAnimation = Animated.sequence([
+      Animated.delay(2900),
+      Animated.parallel([
+        Animated.timing(haloScale, { toValue: 2.2, duration: 1800, easing: Easing.out(Easing.cubic), useNativeDriver: true }),
+        Animated.sequence([
+          Animated.timing(haloOpacity, { toValue: 0.22, duration: 600, easing: Easing.out(Easing.quad), useNativeDriver: true }),
+          Animated.timing(haloOpacity, { toValue: 0, duration: 1200, easing: Easing.in(Easing.quad), useNativeDriver: true }),
+        ]),
+      ]),
+    ]);
+
+    // ── 로고 호흡 루프 — 안착 후 1.5초부터 페이드아웃 직전까지 ──
+    // scale 1.0 ↔ 1.015를 2.5초 주기로 2번 반복 (총 5초) — 거의 의식 못 할 정도로 미세
+    // iterations 명시: 무한 루프면 parallel.start() 콜백이 안 불려 onFinish 안 됨
+    const logoBreathLoop = Animated.sequence([
+      Animated.delay(1500),
+      Animated.loop(
+        Animated.sequence([
+          Animated.timing(logoBreath, { toValue: 1.015, duration: 1250, easing: Easing.inOut(Easing.sin), useNativeDriver: true }),
+          Animated.timing(logoBreath, { toValue: 1, duration: 1250, easing: Easing.inOut(Easing.sin), useNativeDriver: true }),
+        ]),
+        { iterations: 2 }
+      ),
+    ]);
+
     // ── 메인 시퀀스 ──
     Animated.parallel([
       // 오선지: 독립적으로 오른쪽→왼쪽 끝까지 펼쳐짐
@@ -276,6 +319,10 @@ function AnimatedSplash({ onFinish }) {
         Animated.timing(staffOpacity, { toValue: 1, duration: 400, useNativeDriver: true }),
         Animated.timing(staffWidth, { toValue: SCREEN_W * 0.55, duration: 1800, easing: Easing.out(Easing.cubic), useNativeDriver: false }),
       ]),
+
+      // 헤일로 + 로고 호흡 루프
+      haloAnimation,
+      logoBreathLoop,
 
       // 메인 시퀀스
       Animated.sequence([
@@ -314,12 +361,20 @@ function AnimatedSplash({ onFinish }) {
           ]),
         ]),
 
-        // 4단계: 타이틀 + 서브타이틀 (1400~1900ms)
+        // 4단계: 타이틀 글자별 stagger + 서브타이틀 (1400~2400ms)
+        // 한 글자씩 130ms 간격으로 페이드인 + 살짝 위로 — 한 음씩 타건되는 느낌
         Animated.parallel([
-          Animated.timing(titleOpacity, { toValue: 1, duration: 400, useNativeDriver: true }),
-          Animated.spring(titleTranslateY, { toValue: 0, friction: 8, tension: 40, useNativeDriver: true }),
+          Animated.stagger(
+            130,
+            titleCharAnims.map((anim) =>
+              Animated.parallel([
+                Animated.timing(anim.opacity, { toValue: 1, duration: 380, easing: Easing.out(Easing.cubic), useNativeDriver: true }),
+                Animated.spring(anim.translateY, { toValue: 0, friction: 9, tension: 50, useNativeDriver: true }),
+              ])
+            )
+          ),
           Animated.sequence([
-            Animated.delay(200),
+            Animated.delay(700), // 마지막 글자 등장 직후
             Animated.parallel([
               Animated.timing(subtitleOpacity, { toValue: 1, duration: 400, useNativeDriver: true }),
               Animated.spring(subtitleTranslateY, { toValue: 0, friction: 8, tension: 40, useNativeDriver: true }),
@@ -428,6 +483,21 @@ function AnimatedSplash({ onFinish }) {
 
       {/* 로고 + 링 컨테이너 */}
       <View style={splashStyles.logoWrap}>
+        {/* 잔잔한 헤일로 — 로고 중심에서 부드럽게 한 번 퍼지는 동심원 (호수 위 파문) */}
+        <Animated.View
+          pointerEvents="none"
+          style={{
+            position: 'absolute',
+            width: 140,
+            height: 140,
+            borderRadius: 70,
+            borderWidth: 0.8,
+            borderColor: '#C9A96E',
+            opacity: haloOpacity,
+            transform: [{ scale: haloScale }],
+          }}
+        />
+
         {/* 로고 링 이펙트 */}
         <Animated.View
           style={[
@@ -439,14 +509,14 @@ function AnimatedSplash({ onFinish }) {
           ]}
         />
 
-        {/* 로고 */}
+        {/* 로고 — logoScale(등장)과 logoBreath(호흡 루프)를 곱 transform으로 조합 */}
         <Animated.Image
           source={require('../assets/images/logo.png')}
           style={[
             splashStyles.logo,
             {
               opacity: logoOpacity,
-              transform: [{ scale: logoScale }, { rotate: logoRotateStr }],
+              transform: [{ scale: logoScale }, { scale: logoBreath }, { rotate: logoRotateStr }],
             },
           ]}
           resizeMode="contain"
@@ -460,18 +530,26 @@ function AnimatedSplash({ onFinish }) {
         <Animated.View style={[splashStyles.goldLine, { width: animLineRight, marginLeft: 6 }]} />
       </View>
 
-      {/* 앱 타이틀 */}
-      <Animated.Text
-        style={[
-          splashStyles.title,
-          {
-            opacity: titleOpacity,
-            transform: [{ translateY: titleTranslateY }],
-          },
-        ]}
-      >
-        유진온뮤직
-      </Animated.Text>
+      {/* 앱 타이틀 — 글자별로 한 음씩 타건되듯 순차 등장 */}
+      <View style={splashStyles.titleRow}>
+        {TITLE_CHARS.map((ch, i) => {
+          const a = titleCharAnims[i];
+          return (
+            <Animated.Text
+              key={`titleChar-${i}`}
+              style={[
+                splashStyles.title,
+                {
+                  opacity: a.opacity,
+                  transform: [{ translateY: a.translateY }],
+                },
+              ]}
+            >
+              {ch}
+            </Animated.Text>
+          );
+        })}
+      </View>
 
       {/* 서브타이틀 */}
       <Animated.Text
@@ -536,12 +614,16 @@ const splashStyles = StyleSheet.create({
     marginBottom: 18,
     opacity: 0.4,
   },
+  // 글자별 등장이라 marginBottom은 부모 row에 부여, 개별 글자엔 letterSpacing만
+  titleRow: {
+    flexDirection: 'row',
+    marginBottom: 10,
+  },
   title: {
     fontSize: 26,
     fontWeight: '300',
     color: '#F5F0E8',
     letterSpacing: 4,
-    marginBottom: 10,
   },
   subtitle: {
     fontSize: 11,
