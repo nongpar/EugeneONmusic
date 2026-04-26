@@ -643,6 +643,8 @@ function BackgroundMusic({ muted }) {
 // 상담 완료 후 표시되는 음악회 티켓 형태의 receipt — 제출의 무게감과 기념품 느낌
 // (저장·공유 기능은 native 모듈 호환성 문제로 일시 제거 — 추후 안정화 후 복원 예정)
 function TicketReceipt({ consultationId, onClose }) {
+  const { colors } = useTheme();
+  const styles = makeStyles(colors);
   const now = new Date();
   const pad = (n) => String(n).padStart(2, '0');
   const dateStr = `${now.getFullYear()}.${pad(now.getMonth() + 1)}.${pad(now.getDate())}`;
@@ -683,6 +685,8 @@ function TicketReceipt({ consultationId, onClose }) {
 
 // ────────────── 말풍선 컴포넌트 ──────────────
 function MessageBubble({ message }) {
+  const { colors } = useTheme();
+  const styles = makeStyles(colors);
   if (message.role === 'system') {
     return (
       <View style={styles.systemBubble}>
