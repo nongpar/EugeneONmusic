@@ -3,6 +3,7 @@ import { Tabs } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { HomeIcon, LessonIcon, CourseIcon, SNSIcon, MyIcon } from '../../components/TabIcons';
 import AIConsultFAB from '../../components/AIConsultFAB';
+import { useTheme } from '../../hooks/useTheme';
 
 let Haptics = null;
 if (Platform.OS !== 'web') {
@@ -11,6 +12,7 @@ if (Platform.OS !== 'web') {
 
 export default function TabLayout() {
   const insets = useSafeAreaInsets();
+  const { colors } = useTheme();
 
   return (
     <View style={{ flex: 1 }}>
@@ -22,11 +24,11 @@ export default function TabLayout() {
       }}
       screenOptions={{
         headerShown: false,
-        tabBarActiveTintColor: '#C9A96E',
-        tabBarInactiveTintColor: 'rgba(201,169,110,0.3)',
+        tabBarActiveTintColor: colors.accent,
+        tabBarInactiveTintColor: colors.accentMuted,
         tabBarStyle: {
-          backgroundColor: '#0C0A08',
-          borderTopColor: 'rgba(201,169,110,0.15)',
+          backgroundColor: colors.bg,
+          borderTopColor: colors.borderSoft,
           borderTopWidth: 0.5,
           height: 64 + insets.bottom,
           paddingBottom: Math.max(insets.bottom, 10),

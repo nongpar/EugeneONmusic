@@ -16,6 +16,7 @@ import {
 import { router } from 'expo-router';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import ChopinAvatar from './ChopinAvatar';
+import { useTheme } from '../hooks/useTheme';
 
 let Haptics = null;
 if (Platform.OS !== 'web') {
@@ -27,6 +28,8 @@ const HIDDEN_KEY = '@ai_consult_fab_hidden';
 const HIDDEN_OFFSET = 64; // 숨길 때 오른쪽으로 이동할 px. FAB(56) 대부분이 화면 밖, ~14px 피크
 
 export default function AIConsultFAB({ bottom = 90, right = 20 }) {
+  const { colors } = useTheme();
+  const styles = makeStyles(colors);
   const [showHint, setShowHint] = useState(false);
   const [hidden, setHidden] = useState(false);
   const hiddenRef = useRef(false); // 최신 값을 panResponder 클로저에서 참조
@@ -219,7 +222,7 @@ export default function AIConsultFAB({ bottom = 90, right = 20 }) {
 
 const SIZE = 56;
 
-const styles = StyleSheet.create({
+const makeStyles = (c) => StyleSheet.create({
   container: {
     position: 'absolute',
     alignItems: 'center',
@@ -231,12 +234,10 @@ const styles = StyleSheet.create({
     borderRadius: SIZE / 2,
     alignItems: 'center',
     justifyContent: 'center',
-    // 골드 외곽
     borderWidth: 1.2,
-    borderColor: '#C9A96E',
-    backgroundColor: '#1A1612',
-    // 그림자 (elevation on Android)
-    shadowColor: '#C9A96E',
+    borderColor: c.accent,
+    backgroundColor: c.bgElevated,
+    shadowColor: c.accent,
     shadowOffset: { width: 0, height: 3 },
     shadowOpacity: 0.4,
     shadowRadius: 8,
@@ -254,18 +255,18 @@ const styles = StyleSheet.create({
     height: SIZE,
     borderRadius: SIZE / 2,
     borderWidth: 1.5,
-    borderColor: '#C9A96E',
+    borderColor: c.accent,
   },
   captionName: {
     fontSize: 11,
-    color: '#C9A96E',
+    color: c.accent,
     fontWeight: '500',
     letterSpacing: 1,
     marginTop: 4,
   },
   captionRole: {
     fontSize: 9,
-    color: 'rgba(201,169,110,0.6)',
+    color: c.textHint,
     letterSpacing: 0.8,
     marginTop: 1,
   },
@@ -273,16 +274,16 @@ const styles = StyleSheet.create({
     position: 'absolute',
     right: SIZE + 10,
     top: SIZE / 2 - 14,
-    backgroundColor: '#1A1612',
+    backgroundColor: c.bgElevated,
     paddingHorizontal: 12,
     paddingVertical: 8,
     borderRadius: 4,
     borderWidth: 0.5,
-    borderColor: 'rgba(201,169,110,0.4)',
+    borderColor: c.border,
   },
   hintText: {
     fontSize: 12,
-    color: '#F5F0E8',
+    color: c.text,
     fontWeight: '400',
     letterSpacing: 0.4,
   },
@@ -297,6 +298,6 @@ const styles = StyleSheet.create({
     borderLeftWidth: 5,
     borderTopColor: 'transparent',
     borderBottomColor: 'transparent',
-    borderLeftColor: '#1A1612',
+    borderLeftColor: c.bgElevated,
   },
 });

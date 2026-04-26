@@ -7,6 +7,7 @@ import { useAudioPlayer, useAudioPlayerStatus, setAudioModeAsync } from 'expo-au
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { AuthProvider, useAuth } from '../hooks/useAuth';
 import { useNotifications } from '../hooks/useNotifications';
+import { ThemeProvider, useTheme } from '../hooks/useTheme';
 import { doc, setDoc, collection, query, where, getDocs, deleteDoc } from 'firebase/firestore';
 import { db } from '../config/firebase';
 import InAppNotification from '../components/InAppNotification';
@@ -628,24 +629,19 @@ function NotificationInit() {
   return null;
 }
 
-export default function RootLayout() {
-  const [splashDone, setSplashDone] = useState(false);
-
-  const handleSplashFinish = useCallback(() => {
-    setSplashDone(true);
-  }, []);
-
+// 테마 토큰을 사용해야 하는 부분(Stack 배경, StatusBar)을 ThemeProvider 하위로 격리
+function ThemedRootContent({ splashDone, onSplashFinish }) {
+  const { colors } = useTheme();
   return (
-    <GestureHandlerRootView style={{ flex: 1 }}>
-    <AuthProvider>
-      <StatusBar style="light" />
+    <>
+      <StatusBar style={colors.statusBar} />
       <NotificationInit />
       <ConsentGate />
       <InAppNotification />
       <Stack
         screenOptions={{
           headerShown: false,
-          contentStyle: { backgroundColor: '#110E0B' },
+          contentStyle: { backgroundColor: colors.bg },
         }}
       >
         <Stack.Screen name="(tabs)" />
@@ -679,14 +675,32 @@ export default function RootLayout() {
         <Stack.Screen name="settings/practice-stats" />
         <Stack.Screen name="settings/privacy" />
         <Stack.Screen name="settings/terms" />
+        <Stack.Screen name="settings/theme" />
         <Stack.Screen name="admin/send-notification" />
         <Stack.Screen name="admin/inquiries/index" />
         <Stack.Screen name="admin/inquiries/[id]" />
         <Stack.Screen name="ai-consult" options={{ presentation: 'modal', gestureEnabled: false }} />
         <Stack.Screen name="my-consultations" />
       </Stack>
-      {!splashDone && <AnimatedSplash onFinish={handleSplashFinish} />}
-    </AuthProvider>
+      {!splashDone && <AnimatedSplash onFinish={onSplashFinish} />}
+    </>
+  );
+}
+
+export default function RootLayout() {
+  const [splashDone, setSplashDone] = useState(false);
+
+  const handleSplashFinish = useCallback(() => {
+    setSplashDone(true);
+  }, []);
+
+  return (
+    <GestureHandlerRootView style={{ flex: 1 }}>
+      <AuthProvider>
+        <ThemeProvider>
+          <ThemedRootContent splashDone={splashDone} onSplashFinish={handleSplashFinish} />
+        </ThemeProvider>
+      </AuthProvider>
     </GestureHandlerRootView>
   );
 }

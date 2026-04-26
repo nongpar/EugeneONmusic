@@ -6,9 +6,10 @@ import Svg, { Path } from 'react-native-svg';
 import { collection, query, where, onSnapshot } from 'firebase/firestore';
 import { db } from '../config/firebase';
 import { useAuth } from '../hooks/useAuth';
+import { useTheme } from '../hooks/useTheme';
 import { router } from 'expo-router';
 
-function BellIcon({ size = 22, color = '#C9A96E' }) {
+function BellIcon({ size = 22, color }) {
   return (
     <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
       <Path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9" stroke={color} strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round" />
@@ -19,6 +20,8 @@ function BellIcon({ size = 22, color = '#C9A96E' }) {
 
 export default function Header() {
   const { user } = useAuth();
+  const { colors } = useTheme();
+  const styles = makeStyles(colors);
   const [unreadCount, setUnreadCount] = useState(0);
 
   useEffect(() => {
@@ -64,7 +67,7 @@ export default function Header() {
         onPress={() => router.push('/notifications')}
         activeOpacity={0.7}
       >
-        <BellIcon />
+        <BellIcon color={colors.accent} />
         {unreadCount > 0 && (
           <View style={styles.badge}>
             <Text style={styles.badgeText}>
@@ -77,7 +80,7 @@ export default function Header() {
   );
 }
 
-const styles = StyleSheet.create({
+const makeStyles = (c) => StyleSheet.create({
   container: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -85,9 +88,9 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     paddingTop: 12,
     paddingBottom: 12,
-    backgroundColor: '#0C0A08',
+    backgroundColor: c.bg,
     borderBottomWidth: 0.5,
-    borderBottomColor: 'rgba(201,169,110,0.15)',
+    borderBottomColor: c.borderSoft,
   },
   logoRow: {
     flexDirection: 'row',
@@ -101,13 +104,13 @@ const styles = StyleSheet.create({
   logoText: {
     fontSize: 14,
     fontWeight: '400',
-    color: '#F5F0E8',
+    color: c.text,
     letterSpacing: 1.2,
   },
   logoAccent: {
     fontSize: 10,
     fontWeight: '400',
-    color: '#C9A96E',
+    color: c.accent,
     letterSpacing: 2,
   },
   notificationBtn: {
@@ -118,7 +121,7 @@ const styles = StyleSheet.create({
     position: 'absolute',
     top: 0,
     right: 0,
-    backgroundColor: '#e74c3c',
+    backgroundColor: c.danger,
     borderRadius: 8,
     minWidth: 16,
     height: 16,

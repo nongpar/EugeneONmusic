@@ -1,6 +1,7 @@
 import { View, Text, StyleSheet, TouchableOpacity, Image } from 'react-native';
 import Svg, { Path, Circle, Rect } from 'react-native-svg';
 import { router } from 'expo-router';
+import { useTheme } from '../hooks/useTheme';
 
 // ── SVG 아이콘 ──
 function NewsIcon({ size = 12, color = '#fff' }) {
@@ -77,6 +78,8 @@ function stripHtml(html) {
 }
 
 export default function NewsCard({ post, isHeadline, onPress }) {
+  const { colors } = useTheme();
+  const styles = makeStyles(colors);
   const title = post?.title?.rendered
     ? stripHtml(post.title.rendered)
     : (post?.title || '');
@@ -143,14 +146,14 @@ export default function NewsCard({ post, isHeadline, onPress }) {
   );
 }
 
-const styles = StyleSheet.create({
+const makeStyles = (c) => StyleSheet.create({
   headlineCard: {
     borderRadius: 4,
     marginHorizontal: 20,
     marginBottom: 16,
     overflow: 'hidden',
     borderWidth: 0.5,
-    borderColor: 'rgba(201,169,110,0.3)',
+    borderColor: c.border,
     position: 'relative',
   },
   headlineImage: {
@@ -160,36 +163,37 @@ const styles = StyleSheet.create({
   headlineOverlay: {
     padding: 20,
     gap: 8,
-    backgroundColor: 'rgba(201,169,110,0.07)',
+    backgroundColor: c.surface,
   },
+  // 사진 위 오버레이 — 다크 모드에서는 어둡게, 라이트 모드에서는 크림으로
   headlineOverlayWithImage: {
     position: 'absolute',
     bottom: 0,
     left: 0,
     right: 0,
-    backgroundColor: 'rgba(12,10,8,0.85)',
+    backgroundColor: c.name === 'dark' ? 'rgba(12,10,8,0.85)' : 'rgba(245,239,227,0.92)',
     padding: 16,
   },
   headlineTitle: {
     fontSize: 17,
     fontWeight: '400',
-    color: '#F5F0E8',
+    color: c.text,
     lineHeight: 24,
     letterSpacing: 0.3,
   },
   headlineSummary: {
     fontSize: 13,
-    color: '#9e9282',
+    color: c.textMuted,
     lineHeight: 19,
   },
   card: {
-    backgroundColor: 'rgba(201,169,110,0.07)',
+    backgroundColor: c.surface,
     borderRadius: 4,
     marginHorizontal: 20,
     marginBottom: 10,
     padding: 14,
     borderWidth: 0.5,
-    borderColor: 'rgba(201,169,110,0.15)',
+    borderColor: c.borderSoft,
   },
   cardContent: {
     flexDirection: 'row',
@@ -204,7 +208,7 @@ const styles = StyleSheet.create({
   cardTitle: {
     fontSize: 14,
     fontWeight: '400',
-    color: '#F5F0E8',
+    color: c.text,
     lineHeight: 20,
     letterSpacing: 0.3,
   },
@@ -212,7 +216,7 @@ const styles = StyleSheet.create({
     width: 56,
     height: 56,
     borderRadius: 4,
-    backgroundColor: 'rgba(201,169,110,0.18)',
+    backgroundColor: c.surfaceStrong,
   },
   cardIcon: {
     width: 52,
@@ -238,6 +242,6 @@ const styles = StyleSheet.create({
   },
   dateText: {
     fontSize: 11,
-    color: '#9e9282',
+    color: c.textMuted,
   },
 });

@@ -13,6 +13,7 @@ import Header from '../../components/Header';
 import NewsCard from '../../components/NewsCard';
 import { useAuth } from '../../hooks/useAuth';
 import { usePracticeStats } from '../../hooks/usePracticeStats';
+import { useTheme } from '../../hooks/useTheme';
 
 let Haptics = null;
 if (Platform.OS !== 'web') {
@@ -25,7 +26,7 @@ const SCREEN_W = Math.min(RAW_SCREEN_W, 540);
 const WP_API = 'https://www.eugeneonmusic.com/wp-json/wp/v2';
 
 // ── SVG Icons ──
-function ClockIcon({ size = 20, color = '#C9A96E' }) {
+function ClockIcon({ size = 20, color }) {
   return (
     <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
       <Circle cx="12" cy="12" r="9" stroke={color} strokeWidth={1.8} />
@@ -40,7 +41,7 @@ function FlameIcon({ size = 20, color = '#e74c3c' }) {
     </Svg>
   );
 }
-function RefreshIcon({ size = 16, color = '#9e9282' }) {
+function RefreshIcon({ size = 16, color }) {
   return (
     <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
       <Path d="M1 4v6h6M23 20v-6h-6" stroke={color} strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" />
@@ -49,7 +50,7 @@ function RefreshIcon({ size = 16, color = '#9e9282' }) {
   );
 }
 // 클래식 장식선 (Ornamental Divider)
-function OrnamentDivider({ width = 200, color = '#C9A96E' }) {
+function OrnamentDivider({ width = 200, color }) {
   return (
     <Svg width={width} height={20} viewBox={`0 0 ${width} 20`}>
       <Line x1="0" y1="10" x2={width * 0.35} y2="10" stroke={color} strokeWidth={0.5} opacity={0.4} />
@@ -95,6 +96,8 @@ const FALLBACK_SLIDES = [
 export default function HomeScreen() {
   const insets = useSafeAreaInsets();
   const { user } = useAuth();
+  const { colors } = useTheme();
+  const styles = makeStyles(colors);
   const { todaySeconds, streakDays, loading: statsLoading } = usePracticeStats(user?.uid);
   const [posts, setPosts] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -238,7 +241,7 @@ export default function HomeScreen() {
 
         {/* ── 장식 디바이더 ── */}
         <View style={{ alignItems: 'center', marginVertical: 4 }}>
-          <OrnamentDivider width={SCREEN_W - 80} />
+          <OrnamentDivider width={SCREEN_W - 80} color={colors.accent} />
         </View>
 
         {/* ── 퀵 액션 ── */}
@@ -275,11 +278,11 @@ export default function HomeScreen() {
           {user ? (
             <View style={styles.practiceRow}>
               <LinearGradient
-                colors={['rgba(201,169,110,0.07)', 'rgba(201,169,110,0.06)']}
+                colors={[colors.surface, colors.inputBg]}
                 style={styles.practiceCard}
               >
                 <View style={styles.practiceIconWrap}>
-                  <ClockIcon />
+                  <ClockIcon color={colors.accent} />
                 </View>
                 <Text style={styles.practiceValue}>
                   {statsLoading ? '...' : formatPracticeTime(todaySeconds)}
@@ -287,7 +290,7 @@ export default function HomeScreen() {
                 <Text style={styles.practiceLabel}>오늘 연습</Text>
               </LinearGradient>
               <LinearGradient
-                colors={['rgba(201,169,110,0.07)', 'rgba(201,169,110,0.06)']}
+                colors={[colors.surface, colors.inputBg]}
                 style={styles.practiceCard}
               >
                 <View style={styles.practiceIconWrap}>
@@ -300,7 +303,7 @@ export default function HomeScreen() {
               </LinearGradient>
             </View>
           ) : (
-            <LinearGradient colors={['rgba(201,169,110,0.07)', 'rgba(201,169,110,0.06)']} style={styles.practiceEmpty}>
+            <LinearGradient colors={[colors.surface, colors.inputBg]} style={styles.practiceEmpty}>
               <Text style={styles.practiceEmptyText}>로그인하면 연습 기록을 확인할 수 있어요</Text>
             </LinearGradient>
           )}
@@ -310,7 +313,7 @@ export default function HomeScreen() {
         <View style={styles.newsSection}>
           {/* 장식 디바이더 */}
           <View style={{ alignItems: 'center', marginBottom: 16 }}>
-            <OrnamentDivider width={SCREEN_W - 80} />
+            <OrnamentDivider width={SCREEN_W - 80} color={colors.accent} />
           </View>
 
           <View style={styles.sectionHeaderRow}>
@@ -320,9 +323,9 @@ export default function HomeScreen() {
             </View>
             <TouchableOpacity onPress={fetchPosts} style={styles.refreshBtn}>
               {loading ? (
-                <ActivityIndicator size="small" color="#C9A96E" />
+                <ActivityIndicator size="small" color={colors.accent} />
               ) : (
-                <RefreshIcon />
+                <RefreshIcon color={colors.textMuted} />
               )}
             </TouchableOpacity>
           </View>
@@ -347,7 +350,7 @@ export default function HomeScreen() {
           </View>
         ) : loading && posts.length === 0 ? (
           <View style={styles.loadingBox}>
-            <ActivityIndicator size="large" color="#C9A96E" />
+            <ActivityIndicator size="large" color={colors.accent} />
             <Text style={styles.loadingText}>소식을 불러오는 중...</Text>
           </View>
         ) : (
@@ -362,12 +365,14 @@ export default function HomeScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#0C0A08' },
+const makeStyles = (c) => StyleSheet.create({
+  container: { flex: 1, backgroundColor: c.bg },
   scrollView: { flex: 1 },
   scrollContent: { paddingTop: 4 },
 
-  /* ── 히어로 캐러셀 ── */
+  /* ── 히어로 캐러셀 ──
+     히어로는 사진 위 흰색 텍스트 구도라 다크/라이트 양쪽에서 어두운 그라디언트로
+     하단 가독성을 확보 (브랜드 톤 유지). 프레임 코너만 골드 액센트 사용. */
   heroSection: {
     marginBottom: 10,
   },
@@ -390,7 +395,6 @@ const styles = StyleSheet.create({
     right: 0,
     bottom: 0,
   },
-  // 클래식 프레임 코너 장식
   heroFrame: {
     position: 'absolute',
     top: 0, left: 0, right: 0, bottom: 0,
@@ -466,15 +470,15 @@ const styles = StyleSheet.create({
     width: 6,
     height: 6,
     borderRadius: 3,
-    backgroundColor: '#2a2420',
+    backgroundColor: c.borderSoft,
     borderWidth: 0.5,
-    borderColor: 'rgba(201,169,110,0.2)',
+    borderColor: c.border,
   },
   indicatorActive: {
     width: 24,
-    backgroundColor: '#C9A96E',
+    backgroundColor: c.accent,
     borderRadius: 3,
-    borderColor: '#C9A96E',
+    borderColor: c.accent,
   },
 
   /* ── 퀵 액션 ── */
@@ -531,12 +535,12 @@ const styles = StyleSheet.create({
   goldBar: {
     width: 2,
     height: 18,
-    backgroundColor: '#C9A96E',
+    backgroundColor: c.accent,
   },
   sectionTitle: {
     fontSize: 16,
     fontWeight: '400',
-    color: '#F5F0E8',
+    color: c.text,
     letterSpacing: 1.5,
   },
   refreshBtn: { padding: 6 },
@@ -558,27 +562,27 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 8,
     borderWidth: 0.5,
-    borderColor: 'rgba(201,169,110,0.2)',
+    borderColor: c.border,
   },
   practiceIconWrap: {
     width: 42,
     height: 42,
     borderRadius: 21,
-    backgroundColor: 'rgba(201,169,110,0.06)',
+    backgroundColor: c.inputBg,
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 0.5,
-    borderColor: 'rgba(201,169,110,0.2)',
+    borderColor: c.border,
   },
   practiceValue: {
     fontSize: 22,
     fontWeight: '300',
-    color: '#F5F0E8',
+    color: c.text,
     letterSpacing: 0.5,
   },
   practiceLabel: {
     fontSize: 11,
-    color: '#8a7e6d',
+    color: c.textMuted,
     fontWeight: '400',
     letterSpacing: 0.5,
   },
@@ -588,9 +592,9 @@ const styles = StyleSheet.create({
     padding: 24,
     alignItems: 'center',
     borderWidth: 0.5,
-    borderColor: 'rgba(201,169,110,0.2)',
+    borderColor: c.border,
   },
-  practiceEmptyText: { fontSize: 13, color: '#8a7e6d', letterSpacing: 0.3 },
+  practiceEmptyText: { fontSize: 13, color: c.textMuted, letterSpacing: 0.3 },
 
   /* ── 뉴스 섹션 ── */
   newsSection: {
@@ -606,7 +610,7 @@ const styles = StyleSheet.create({
   },
   newsQuote: {
     fontSize: 14,
-    color: '#a89880',
+    color: c.textSoft,
     fontStyle: 'italic',
     paddingHorizontal: 24,
     marginBottom: 14,
@@ -620,25 +624,25 @@ const styles = StyleSheet.create({
     paddingVertical: 40,
     gap: 12,
   },
-  loadingText: { fontSize: 13, color: '#8a7e6d' },
+  loadingText: { fontSize: 13, color: c.textMuted },
   errorBox: {
     alignItems: 'center',
     paddingVertical: 30,
     gap: 10,
     marginHorizontal: 20,
-    backgroundColor: '#15120e',
+    backgroundColor: c.bgElevated,
     borderRadius: 4,
     borderWidth: 0.5,
-    borderColor: 'rgba(201,169,110,0.15)',
+    borderColor: c.borderSoft,
   },
-  errorText: { fontSize: 14, color: '#c77a7a' },
+  errorText: { fontSize: 14, color: c.danger },
   retryBtn: {
-    backgroundColor: 'rgba(201,169,110,0.1)',
+    backgroundColor: c.surface,
     paddingHorizontal: 16,
     paddingVertical: 8,
     borderRadius: 2,
     borderWidth: 0.5,
-    borderColor: 'rgba(201,169,110,0.3)',
+    borderColor: c.border,
   },
-  retryText: { fontSize: 13, fontWeight: '500', color: '#C9A96E', letterSpacing: 0.5 },
+  retryText: { fontSize: 13, fontWeight: '500', color: c.accent, letterSpacing: 0.5 },
 });
