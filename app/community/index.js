@@ -10,6 +10,7 @@ import {
 } from 'firebase/firestore';
 import { db } from '../../config/firebase';
 import { useAuth } from '../../hooks/useAuth';
+import { useTheme } from '../../hooks/useTheme';
 
 // SVG 아이콘
 function BackIcon({ size = 24, color = '#C9A96E' }) {
@@ -58,6 +59,8 @@ const CATEGORY_COLORS = {
 };
 
 function PostItem({ item }) {
+  const { colors } = useTheme();
+  const styles = makeStyles(colors);
   const timeAgo = getTimeAgo(item.createdAt?.toDate?.() || new Date());
 
   return (
@@ -76,10 +79,10 @@ function PostItem({ item }) {
       <View style={styles.postFooter}>
         <Text style={styles.authorText}>{item.authorName || '익명'}</Text>
         <View style={styles.statsRow}>
-          <ChatBubbleIcon />
+          <ChatBubbleIcon color={colors.textMuted} />
           <Text style={styles.statText}>{item.commentCount || 0}</Text>
           <View style={{ width: 10 }} />
-          <HeartIcon />
+          <HeartIcon color={colors.textMuted} />
           <Text style={styles.statText}>{item.likeCount || 0}</Text>
         </View>
       </View>
@@ -96,6 +99,8 @@ function getTimeAgo(date) {
 }
 
 export default function CommunityScreen() {
+  const { colors } = useTheme();
+  const styles = makeStyles(colors);
   const insets = useSafeAreaInsets();
   const { user } = useAuth();
   const [posts, setPosts] = useState([]);
@@ -146,7 +151,7 @@ export default function CommunityScreen() {
     <View style={[styles.container, { paddingTop: insets.top }]}>
       <View style={styles.header}>
         <TouchableOpacity onPress={() => router.back()}>
-          <BackIcon />
+          <BackIcon color={colors.accent} />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>커뮤니티</Text>
         <TouchableOpacity
@@ -158,17 +163,17 @@ export default function CommunityScreen() {
             router.push('/community/write');
           }}
         >
-          <WriteIcon />
+          <WriteIcon color={colors.accent} />
         </TouchableOpacity>
       </View>
 
       {loading ? (
         <View style={styles.center}>
-          <ActivityIndicator color="#C9A96E" size="large" />
+          <ActivityIndicator color={colors.accent} size="large" />
         </View>
       ) : visiblePosts.length === 0 ? (
         <View style={styles.center}>
-          <EmptyDocIcon />
+          <EmptyDocIcon color={colors.textMuted} />
           <Text style={styles.emptyText}>아직 게시글이 없습니다</Text>
           <Text style={styles.emptySubtext}>첫 게시글을 작성해보세요!</Text>
         </View>
@@ -185,32 +190,32 @@ export default function CommunityScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#110E0B' },
+const makeStyles = (c) => StyleSheet.create({
+  container: { flex: 1, backgroundColor: c.bg },
   header: {
     flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center',
     paddingHorizontal: 20, paddingVertical: 12,
   },
-  headerTitle: { fontSize: 18, fontWeight: '400', color: '#F5F0E8', letterSpacing: 0.5 },
+  headerTitle: { fontSize: 18, fontWeight: '400', color: c.text, letterSpacing: 0.5 },
   center: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: 8 },
-  emptyText: { fontSize: 16, fontWeight: '400', color: '#C9A96E' },
-  emptySubtext: { fontSize: 14, color: '#9e9282' },
+  emptyText: { fontSize: 16, fontWeight: '400', color: c.accent },
+  emptySubtext: { fontSize: 14, color: c.textMuted },
   listContent: { paddingHorizontal: 20, paddingBottom: 20 },
   postCard: {
-    backgroundColor: 'rgba(201,169,110,0.07)', borderRadius: 4, padding: 16,
-    marginBottom: 10, gap: 8, borderWidth: 0.5, borderColor: 'rgba(201,169,110,0.15)',
+    backgroundColor: c.surface, borderRadius: 4, padding: 16,
+    marginBottom: 10, gap: 8, borderWidth: 0.5, borderColor: c.surfaceStrong,
   },
   postHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
   categoryBadge: { paddingHorizontal: 8, paddingVertical: 3, borderRadius: 4 },
   categoryText: { fontSize: 11, fontWeight: '400', color: '#fff', letterSpacing: 0.5 },
-  timeText: { fontSize: 12, color: '#9e9282' },
-  postTitle: { fontSize: 16, fontWeight: '400', color: '#F5F0E8', lineHeight: 22, letterSpacing: 0.3 },
-  postBody: { fontSize: 13, color: '#9e9282', lineHeight: 20 },
+  timeText: { fontSize: 12, color: c.textMuted },
+  postTitle: { fontSize: 16, fontWeight: '400', color: c.text, lineHeight: 22, letterSpacing: 0.3 },
+  postBody: { fontSize: 13, color: c.textMuted, lineHeight: 20 },
   postFooter: {
     flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center',
     marginTop: 4,
   },
-  authorText: { fontSize: 12, color: '#9e9282' },
+  authorText: { fontSize: 12, color: c.textMuted },
   statsRow: { flexDirection: 'row', alignItems: 'center', gap: 4 },
-  statText: { fontSize: 12, color: '#9e9282' },
+  statText: { fontSize: 12, color: c.textMuted },
 });

@@ -7,6 +7,7 @@ import { useLocalSearchParams, useRouter } from 'expo-router';
 import Svg, { Path } from 'react-native-svg';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAuth } from '../../hooks/useAuth';
+import { useTheme } from '../../hooks/useTheme';
 
 let ScreenOrientation = null;
 if (Platform.OS !== 'web') {
@@ -46,6 +47,8 @@ function RefreshIcon({ size = 18, color = '#C9A96E' }) {
 }
 
 export default function CourseDetailScreen() {
+  const { colors } = useTheme();
+  const styles = makeStyles(colors);
   const { id, title, url } = useLocalSearchParams();
   const router = useRouter();
   const insets = useSafeAreaInsets();
@@ -167,7 +170,7 @@ export default function CourseDetailScreen() {
           accessibilityLabel="앱으로 돌아가기"
           hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
         >
-          <CloseIcon size={20} />
+          <CloseIcon size={20} color={colors.text} />
         </TouchableOpacity>
 
         <View style={styles.headerCenter}>
@@ -183,11 +186,11 @@ export default function CourseDetailScreen() {
               onPress={handleWebBack}
               accessibilityLabel="웹 이전 페이지"
             >
-              <BackIcon />
+              <BackIcon color={colors.text} />
             </TouchableOpacity>
           )}
           <TouchableOpacity style={styles.headerBtn} onPress={handleRefresh}>
-            <RefreshIcon />
+            <RefreshIcon color={colors.accent} />
           </TouchableOpacity>
         </View>
       </View>
@@ -204,7 +207,7 @@ export default function CourseDetailScreen() {
         {/* 로그인 단계에서 WebView 가리는 오버레이 */}
         {showLoginOverlay && (
           <View style={styles.loginOverlay}>
-            <ActivityIndicator size="large" color="#C9A96E" />
+            <ActivityIndicator size="large" color={colors.accent} />
             <Text style={styles.loginOverlayTitle}>강좌 연결 중...</Text>
             <Text style={styles.loginOverlayDesc}>자동 로그인 후 강좌로 이동합니다</Text>
           </View>
@@ -220,7 +223,7 @@ export default function CourseDetailScreen() {
                 width: '100%',
                 height: '100%',
                 border: 'none',
-                backgroundColor: '#110E0B',
+                backgroundColor: colors.bg,
               }}
               title={courseTitle}
               onLoad={() => setLoading(false)}
@@ -276,7 +279,7 @@ export default function CourseDetailScreen() {
               thirdPartyCookiesEnabled
               renderLoading={() => (
                 <View style={styles.webviewLoading}>
-                  <ActivityIndicator size="large" color="#C9A96E" />
+                  <ActivityIndicator size="large" color={colors.accent} />
                   <Text style={styles.webviewLoadingText}>로그인 연동 중...</Text>
                 </View>
               )}
@@ -288,14 +291,14 @@ export default function CourseDetailScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#110E0B' },
+const makeStyles = (c) => StyleSheet.create({
+  container: { flex: 1, backgroundColor: c.bg },
 
   /* 헤더 */
   header: {
     flexDirection: 'row', alignItems: 'center',
     paddingHorizontal: 12, paddingVertical: 10,
-    borderBottomWidth: 0.5, borderBottomColor: 'rgba(201,169,110,0.15)',
+    borderBottomWidth: 0.5, borderBottomColor: c.surfaceStrong,
     gap: 8,
   },
   headerBtn: {
@@ -305,47 +308,47 @@ const styles = StyleSheet.create({
   closeBtn: {
     width: 36, height: 36, borderRadius: 18,
     alignItems: 'center', justifyContent: 'center',
-    backgroundColor: 'rgba(201,169,110,0.1)',
+    backgroundColor: c.surface,
     borderWidth: 0.5, borderColor: 'rgba(201,169,110,0.22)',
   },
   headerCenter: { flex: 1, alignItems: 'center' },
-  headerTitle: { fontSize: 15, fontWeight: '400', color: '#F5F0E8', letterSpacing: 0.3 },
-  headerSub: { fontSize: 10, color: '#9e9282', marginTop: 1 },
+  headerTitle: { fontSize: 15, fontWeight: '400', color: c.text, letterSpacing: 0.3 },
+  headerSub: { fontSize: 10, color: c.textMuted, marginTop: 1 },
   headerRight: { flexDirection: 'row', gap: 4 },
 
   /* 로딩 바 */
   loadingBar: {
-    height: 2, backgroundColor: 'rgba(201,169,110,0.07)',
+    height: 2, backgroundColor: c.surface,
   },
   loadingProgress: {
     height: 2, width: '60%',
-    backgroundColor: '#C9A96E',
+    backgroundColor: c.accent,
   },
 
   /* 로그인 오버레이 */
   loginOverlay: {
     ...StyleSheet.absoluteFillObject,
     zIndex: 10,
-    backgroundColor: '#110E0B',
+    backgroundColor: c.bg,
     alignItems: 'center',
     justifyContent: 'center',
     gap: 12,
   },
   loginOverlayTitle: {
-    fontSize: 16, fontWeight: '300', color: '#F5F0E8', letterSpacing: 0.5, marginTop: 4,
+    fontSize: 16, fontWeight: '300', color: c.text, letterSpacing: 0.5, marginTop: 4,
   },
   loginOverlayDesc: {
-    fontSize: 13, color: '#9e9282',
+    fontSize: 13, color: c.textMuted,
   },
 
   /* WebView */
   webviewWrap: { flex: 1 },
-  webview: { flex: 1, backgroundColor: '#110E0B' },
+  webview: { flex: 1, backgroundColor: c.bg },
   webviewLoading: {
     position: 'absolute', top: 0, left: 0, right: 0, bottom: 0,
     alignItems: 'center', justifyContent: 'center',
-    backgroundColor: '#110E0B', gap: 12,
+    backgroundColor: c.bg, gap: 12,
   },
-  webviewLoadingText: { fontSize: 14, color: '#9e9282' },
+  webviewLoadingText: { fontSize: 14, color: c.textMuted },
 
 });

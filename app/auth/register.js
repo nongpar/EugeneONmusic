@@ -3,6 +3,7 @@ import { WebView } from 'react-native-webview';
 import { router } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Svg, { Path } from 'react-native-svg';
+import { useTheme } from '../../hooks/useTheme';
 
 function BackIcon({ size = 22, color = '#C9A96E' }) {
   return (
@@ -13,13 +14,15 @@ function BackIcon({ size = 22, color = '#C9A96E' }) {
 }
 
 export default function RegisterScreen() {
+  const { colors } = useTheme();
+  const styles = makeStyles(colors);
   const insets = useSafeAreaInsets();
 
   return (
     <View style={[styles.container, { paddingTop: insets.top }]}>
       <View style={styles.header}>
         <TouchableOpacity style={styles.backBtn} onPress={() => router.back()}>
-          <BackIcon />
+          <BackIcon color={colors.accent} />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>회원가입</Text>
         <View style={{ width: 22 }} />
@@ -44,10 +47,10 @@ export default function RegisterScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const makeStyles = (c) => StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#110E0B',
+    backgroundColor: c.bg,
   },
   header: {
     flexDirection: 'row',
@@ -56,7 +59,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 12,
     borderBottomWidth: 0.5,
-    borderBottomColor: 'rgba(201,169,110,0.18)',
+    borderBottomColor: c.border,
   },
   backBtn: {
     padding: 4,
@@ -64,12 +67,12 @@ const styles = StyleSheet.create({
   headerTitle: {
     fontSize: 18,
     fontWeight: '400',
-    color: '#F5F0E8',
+    color: c.text,
     letterSpacing: 0.3,
   },
   webview: {
     flex: 1,
-    backgroundColor: '#110E0B',
+    backgroundColor: c.bg,
   },
   webFallback: {
     flex: 1,
@@ -78,7 +81,7 @@ const styles = StyleSheet.create({
     padding: 20,
   },
   webFallbackText: {
-    color: '#9e9282',
+    color: c.textMuted,
     fontSize: 15,
   },
 });

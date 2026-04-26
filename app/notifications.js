@@ -12,6 +12,7 @@ import {
 } from 'firebase/firestore';
 import { db } from '../config/firebase';
 import { useAuth } from '../hooks/useAuth';
+import { useTheme } from '../hooks/useTheme';
 
 let Haptics = null;
 if (Platform.OS !== 'web') {
@@ -93,6 +94,8 @@ function EmptyBellIcon({ size = 56, color = 'rgba(201,169,110,0.2)' }) {
 // ── Manuscript Decorations ──
 
 function StaffLines() {
+  const { colors } = useTheme();
+  const styles = makeStyles(colors);
   return (
     <View style={styles.staffLines} pointerEvents="none">
       {[0, 1, 2, 3, 4].map(i => (
@@ -140,6 +143,8 @@ const NOTIF_TYPE_LABELS = {
 // ── Notification Card ──
 
 function NotificationCard({ item, onPress, onDelete }) {
+  const { colors } = useTheme();
+  const styles = makeStyles(colors);
   const IconComp = NOTIF_ICONS[item.type] || MegaphoneIcon;
   const typeLabel = NOTIF_TYPE_LABELS[item.type] || '알림';
 
@@ -149,7 +154,7 @@ function NotificationCard({ item, onPress, onDelete }) {
       activeOpacity={0.8}
       onPress={() => onDelete(item)}
     >
-      <TrashIcon size={20} color="#F5F0E8" />
+      <TrashIcon size={20} color={colors.text} />
       <Text style={styles.swipeDeleteText}>삭제</Text>
     </TouchableOpacity>
   );
@@ -164,7 +169,7 @@ function NotificationCard({ item, onPress, onDelete }) {
       {!item.read && <View style={styles.unreadDot} />}
 
       <View style={styles.cardIconWrap}>
-        <IconComp size={20} />
+        <IconComp size={20} color={colors.accent} />
       </View>
 
       <View style={styles.cardContent}>
@@ -203,6 +208,8 @@ function NotificationCard({ item, onPress, onDelete }) {
 // ── Main Screen ──
 
 export default function NotificationsScreen() {
+  const { colors } = useTheme();
+  const styles = makeStyles(colors);
   const insets = useSafeAreaInsets();
   const router = useRouter();
   const { user } = useAuth();
@@ -375,7 +382,7 @@ export default function NotificationsScreen() {
       {/* Header */}
       <View style={styles.header}>
         <TouchableOpacity style={styles.backBtn} onPress={() => router.back()}>
-          <BackIcon />
+          <BackIcon color={colors.text} />
         </TouchableOpacity>
         <View style={styles.headerCenter}>
           <Text style={styles.headerTitle}>알림</Text>
@@ -438,7 +445,7 @@ export default function NotificationsScreen() {
       {/* Notification list */}
       {loading ? (
         <View style={styles.center}>
-          <ActivityIndicator size="large" color="#C9A96E" />
+          <ActivityIndicator size="large" color={colors.accent} />
         </View>
       ) : (
         <FlatList
@@ -451,7 +458,7 @@ export default function NotificationsScreen() {
           showsVerticalScrollIndicator={false}
           ListEmptyComponent={
             <View style={styles.emptyContainer}>
-              <EmptyBellIcon />
+              <EmptyBellIcon color={colors.border} />
               <Text style={styles.emptyTitle}>알림이 없습니다</Text>
               <Text style={styles.emptySubtitle}>새로운 소식이 오면 여기에 표시됩니다</Text>
             </View>
@@ -464,10 +471,10 @@ export default function NotificationsScreen() {
 
 // ── Styles ──
 
-const styles = StyleSheet.create({
+const makeStyles = (c) => StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#110E0B',
+    backgroundColor: c.bg,
   },
 
   // Header
@@ -478,7 +485,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 14,
     borderBottomWidth: 0.5,
-    borderBottomColor: 'rgba(201,169,110,0.15)',
+    borderBottomColor: c.surfaceStrong,
   },
   backBtn: {
     width: 40,
@@ -494,11 +501,11 @@ const styles = StyleSheet.create({
   headerTitle: {
     fontSize: 18,
     fontWeight: '300',
-    color: '#F5F0E8',
+    color: c.text,
     letterSpacing: 1,
   },
   headerBadge: {
-    backgroundColor: '#C9A96E',
+    backgroundColor: c.accent,
     borderRadius: 10,
     minWidth: 20,
     height: 20,
@@ -509,7 +516,7 @@ const styles = StyleSheet.create({
   headerBadgeText: {
     fontSize: 11,
     fontWeight: '600',
-    color: '#110E0B',
+    color: c.bg,
   },
   headerActions: {
     flexDirection: 'row',
@@ -521,7 +528,7 @@ const styles = StyleSheet.create({
   },
   markReadText: {
     fontSize: 13,
-    color: '#C9A96E',
+    color: c.accent,
     fontWeight: '400',
     letterSpacing: 0.3,
   },
@@ -541,7 +548,7 @@ const styles = StyleSheet.create({
     gap: 4,
   },
   swipeDeleteText: {
-    color: '#F5F0E8',
+    color: c.text,
     fontSize: 12,
     fontWeight: '500',
     letterSpacing: 0.5,
@@ -555,7 +562,7 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
     gap: 8,
     borderBottomWidth: 0.5,
-    borderBottomColor: 'rgba(201,169,110,0.1)',
+    borderBottomColor: c.surface,
   },
   inquiriesBanner: {
     flexDirection: 'row',
@@ -564,47 +571,47 @@ const styles = StyleSheet.create({
     marginTop: 12,
     paddingHorizontal: 14,
     paddingVertical: 12,
-    backgroundColor: 'rgba(201,169,110,0.1)',
+    backgroundColor: c.surface,
     borderWidth: 0.5,
-    borderColor: 'rgba(201,169,110,0.35)',
+    borderColor: c.placeholder,
     borderRadius: 4,
     gap: 10,
   },
   inquiriesBannerTitle: {
     fontSize: 14,
-    color: '#F5F0E8',
+    color: c.text,
     fontWeight: '500',
     letterSpacing: 0.3,
   },
   inquiriesBannerSub: {
     fontSize: 11,
-    color: '#9e9282',
+    color: c.textMuted,
     marginTop: 2,
   },
   inquiriesBannerArrow: {
     fontSize: 18,
-    color: '#C9A96E',
+    color: c.accent,
   },
   filterBtn: {
     paddingHorizontal: 14,
     paddingVertical: 7,
     borderRadius: 4,
-    backgroundColor: 'rgba(201,169,110,0.07)',
+    backgroundColor: c.surface,
     borderWidth: 0.5,
-    borderColor: 'rgba(201,169,110,0.18)',
+    borderColor: c.border,
   },
   filterBtnActive: {
     backgroundColor: 'transparent',
-    borderColor: '#C9A96E',
+    borderColor: c.accent,
   },
   filterLabel: {
     fontSize: 13,
     fontWeight: '400',
-    color: '#9e9282',
+    color: c.textMuted,
     letterSpacing: 0.3,
   },
   filterLabelActive: {
-    color: '#C9A96E',
+    color: c.accent,
   },
 
   // List
@@ -627,7 +634,7 @@ const styles = StyleSheet.create({
     borderWidth: 0.5,
     borderColor: 'rgba(180,150,100,0.15)',
     borderLeftWidth: 2,
-    borderLeftColor: 'rgba(201,169,110,0.15)',
+    borderLeftColor: c.surfaceStrong,
     padding: 14,
     marginBottom: 10,
     position: 'relative',
@@ -635,7 +642,7 @@ const styles = StyleSheet.create({
   },
   cardUnread: {
     backgroundColor: 'rgba(245,240,225,0.07)',
-    borderLeftColor: '#C9A96E',
+    borderLeftColor: c.accent,
   },
   unreadDot: {
     position: 'absolute',
@@ -644,7 +651,7 @@ const styles = StyleSheet.create({
     width: 8,
     height: 8,
     borderRadius: 4,
-    backgroundColor: '#C9A96E',
+    backgroundColor: c.accent,
   },
   staffLines: {
     position: 'absolute',
@@ -664,9 +671,9 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: 4,
-    backgroundColor: 'rgba(201,169,110,0.1)',
+    backgroundColor: c.surface,
     borderWidth: 0.5,
-    borderColor: 'rgba(201,169,110,0.2)',
+    borderColor: c.border,
     alignItems: 'center',
     justifyContent: 'center',
     marginRight: 12,
@@ -686,27 +693,27 @@ const styles = StyleSheet.create({
     paddingHorizontal: 8,
     paddingVertical: 2,
     borderRadius: 2,
-    backgroundColor: 'rgba(201,169,110,0.1)',
+    backgroundColor: c.surface,
   },
   typeBadgeText: {
     fontSize: 10,
     fontWeight: '500',
-    color: '#C9A96E',
+    color: c.accent,
     letterSpacing: 1,
   },
   cardTime: {
     fontSize: 11,
-    color: '#9e9282',
+    color: c.textMuted,
   },
   cardTitle: {
     fontSize: 15,
     fontWeight: '400',
-    color: '#F5F0E8',
+    color: c.text,
     marginTop: 2,
   },
   cardBody: {
     fontSize: 13,
-    color: '#9e9282',
+    color: c.textMuted,
     lineHeight: 18,
   },
 
@@ -720,12 +727,12 @@ const styles = StyleSheet.create({
   emptyTitle: {
     fontSize: 16,
     fontWeight: '300',
-    color: '#9e9282',
+    color: c.textMuted,
     marginTop: 8,
   },
   emptySubtitle: {
     fontSize: 14,
-    color: 'rgba(201,169,110,0.4)',
+    color: c.accentMuted,
     textAlign: 'center',
   },
 });

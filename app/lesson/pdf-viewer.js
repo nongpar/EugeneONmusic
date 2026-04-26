@@ -4,6 +4,7 @@ import { useLocalSearchParams, router } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Svg, { Path } from 'react-native-svg';
 import WebView from 'react-native-webview';
+import { useTheme } from '../../hooks/useTheme';
 
 let ScreenOrientation = null;
 if (Platform.OS !== 'web') {
@@ -19,6 +20,8 @@ function BackIcon({ size = 22, color = '#9e9282' }) {
 }
 
 export default function PDFViewerScreen() {
+  const { colors } = useTheme();
+  const styles = makeStyles(colors);
   const insets = useSafeAreaInsets();
   const { url, title } = useLocalSearchParams();
 
@@ -45,7 +48,7 @@ export default function PDFViewerScreen() {
     <View style={[styles.container, { paddingTop: insets.top }]}>
       <View style={styles.header}>
         <TouchableOpacity onPress={() => router.back()} style={styles.headerBtn}>
-          <BackIcon />
+          <BackIcon color={colors.textMuted} />
         </TouchableOpacity>
         <View style={styles.headerCenter}>
           <Text style={styles.headerTitle} numberOfLines={1}>{displayTitle}</Text>
@@ -70,7 +73,7 @@ export default function PDFViewerScreen() {
           startInLoadingState
           renderLoading={() => (
             <View style={styles.loadingOverlay}>
-              <ActivityIndicator size="large" color="#C9A96E" />
+              <ActivityIndicator size="large" color={colors.accent} />
               <Text style={styles.loadingText}>악보 로딩 중...</Text>
             </View>
           )}
@@ -80,29 +83,29 @@ export default function PDFViewerScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#110E0B' },
+const makeStyles = (c) => StyleSheet.create({
+  container: { flex: 1, backgroundColor: c.bg },
   header: {
     flexDirection: 'row', alignItems: 'center',
     paddingHorizontal: 16, paddingVertical: 12,
-    borderBottomWidth: 0.5, borderBottomColor: 'rgba(201,169,110,0.15)', gap: 12,
+    borderBottomWidth: 0.5, borderBottomColor: c.surfaceStrong, gap: 12,
   },
   headerBtn: { width: 36, height: 36, borderRadius: 4, alignItems: 'center', justifyContent: 'center' },
   headerCenter: { flex: 1, alignItems: 'center' },
-  headerTitle: { fontSize: 16, fontWeight: '300', color: '#F5F0E8', letterSpacing: 0.5 },
+  headerTitle: { fontSize: 16, fontWeight: '300', color: c.text, letterSpacing: 0.5 },
   webview: { flex: 1 },
   loadingOverlay: {
     ...StyleSheet.absoluteFillObject,
-    backgroundColor: '#110E0B',
+    backgroundColor: c.bg,
     alignItems: 'center', justifyContent: 'center', gap: 12,
   },
-  loadingText: { fontSize: 13, color: '#9e9282' },
+  loadingText: { fontSize: 13, color: c.textMuted },
   center: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: 16 },
-  webText: { fontSize: 14, color: '#9e9282' },
+  webText: { fontSize: 14, color: c.textMuted },
   openBtn: {
     paddingVertical: 12, paddingHorizontal: 24,
-    borderRadius: 4, borderWidth: 1, borderColor: 'rgba(201,169,110,0.3)',
-    backgroundColor: 'rgba(201,169,110,0.07)',
+    borderRadius: 4, borderWidth: 1, borderColor: c.accentMuted,
+    backgroundColor: c.surface,
   },
-  openBtnText: { fontSize: 14, color: '#C9A96E' },
+  openBtnText: { fontSize: 14, color: c.accent },
 });

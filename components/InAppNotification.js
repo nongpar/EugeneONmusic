@@ -9,6 +9,7 @@ import { router } from 'expo-router';
 import { collection, query, where, orderBy, limit, onSnapshot } from 'firebase/firestore';
 import { db } from '../config/firebase';
 import { useAuth } from '../hooks/useAuth';
+import { useTheme } from '../hooks/useTheme';
 
 // ── Icons ──
 
@@ -68,6 +69,8 @@ const TYPE_LABELS = {
 // ── Banner Component ──
 
 function NotificationBanner({ notification, onDismiss, onPress, insets }) {
+  const { colors } = useTheme();
+  const styles = makeStyles(colors);
   const slideAnim = useRef(new Animated.Value(-120)).current;
   const opacityAnim = useRef(new Animated.Value(0)).current;
 
@@ -131,7 +134,7 @@ function NotificationBanner({ notification, onDismiss, onPress, insets }) {
       >
         {/* 아이콘 */}
         <View style={styles.bannerIcon}>
-          <IconComp />
+          <IconComp color={colors.accent} />
         </View>
 
         {/* 텍스트 */}
@@ -297,14 +300,14 @@ export default function InAppNotification() {
 
 // ── Styles ──
 
-const styles = StyleSheet.create({
+const makeStyles = (c) => StyleSheet.create({
   banner: {
     position: 'absolute',
     top: 0,
     left: 0,
     right: 0,
     zIndex: 9999,
-    backgroundColor: '#1a1612',
+    backgroundColor: c.bgElevated,
     borderBottomLeftRadius: 16,
     borderBottomRightRadius: 16,
     shadowColor: '#000',
@@ -326,7 +329,7 @@ const styles = StyleSheet.create({
     borderRadius: 4,
     backgroundColor: 'rgba(201,169,110,0.12)',
     borderWidth: 0.5,
-    borderColor: 'rgba(201,169,110,0.25)',
+    borderColor: c.border,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -342,21 +345,21 @@ const styles = StyleSheet.create({
   bannerType: {
     fontSize: 10,
     fontWeight: '500',
-    color: '#C9A96E',
+    color: c.accent,
     letterSpacing: 1,
   },
   bannerTime: {
     fontSize: 10,
-    color: '#9e9282',
+    color: c.textMuted,
   },
   bannerTitle: {
     fontSize: 14,
     fontWeight: '500',
-    color: '#F5F0E8',
+    color: c.text,
   },
   bannerBody: {
     fontSize: 12,
-    color: '#9e9282',
+    color: c.textMuted,
     lineHeight: 16,
   },
   bannerClose: {
@@ -367,12 +370,12 @@ const styles = StyleSheet.create({
   },
   bannerCloseText: {
     fontSize: 14,
-    color: '#9e9282',
+    color: c.textMuted,
     fontWeight: '300',
   },
   bannerBottomLine: {
     height: 1.5,
-    backgroundColor: 'rgba(201,169,110,0.25)',
+    backgroundColor: c.border,
     marginHorizontal: 20,
     borderRadius: 1,
     marginBottom: 4,

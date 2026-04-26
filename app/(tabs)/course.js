@@ -6,6 +6,7 @@ import {
 import Svg, { Path, Circle } from 'react-native-svg';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
+import { useTheme } from '../../hooks/useTheme';
 
 let Haptics = null;
 if (Platform.OS !== 'web') {
@@ -139,11 +140,13 @@ function UserIcon({ size = 14, color = '#9e9282' }) {
 
 // ── 배지 컴포넌트 ──
 function CategoryBadge({ category }) {
-  const colors = {
-    '피아노': { bg: 'rgba(201,169,110,0.1)', text: '#C9A96E' },
-    '작곡·음악이론': { bg: 'rgba(201,169,110,0.1)', text: '#C9A96E' },
+  const { colors } = useTheme();
+  const styles = makeStyles(colors);
+  const map = {
+    '피아노': { bg: colors.surface, text: colors.accent },
+    '작곡·음악이론': { bg: colors.surface, text: colors.accent },
   };
-  const c = colors[category] || colors['피아노'];
+  const c = map[category] || map['피아노'];
   return (
     <View style={[styles.categoryBadge, { backgroundColor: c.bg }]}>
       <Text style={[styles.categoryBadgeText, { color: c.text }]}>{category}</Text>
@@ -152,9 +155,11 @@ function CategoryBadge({ category }) {
 }
 
 function StatusBadge({ status }) {
+  const { colors } = useTheme();
+  const styles = makeStyles(colors);
   if (status === 'none') return null;
   const config = {
-    new: { bg: '#C9A96E', text: '#0C0A08', label: 'NEW' },
+    new: { bg: colors.accent, text: colors.bg, label: 'NEW' },
     popular: { bg: '#2C5F8A', text: '#ffffff', label: 'BEST' },
   };
   const c = config[status];
@@ -168,6 +173,8 @@ function StatusBadge({ status }) {
 
 // ── 강좌 카드 ──
 function CourseCard({ course, onPress }) {
+  const { colors } = useTheme();
+  const styles = makeStyles(colors);
   return (
     <TouchableOpacity style={styles.courseCard} activeOpacity={0.7} onPress={onPress} accessibilityRole="button">
       {/* 썸네일 */}
@@ -180,7 +187,7 @@ function CourseCard({ course, onPress }) {
           />
         ) : (
           <View style={styles.cardPlaceholder}>
-            <PlayIcon size={32} color="rgba(201,169,110,0.6)" />
+            <PlayIcon size={32} color={colors.textHint} />
           </View>
         )}
         {/* 상태 배지 */}
@@ -205,12 +212,12 @@ function CourseCard({ course, onPress }) {
         <Text style={styles.cardTitle} numberOfLines={2}>{course.title}</Text>
         {course.composer ? (
           <View style={styles.metaRow}>
-            <MusicNoteIcon size={13} />
+            <MusicNoteIcon size={13} color={colors.textMuted} />
             <Text style={styles.metaText}>{course.composer}</Text>
           </View>
         ) : null}
         <View style={styles.metaRow}>
-          <UserIcon size={13} />
+          <UserIcon size={13} color={colors.textMuted} />
           <Text style={styles.metaText}>강사: {course.instructor}</Text>
         </View>
       </View>
@@ -220,6 +227,8 @@ function CourseCard({ course, onPress }) {
 
 // ── 메인 화면 ──
 export default function CourseScreen() {
+  const { colors } = useTheme();
+  const styles = makeStyles(colors);
   const insets = useSafeAreaInsets();
   const router = useRouter();
   const [activeCategory, setActiveCategory] = useState('전체');
@@ -303,8 +312,8 @@ export default function CourseScreen() {
           <RefreshControl
             refreshing={refreshing}
             onRefresh={onRefresh}
-            tintColor="#C9A96E"
-            colors={['#C9A96E']}
+            tintColor={colors.accent}
+            colors={[colors.accent]}
           />
         }
       >
@@ -319,7 +328,7 @@ export default function CourseScreen() {
 
         {loading && (
           <View style={styles.loadingWrap}>
-            <ActivityIndicator size="large" color="#C9A96E" />
+            <ActivityIndicator size="large" color={colors.accent} />
             <Text style={styles.loadingText}>강좌 불러오는 중...</Text>
           </View>
         )}
@@ -334,7 +343,7 @@ export default function CourseScreen() {
 
         {!loading && filtered.length === 0 && (
           <View style={styles.emptyWrap}>
-            <BookIcon size={40} color="rgba(201,169,110,0.3)" />
+            <BookIcon size={40} color={colors.accentMuted} />
             <Text style={styles.emptyText}>해당 카테고리의 강좌가 없습니다</Text>
           </View>
         )}
@@ -355,7 +364,7 @@ export default function CourseScreen() {
           accessibilityRole="button"
         >
           <Text style={styles.ctaText}>수강신청 페이지 바로가기</Text>
-          <ExternalIcon size={16} />
+          <ExternalIcon size={16} color={colors.accent} />
         </TouchableOpacity>
 
         <View style={{ height: 20 }} />
@@ -364,29 +373,29 @@ export default function CourseScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#110E0B' },
+const makeStyles = (c) => StyleSheet.create({
+  container: { flex: 1, backgroundColor: c.bg },
 
   /* 헤더 */
   header: {
     flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center',
     paddingHorizontal: 24, paddingTop: 16, paddingBottom: 14,
-    borderBottomWidth: 0.5, borderBottomColor: 'rgba(201,169,110,0.15)',
+    borderBottomWidth: 0.5, borderBottomColor: c.surfaceStrong,
   },
-  headerTitle: { fontSize: 22, fontWeight: '300', color: '#F5F0E8', letterSpacing: 1 },
-  headerSub: { fontSize: 10, color: '#C9A96E', marginTop: 4, fontWeight: '400', letterSpacing: 2.5 },
+  headerTitle: { fontSize: 22, fontWeight: '300', color: c.text, letterSpacing: 1 },
+  headerSub: { fontSize: 10, color: c.accent, marginTop: 4, fontWeight: '400', letterSpacing: 2.5 },
 
   /* 카테고리 */
-  categoryWrap: { borderBottomWidth: 0.5, borderBottomColor: 'rgba(201,169,110,0.15)' },
+  categoryWrap: { borderBottomWidth: 0.5, borderBottomColor: c.surfaceStrong },
   categoryRow: { paddingHorizontal: 20, paddingVertical: 12, gap: 8 },
   categoryBtn: {
     paddingHorizontal: 16, paddingVertical: 8,
-    borderRadius: 4, backgroundColor: 'rgba(201,169,110,0.07)',
-    borderWidth: 0.5, borderColor: 'rgba(201,169,110,0.18)',
+    borderRadius: 4, backgroundColor: c.surface,
+    borderWidth: 0.5, borderColor: c.border,
   },
-  categoryBtnActive: { backgroundColor: 'transparent', borderColor: '#C9A96E' },
-  categoryLabel: { fontSize: 13, fontWeight: '400', color: '#9e9282', letterSpacing: 0.3 },
-  categoryLabelActive: { color: '#C9A96E' },
+  categoryBtnActive: { backgroundColor: 'transparent', borderColor: c.accent },
+  categoryLabel: { fontSize: 13, fontWeight: '400', color: c.textMuted, letterSpacing: 0.3 },
+  categoryLabelActive: { color: c.accent },
 
   /* 리스트 */
   listContent: {
@@ -400,18 +409,18 @@ const styles = StyleSheet.create({
     flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center',
     paddingVertical: 10,
   },
-  statsText: { fontSize: 12, color: '#9e9282', fontWeight: '400' },
+  statsText: { fontSize: 12, color: c.textMuted, fontWeight: '400' },
   sourceIndicator: { flexDirection: 'row', alignItems: 'center', gap: 5 },
-  sourceDot: { width: 6, height: 6, borderRadius: 3, backgroundColor: '#C9A96E' },
-  sourceText: { fontSize: 11, color: '#9e9282' },
+  sourceDot: { width: 6, height: 6, borderRadius: 3, backgroundColor: c.accent },
+  sourceText: { fontSize: 11, color: c.textMuted },
 
   /* 강좌 카드 */
   courseCard: {
-    backgroundColor: 'rgba(201,169,110,0.07)', borderRadius: 4,
+    backgroundColor: c.surface, borderRadius: 4,
     marginBottom: 14, overflow: 'hidden',
-    borderWidth: 0.5, borderColor: 'rgba(201,169,110,0.18)',
+    borderWidth: 0.5, borderColor: c.border,
   },
-  cardThumbnail: { height: 190, backgroundColor: '#0C0A08', position: 'relative' },
+  cardThumbnail: { height: 190, backgroundColor: c.bg, position: 'relative' },
   cardImage: { width: '100%', height: '100%' },
   cardPlaceholder: {
     flex: 1, alignItems: 'center', justifyContent: 'center',
@@ -433,24 +442,24 @@ const styles = StyleSheet.create({
   cardTopRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
   categoryBadge: { paddingHorizontal: 8, paddingVertical: 3, borderRadius: 2 },
   categoryBadgeText: { fontSize: 11, fontWeight: '600', letterSpacing: 0.5 },
-  cardTitle: { fontSize: 16, fontWeight: '400', color: '#F5F0E8', lineHeight: 23, letterSpacing: 0.3, marginTop: 2 },
+  cardTitle: { fontSize: 16, fontWeight: '400', color: c.text, lineHeight: 23, letterSpacing: 0.3, marginTop: 2 },
   metaRow: { flexDirection: 'row', alignItems: 'center', gap: 5 },
-  metaText: { fontSize: 13, color: '#9e9282', fontWeight: '400' },
+  metaText: { fontSize: 13, color: c.textMuted, fontWeight: '400' },
 
   /* 로딩 */
   loadingWrap: { alignItems: 'center', paddingVertical: 60, gap: 12 },
-  loadingText: { fontSize: 14, color: '#9e9282' },
+  loadingText: { fontSize: 14, color: c.textMuted },
 
   /* 빈 상태 */
   emptyWrap: { alignItems: 'center', paddingVertical: 60, gap: 12 },
-  emptyText: { fontSize: 14, color: '#9e9282' },
+  emptyText: { fontSize: 14, color: c.textMuted },
 
   /* CTA */
   cta: {
     flexDirection: 'row', alignItems: 'center', justifyContent: 'center',
     gap: 8, paddingVertical: 16, marginTop: 8,
-    borderWidth: 0.5, borderColor: 'rgba(201,169,110,0.25)', borderRadius: 4,
-    backgroundColor: 'rgba(201,169,110,0.07)',
+    borderWidth: 0.5, borderColor: c.border, borderRadius: 4,
+    backgroundColor: c.surface,
   },
-  ctaText: { fontSize: 14, fontWeight: '400', color: '#C9A96E', letterSpacing: 0.5 },
+  ctaText: { fontSize: 14, fontWeight: '400', color: c.accent, letterSpacing: 0.5 },
 });

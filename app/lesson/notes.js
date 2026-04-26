@@ -11,6 +11,7 @@ import {
 } from 'firebase/firestore';
 import { db } from '../../config/firebase';
 import { useAuth } from '../../hooks/useAuth';
+import { useTheme } from '../../hooks/useTheme';
 
 // ── SVG 아이콘 ──
 function BackIcon({ size = 22, color = '#9e9282' }) {
@@ -57,6 +58,8 @@ function TrashIcon({ size = 16, color = '#e74c3c' }) {
 
 // ── Manuscript Decorations ──
 function StaffLines() {
+  const { colors } = useTheme();
+  const styles = makeStyles(colors);
   return (
     <View style={styles.staffLines} pointerEvents="none">
       {[0, 1, 2, 3, 4].map(i => (
@@ -67,6 +70,8 @@ function StaffLines() {
 }
 
 function ParchmentCorner({ position = 'topLeft' }) {
+  const { colors } = useTheme();
+  const styles = makeStyles(colors);
   const isTop = position.includes('top');
   const isLeft = position.includes('Left');
   return (
@@ -78,7 +83,7 @@ function ParchmentCorner({ position = 'topLeft' }) {
       !isTop && !isLeft && { transform: [{ scaleX: -1 }, { scaleY: -1 }] },
     ]} pointerEvents="none">
       <Svg width={20} height={20} viewBox="0 0 20 20" fill="none">
-        <Path d="M2 2 C2 2 2 8 8 8 C2 8 2 14 2 14" stroke="rgba(201,169,110,0.2)" strokeWidth={0.8} />
+        <Path d="M2 2 C2 2 2 8 8 8 C2 8 2 14 2 14" stroke={colors.border} strokeWidth={0.8} />
       </Svg>
     </View>
   );
@@ -86,7 +91,9 @@ function ParchmentCorner({ position = 'topLeft' }) {
 
 // ── 노트 카드 ──
 function NoteCard({ note, user, confirmDelete }) {
-  const badgeColor = note.authorRole === 'teacher' ? '#C9A96E' : '#9e9282';
+  const { colors } = useTheme();
+  const styles = makeStyles(colors);
+  const badgeColor = note.authorRole === 'teacher' ? colors.accent : colors.textMuted;
   const roleLabel = note.authorRole === 'teacher' ? '선생님' : '학생';
   const isAuthor = user && note.authorId === user.uid;
 
@@ -104,7 +111,7 @@ function NoteCard({ note, user, confirmDelete }) {
         </View>
         {isAuthor && (
           <TouchableOpacity onPress={() => confirmDelete(note.id)} style={styles.deleteBtn}>
-            <TrashIcon />
+            <TrashIcon color={colors.danger} />
           </TouchableOpacity>
         )}
       </View>
@@ -112,7 +119,7 @@ function NoteCard({ note, user, confirmDelete }) {
       <View style={styles.noteMeta}>
         <Text style={styles.noteAuthor}>{note.authorName}</Text>
         <View style={styles.metaDot} />
-        <CalendarIcon />
+        <CalendarIcon color={colors.textMuted} />
         <Text style={styles.noteDate}>{note.lessonDate || '-'}</Text>
       </View>
 
@@ -125,6 +132,8 @@ function NoteCard({ note, user, confirmDelete }) {
 
 // ── 메인 화면 ──
 export default function LessonNotesScreen() {
+  const { colors } = useTheme();
+  const styles = makeStyles(colors);
   const { user } = useAuth();
   const insets = useSafeAreaInsets();
 
@@ -243,13 +252,13 @@ export default function LessonNotesScreen() {
       <View style={[styles.container, { paddingTop: insets.top }]}>
         <View style={styles.header}>
           <TouchableOpacity onPress={() => router.back()} style={styles.headerBtn}>
-            <BackIcon />
+            <BackIcon color={colors.textMuted} />
           </TouchableOpacity>
           <Text style={styles.headerTitle}>레슨 노트</Text>
           <View style={styles.headerBtn} />
         </View>
         <View style={styles.center}>
-          <ActivityIndicator size="large" color="#C9A96E" />
+          <ActivityIndicator size="large" color={colors.accent} />
         </View>
       </View>
     );
@@ -261,13 +270,13 @@ export default function LessonNotesScreen() {
       <View style={[styles.container, { paddingTop: insets.top }]}>
         <View style={styles.header}>
           <TouchableOpacity onPress={() => router.back()} style={styles.headerBtn}>
-            <BackIcon />
+            <BackIcon color={colors.textMuted} />
           </TouchableOpacity>
           <Text style={styles.headerTitle}>레슨 노트</Text>
           <View style={styles.headerBtn} />
         </View>
         <View style={styles.center}>
-          <NoteIcon size={48} color="rgba(201,169,110,0.3)" />
+          <NoteIcon size={48} color={colors.accentMuted} />
           <Text style={styles.emptyText}>멘토십이 없습니다</Text>
         </View>
       </View>
@@ -288,7 +297,7 @@ export default function LessonNotesScreen() {
       {/* 노트 목록 */}
       {notes.length === 0 ? (
         <View style={styles.center}>
-          <NoteIcon size={48} color="rgba(201,169,110,0.3)" />
+          <NoteIcon size={48} color={colors.accentMuted} />
           <Text style={styles.emptyText}>
             아직 레슨 노트가 없습니다.{'\n'}첫 노트를 작성해보세요!
           </Text>
@@ -309,17 +318,17 @@ export default function LessonNotesScreen() {
         onPress={() => router.push('/lesson/note-write')}
         activeOpacity={0.8}
       >
-        <PlusIcon />
+        <PlusIcon color={colors.accentText} />
       </TouchableOpacity>
     </View>
   );
 }
 
 // ── 스타일 ──
-const styles = StyleSheet.create({
+const makeStyles = (c) => StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#110E0B',
+    backgroundColor: c.bg,
   },
   header: {
     flexDirection: 'row',
@@ -328,7 +337,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 14,
     borderBottomWidth: 0.5,
-    borderBottomColor: 'rgba(201,169,110,0.15)',
+    borderBottomColor: c.surfaceStrong,
   },
   headerBtn: {
     width: 40,
@@ -339,7 +348,7 @@ const styles = StyleSheet.create({
   headerTitle: {
     fontSize: 18,
     fontWeight: '300',
-    color: '#F5F0E8',
+    color: c.text,
     letterSpacing: 1,
   },
   center: {
@@ -349,7 +358,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 32,
   },
   emptyText: {
-    color: '#9e9282',
+    color: c.textMuted,
     fontSize: 15,
     textAlign: 'center',
     marginTop: 16,
@@ -367,7 +376,7 @@ const styles = StyleSheet.create({
     borderWidth: 0.5,
     borderColor: 'rgba(180,150,100,0.2)',
     borderTopWidth: 1.5,
-    borderTopColor: 'rgba(201,169,110,0.25)',
+    borderTopColor: c.border,
     position: 'relative',
     overflow: 'hidden',
   },
@@ -395,7 +404,7 @@ const styles = StyleSheet.create({
   noteTitle: {
     fontSize: 16,
     fontWeight: '400',
-    color: '#F5F0E8',
+    color: c.text,
     marginRight: 8,
   },
   roleBadge: {
@@ -420,23 +429,23 @@ const styles = StyleSheet.create({
   },
   noteAuthor: {
     fontSize: 13,
-    color: '#9e9282',
+    color: c.textMuted,
   },
   metaDot: {
     width: 3,
     height: 3,
     borderRadius: 1.5,
-    backgroundColor: 'rgba(201,169,110,0.25)',
+    backgroundColor: c.border,
     marginHorizontal: 8,
   },
   noteDate: {
     fontSize: 13,
-    color: '#9e9282',
+    color: c.textMuted,
     marginLeft: 4,
   },
   notePreview: {
     fontSize: 14,
-    color: '#9e9282',
+    color: c.textMuted,
     lineHeight: 20,
   },
   fab: {
@@ -445,7 +454,7 @@ const styles = StyleSheet.create({
     width: 56,
     height: 56,
     borderRadius: 28,
-    backgroundColor: '#C9A96E',
+    backgroundColor: c.accent,
     alignItems: 'center',
     justifyContent: 'center',
     elevation: 6,

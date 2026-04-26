@@ -9,6 +9,7 @@ import { useRouter } from 'expo-router';
 import { collection, getDocs, addDoc, serverTimestamp } from 'firebase/firestore';
 import { db } from '../../config/firebase';
 import { useAuth } from '../../hooks/useAuth';
+import { useTheme } from '../../hooks/useTheme';
 import { sendPushNotification } from '../../hooks/useNotifications';
 
 let Haptics = null;
@@ -73,6 +74,8 @@ const AUDIENCES = [
 // ── Manuscript Decorations ──
 
 function StaffLines() {
+  const { colors } = useTheme();
+  const styles = makeStyles(colors);
   return (
     <View style={styles.staffLines} pointerEvents="none">
       {[0, 1, 2, 3, 4].map(i => (
@@ -85,6 +88,8 @@ function StaffLines() {
 // ── Main Screen ──
 
 export default function SendNotificationScreen() {
+  const { colors } = useTheme();
+  const styles = makeStyles(colors);
   const insets = useSafeAreaInsets();
   const router = useRouter();
   const { user } = useAuth();
@@ -169,7 +174,7 @@ export default function SendNotificationScreen() {
       <View style={[styles.container, { paddingTop: insets.top }]}>
         <View style={styles.header}>
           <TouchableOpacity style={styles.backBtn} onPress={() => router.back()}>
-            <BackIcon />
+            <BackIcon color={colors.text} />
           </TouchableOpacity>
           <Text style={styles.headerTitle}>알림 전송</Text>
           <View style={{ width: 40 }} />
@@ -192,7 +197,7 @@ export default function SendNotificationScreen() {
       {/* Header */}
       <View style={styles.header}>
         <TouchableOpacity style={styles.backBtn} onPress={() => router.back()}>
-          <BackIcon />
+          <BackIcon color={colors.text} />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>알림 전송</Text>
         <View style={{ width: 40 }} />
@@ -226,7 +231,7 @@ export default function SendNotificationScreen() {
         <Text style={styles.sectionLabel}>수신 대상</Text>
         <View style={styles.audienceCard}>
           <StaffLines />
-          <UsersIcon />
+          <UsersIcon color={colors.accent} />
           <View style={styles.audienceOptions}>
             {AUDIENCES.map(a => (
               <TouchableOpacity
@@ -257,7 +262,7 @@ export default function SendNotificationScreen() {
             value={title}
             onChangeText={setTitle}
             placeholder="알림 제목을 입력하세요"
-            placeholderTextColor="rgba(201,169,110,0.3)"
+            placeholderTextColor={colors.accentMuted}
             maxLength={50}
           />
           <Text style={styles.charCount}>{title.length}/50</Text>
@@ -272,7 +277,7 @@ export default function SendNotificationScreen() {
             value={body}
             onChangeText={setBody}
             placeholder="알림 내용을 입력하세요"
-            placeholderTextColor="rgba(201,169,110,0.3)"
+            placeholderTextColor={colors.accentMuted}
             multiline
             numberOfLines={4}
             textAlignVertical="top"
@@ -322,10 +327,10 @@ export default function SendNotificationScreen() {
           activeOpacity={0.8}
         >
           {sending ? (
-            <ActivityIndicator size="small" color="#110E0B" />
+            <ActivityIndicator size="small" color={colors.bg} />
           ) : (
             <>
-              <SendIcon />
+              <SendIcon color={colors.bg} />
               <Text style={styles.sendBtnText}>알림 전송</Text>
             </>
           )}
@@ -342,10 +347,10 @@ export default function SendNotificationScreen() {
 
 // ── Styles ──
 
-const styles = StyleSheet.create({
+const makeStyles = (c) => StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#110E0B',
+    backgroundColor: c.bg,
   },
 
   // Header
@@ -356,7 +361,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 14,
     borderBottomWidth: 0.5,
-    borderBottomColor: 'rgba(201,169,110,0.15)',
+    borderBottomColor: c.surfaceStrong,
   },
   backBtn: {
     width: 40,
@@ -367,7 +372,7 @@ const styles = StyleSheet.create({
   headerTitle: {
     fontSize: 18,
     fontWeight: '300',
-    color: '#F5F0E8',
+    color: c.text,
     letterSpacing: 1,
   },
 
@@ -382,7 +387,7 @@ const styles = StyleSheet.create({
   sectionLabel: {
     fontSize: 13,
     fontWeight: '400',
-    color: '#C9A96E',
+    color: c.accent,
     letterSpacing: 1.5,
     fontStyle: 'italic',
     marginBottom: 8,
@@ -400,23 +405,23 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
     paddingHorizontal: 8,
     borderRadius: 4,
-    backgroundColor: 'rgba(201,169,110,0.07)',
+    backgroundColor: c.surface,
     borderWidth: 0.5,
-    borderColor: 'rgba(201,169,110,0.18)',
+    borderColor: c.border,
     alignItems: 'center',
   },
   typeBtnActive: {
-    borderColor: '#C9A96E',
+    borderColor: c.accent,
     backgroundColor: 'rgba(201,169,110,0.12)',
   },
   typeLabel: {
     fontSize: 13,
     fontWeight: '400',
-    color: '#9e9282',
+    color: c.textMuted,
     letterSpacing: 0.3,
   },
   typeLabelActive: {
-    color: '#C9A96E',
+    color: c.accent,
     fontWeight: '500',
   },
 
@@ -427,7 +432,7 @@ const styles = StyleSheet.create({
     borderWidth: 0.5,
     borderColor: 'rgba(180,150,100,0.15)',
     borderTopWidth: 1.5,
-    borderTopColor: 'rgba(201,169,110,0.3)',
+    borderTopColor: c.accentMuted,
     padding: 16,
     flexDirection: 'row',
     alignItems: 'flex-start',
@@ -450,26 +455,26 @@ const styles = StyleSheet.create({
     height: 18,
     borderRadius: 9,
     borderWidth: 1.5,
-    borderColor: 'rgba(201,169,110,0.3)',
+    borderColor: c.accentMuted,
     alignItems: 'center',
     justifyContent: 'center',
   },
   radioActive: {
-    borderColor: '#C9A96E',
+    borderColor: c.accent,
   },
   radioDot: {
     width: 8,
     height: 8,
     borderRadius: 4,
-    backgroundColor: '#C9A96E',
+    backgroundColor: c.accent,
   },
   audienceLabel: {
     fontSize: 14,
-    color: '#9e9282',
+    color: c.textMuted,
     fontWeight: '400',
   },
   audienceLabelActive: {
-    color: '#F5F0E8',
+    color: c.text,
   },
 
   // Input card
@@ -479,14 +484,14 @@ const styles = StyleSheet.create({
     borderWidth: 0.5,
     borderColor: 'rgba(180,150,100,0.15)',
     borderTopWidth: 1.5,
-    borderTopColor: 'rgba(201,169,110,0.3)',
+    borderTopColor: c.accentMuted,
     padding: 14,
     position: 'relative',
     overflow: 'hidden',
   },
   input: {
     fontSize: 15,
-    color: '#F5F0E8',
+    color: c.text,
     fontWeight: '400',
     padding: 0,
     letterSpacing: 0.3,
@@ -497,7 +502,7 @@ const styles = StyleSheet.create({
   },
   charCount: {
     fontSize: 11,
-    color: 'rgba(201,169,110,0.3)',
+    color: c.accentMuted,
     textAlign: 'right',
     marginTop: 8,
   },
@@ -509,7 +514,7 @@ const styles = StyleSheet.create({
     borderWidth: 0.5,
     borderColor: 'rgba(180,150,100,0.2)',
     borderLeftWidth: 2,
-    borderLeftColor: '#C9A96E',
+    borderLeftColor: c.accent,
     padding: 14,
     position: 'relative',
     overflow: 'hidden',
@@ -524,27 +529,27 @@ const styles = StyleSheet.create({
     paddingHorizontal: 8,
     paddingVertical: 2,
     borderRadius: 2,
-    backgroundColor: 'rgba(201,169,110,0.1)',
+    backgroundColor: c.surface,
   },
   previewBadgeText: {
     fontSize: 10,
     fontWeight: '500',
-    color: '#C9A96E',
+    color: c.accent,
     letterSpacing: 1,
   },
   previewTime: {
     fontSize: 11,
-    color: '#9e9282',
+    color: c.textMuted,
   },
   previewTitle: {
     fontSize: 15,
     fontWeight: '400',
-    color: '#F5F0E8',
+    color: c.text,
     marginTop: 2,
   },
   previewBody: {
     fontSize: 13,
-    color: '#9e9282',
+    color: c.textMuted,
     lineHeight: 18,
   },
 
@@ -554,13 +559,13 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
     paddingHorizontal: 14,
     borderRadius: 4,
-    backgroundColor: 'rgba(201,169,110,0.08)',
+    backgroundColor: c.surface,
     borderWidth: 0.5,
-    borderColor: 'rgba(201,169,110,0.2)',
+    borderColor: c.border,
   },
   resultText: {
     fontSize: 13,
-    color: '#C9A96E',
+    color: c.accent,
     textAlign: 'center',
     fontWeight: '400',
   },
@@ -574,7 +579,7 @@ const styles = StyleSheet.create({
     marginTop: 24,
     paddingVertical: 14,
     borderRadius: 4,
-    backgroundColor: '#C9A96E',
+    backgroundColor: c.accent,
   },
   sendBtnDisabled: {
     opacity: 0.6,
@@ -582,14 +587,14 @@ const styles = StyleSheet.create({
   sendBtnText: {
     fontSize: 15,
     fontWeight: '500',
-    color: '#110E0B',
+    color: c.bg,
     letterSpacing: 0.5,
   },
 
   // Footer
   footerNote: {
     fontSize: 12,
-    color: 'rgba(201,169,110,0.3)',
+    color: c.accentMuted,
     textAlign: 'center',
     marginTop: 16,
     lineHeight: 18,
@@ -605,11 +610,11 @@ const styles = StyleSheet.create({
   unauthorizedText: {
     fontSize: 16,
     fontWeight: '300',
-    color: '#9e9282',
+    color: c.textMuted,
   },
   unauthorizedSub: {
     fontSize: 14,
-    color: 'rgba(201,169,110,0.4)',
+    color: c.accentMuted,
     textAlign: 'center',
   },
 

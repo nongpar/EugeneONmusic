@@ -4,6 +4,7 @@ import Svg, { Path, Circle } from 'react-native-svg';
 import { router } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useTheme } from '../../hooks/useTheme';
 
 const STORAGE_KEY = '@eon_notification_settings';
 
@@ -52,6 +53,8 @@ function UserPlusIcon({ size = 22, color = '#C9A96E' }) {
 }
 
 function NotificationRow({ icon, label, description, value, onValueChange }) {
+  const { colors } = useTheme();
+  const styles = makeStyles(colors);
   return (
     <View style={styles.row}>
       <View style={styles.rowLeft}>
@@ -64,8 +67,8 @@ function NotificationRow({ icon, label, description, value, onValueChange }) {
       <Switch
         value={value}
         onValueChange={onValueChange}
-        trackColor={{ false: 'rgba(201,169,110,0.18)', true: '#C9A96E' }}
-        thumbColor={value ? '#F5F0E8' : '#9e9282'}
+        trackColor={{ false: colors.border, true: colors.accent }}
+        thumbColor={value ? colors.text : colors.textMuted}
       />
     </View>
   );
@@ -73,6 +76,8 @@ function NotificationRow({ icon, label, description, value, onValueChange }) {
 
 export default function NotificationsScreen() {
   const insets = useSafeAreaInsets();
+  const { colors } = useTheme();
+  const styles = makeStyles(colors);
 
   const [settings, setSettings] = useState({
     chat: true,
@@ -112,7 +117,7 @@ export default function NotificationsScreen() {
       {/* Header */}
       <View style={styles.header}>
         <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
-          <BackIcon />
+          <BackIcon color={colors.text} />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>알림 설정</Text>
         <View style={{ width: 24 }} />
@@ -122,28 +127,28 @@ export default function NotificationsScreen() {
         <Text style={styles.sectionTitle}>알림</Text>
         <View style={styles.card}>
           <NotificationRow
-            icon={<ChatIcon />}
+            icon={<ChatIcon color={colors.accent} />}
             label="채팅 알림"
             description="새로운 채팅 메시지 알림"
             value={settings.chat}
             onValueChange={(v) => updateSetting('chat', v)}
           />
           <NotificationRow
-            icon={<CalendarIcon />}
+            icon={<CalendarIcon color={colors.accent} />}
             label="레슨 알림"
             description="레슨 일정 및 리마인더"
             value={settings.lesson}
             onValueChange={(v) => updateSetting('lesson', v)}
           />
           <NotificationRow
-            icon={<MegaphoneIcon />}
+            icon={<MegaphoneIcon color={colors.accent} />}
             label="공지사항 알림"
             description="학원 공지사항 및 이벤트"
             value={settings.announcement}
             onValueChange={(v) => updateSetting('announcement', v)}
           />
           <NotificationRow
-            icon={<UserPlusIcon />}
+            icon={<UserPlusIcon color={colors.accent} />}
             label="멘토십 알림"
             description="멘토 배정 및 멘토십 관련 알림"
             value={settings.mentor}
@@ -159,10 +164,10 @@ export default function NotificationsScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const makeStyles = (c) => StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#110E0B',
+    backgroundColor: c.bg,
   },
   header: {
     flexDirection: 'row',
@@ -177,7 +182,7 @@ const styles = StyleSheet.create({
   headerTitle: {
     fontSize: 18,
     fontWeight: '400',
-    color: '#F5F0E8',
+    color: c.text,
     letterSpacing: 0.3,
   },
   content: {
@@ -187,18 +192,18 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: 14,
     fontWeight: '600',
-    color: '#9e9282',
+    color: c.textMuted,
     marginBottom: 10,
     marginTop: 12,
     marginLeft: 4,
     letterSpacing: 0.5,
   },
   card: {
-    backgroundColor: 'rgba(201,169,110,0.07)',
+    backgroundColor: c.surface,
     borderRadius: 4,
     overflow: 'hidden',
     borderWidth: 0.5,
-    borderColor: 'rgba(201,169,110,0.18)',
+    borderColor: c.border,
   },
   row: {
     flexDirection: 'row',
@@ -207,7 +212,7 @@ const styles = StyleSheet.create({
     paddingVertical: 16,
     paddingHorizontal: 16,
     borderBottomWidth: 0.5,
-    borderBottomColor: '#110E0B',
+    borderBottomColor: c.bg,
   },
   rowLeft: {
     flexDirection: 'row',
@@ -219,7 +224,7 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: 4,
-    backgroundColor: '#110E0B',
+    backgroundColor: c.bg,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -229,17 +234,17 @@ const styles = StyleSheet.create({
   },
   rowLabel: {
     fontSize: 15,
-    color: '#F5F0E8',
+    color: c.text,
     fontWeight: '500',
   },
   rowDesc: {
     fontSize: 12,
-    color: '#9e9282',
+    color: c.textMuted,
     marginTop: 2,
   },
   footerNote: {
     fontSize: 12,
-    color: 'rgba(201,169,110,0.3)',
+    color: c.accentMuted,
     textAlign: 'center',
     marginTop: 20,
     lineHeight: 18,

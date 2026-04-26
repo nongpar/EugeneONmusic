@@ -5,8 +5,11 @@ import PracticeTimer from '../../components/PracticeTimer';
 import WeeklyChart from '../../components/WeeklyChart';
 import { useAuth } from '../../hooks/useAuth';
 import { usePracticeStats } from '../../hooks/usePracticeStats';
+import { useTheme } from '../../hooks/useTheme';
 
 export default function PracticeScreen() {
+  const { colors } = useTheme();
+  const styles = makeStyles(colors);
   const insets = useSafeAreaInsets();
   const { user } = useAuth();
   const { weeklyData, todaySeconds } = usePracticeStats(user?.uid);
@@ -28,15 +31,15 @@ export default function PracticeScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const makeStyles = (c) => StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#110E0B',
+    backgroundColor: c.bg,
   },
   screenTitle: {
     fontSize: 20,
     fontWeight: '300',
-    color: '#F5F0E8',
+    color: c.text,
     paddingHorizontal: 20,
     paddingTop: 12,
     paddingBottom: 8,

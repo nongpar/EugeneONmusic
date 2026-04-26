@@ -12,6 +12,7 @@ import {
 } from 'firebase/firestore';
 import { db } from '../../config/firebase';
 import { useAuth } from '../../hooks/useAuth';
+import { useTheme } from '../../hooks/useTheme';
 
 const showAlert = (title, message, buttons) => {
   if (Platform.OS === 'web') {
@@ -60,6 +61,8 @@ function getTimeAgo(date) {
 }
 
 function CommentItem({ item, currentUid, onReportComment }) {
+  const { colors } = useTheme();
+  const styles = makeStyles(colors);
   const time = getTimeAgo(item.createdAt?.toDate?.() || new Date());
   const isMine = item.authorId === currentUid;
 
@@ -105,6 +108,8 @@ function CommentItem({ item, currentUid, onReportComment }) {
 }
 
 export default function PostDetailScreen() {
+  const { colors } = useTheme();
+  const styles = makeStyles(colors);
   const { id } = useLocalSearchParams();
   const insets = useSafeAreaInsets();
   const { user } = useAuth();
@@ -273,7 +278,7 @@ export default function PostDetailScreen() {
   if (loading) {
     return (
       <View style={[styles.container, styles.center, { paddingTop: insets.top }]}>
-        <ActivityIndicator color="#C9A96E" size="large" />
+        <ActivityIndicator color={colors.accent} size="large" />
       </View>
     );
   }
@@ -292,14 +297,14 @@ export default function PostDetailScreen() {
       <View style={[styles.container, { paddingTop: insets.top }]}>
         <View style={styles.header}>
           <TouchableOpacity onPress={() => router.back()}>
-            <BackIcon />
+            <BackIcon color={colors.accent} />
           </TouchableOpacity>
           <Text style={styles.headerTitle}>게시글</Text>
           <View style={{ width: 24 }} />
         </View>
         <View style={styles.center}>
           <Text style={styles.emptyText}>차단한 사용자의 게시글입니다</Text>
-          <Text style={[styles.emptyText, { fontSize: 13, marginTop: 8, color: '#9e9282' }]}>
+          <Text style={[styles.emptyText, { fontSize: 13, marginTop: 8, color: colors.textMuted }]}>
             차단을 해제하려면 MY 페이지에서 관리할 수 있습니다
           </Text>
         </View>
@@ -316,12 +321,12 @@ export default function PostDetailScreen() {
     >
       <View style={styles.header}>
         <TouchableOpacity onPress={() => router.back()}>
-          <BackIcon />
+          <BackIcon color={colors.accent} />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>게시글</Text>
         {user && post && post.authorId !== user.uid ? (
           <TouchableOpacity onPress={() => setShowMoreMenu(true)}>
-            <MoreIcon />
+            <MoreIcon color={colors.accent} />
           </TouchableOpacity>
         ) : (
           <View style={{ width: 24 }} />
@@ -337,7 +342,7 @@ export default function PostDetailScreen() {
             </TouchableOpacity>
             <View style={styles.menuDivider} />
             <TouchableOpacity style={styles.menuOptionItem} onPress={handleBlockUser}>
-              <Text style={[styles.menuOptionText, { color: '#e74c3c' }]}>작성자 차단</Text>
+              <Text style={[styles.menuOptionText, { color: colors.danger }]}>작성자 차단</Text>
             </TouchableOpacity>
           </View>
         </TouchableOpacity>
@@ -368,7 +373,7 @@ export default function PostDetailScreen() {
           <TextInput
             style={styles.commentInput}
             placeholder="댓글을 입력하세요"
-            placeholderTextColor="rgba(201,169,110,0.3)"
+            placeholderTextColor={colors.accentMuted}
             value={commentText}
             onChangeText={setCommentText}
           />
@@ -385,46 +390,46 @@ export default function PostDetailScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#110E0B' },
+const makeStyles = (c) => StyleSheet.create({
+  container: { flex: 1, backgroundColor: c.bg },
   center: { alignItems: 'center', justifyContent: 'center' },
   header: {
     flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center',
     paddingHorizontal: 20, paddingVertical: 12,
   },
-  headerTitle: { fontSize: 18, fontWeight: '400', color: '#F5F0E8', letterSpacing: 0.5 },
-  emptyText: { fontSize: 16, color: '#9e9282' },
+  headerTitle: { fontSize: 18, fontWeight: '400', color: c.text, letterSpacing: 0.5 },
+  emptyText: { fontSize: 16, color: c.textMuted },
   listContent: { paddingHorizontal: 20, paddingBottom: 20 },
   postSection: { marginBottom: 8 },
-  postTitle: { fontSize: 20, fontWeight: '300', color: '#F5F0E8', lineHeight: 28, marginBottom: 8, letterSpacing: 0.3 },
+  postTitle: { fontSize: 20, fontWeight: '300', color: c.text, lineHeight: 28, marginBottom: 8, letterSpacing: 0.3 },
   postMeta: { flexDirection: 'row', gap: 10, marginBottom: 16 },
-  postAuthor: { fontSize: 13, color: '#C9A96E', fontWeight: '400' },
-  postTime: { fontSize: 13, color: '#9e9282' },
+  postAuthor: { fontSize: 13, color: c.accent, fontWeight: '400' },
+  postTime: { fontSize: 13, color: c.textMuted },
   postBody: { fontSize: 15, color: '#c0bab0', lineHeight: 24 },
-  divider: { height: 0.5, backgroundColor: 'rgba(201,169,110,0.15)', marginVertical: 20 },
-  commentTitle: { fontSize: 15, fontWeight: '400', color: '#F5F0E8', marginBottom: 12, letterSpacing: 0.3 },
+  divider: { height: 0.5, backgroundColor: c.surfaceStrong, marginVertical: 20 },
+  commentTitle: { fontSize: 15, fontWeight: '400', color: c.text, marginBottom: 12, letterSpacing: 0.3 },
   commentCard: {
-    backgroundColor: 'rgba(201,169,110,0.07)', borderRadius: 4, padding: 12, marginBottom: 8, gap: 6,
+    backgroundColor: c.surface, borderRadius: 4, padding: 12, marginBottom: 8, gap: 6,
   },
   commentHeader: { flexDirection: 'row', alignItems: 'center', gap: 8 },
   commentAvatar: {
-    width: 28, height: 28, borderRadius: 14, backgroundColor: '#C9A96E',
+    width: 28, height: 28, borderRadius: 14, backgroundColor: c.accent,
     alignItems: 'center', justifyContent: 'center',
   },
-  commentAvatarText: { fontSize: 12, fontWeight: '400', color: '#0C0A08' },
-  commentAuthor: { fontSize: 13, fontWeight: '400', color: '#C9A96E' },
-  commentTime: { fontSize: 11, color: '#9e9282' },
+  commentAvatarText: { fontSize: 12, fontWeight: '400', color: c.bg },
+  commentAuthor: { fontSize: 13, fontWeight: '400', color: c.accent },
+  commentTime: { fontSize: 11, color: c.textMuted },
   commentBody: { fontSize: 14, color: '#c0bab0', lineHeight: 20, paddingLeft: 36 },
   inputBar: {
     flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16, paddingTop: 8,
-    backgroundColor: 'rgba(201,169,110,0.07)', borderTopWidth: 0.5, borderTopColor: 'rgba(201,169,110,0.18)', gap: 8,
+    backgroundColor: c.surface, borderTopWidth: 0.5, borderTopColor: c.border, gap: 8,
   },
   commentInput: {
-    flex: 1, backgroundColor: '#110E0B', borderRadius: 4,
-    paddingHorizontal: 16, paddingVertical: 10, fontSize: 14, color: '#F5F0E8',
+    flex: 1, backgroundColor: c.bg, borderRadius: 4,
+    paddingHorizontal: 16, paddingVertical: 10, fontSize: 14, color: c.text,
   },
   sendBtn: {
-    width: 36, height: 36, borderRadius: 18, backgroundColor: '#C9A96E',
+    width: 36, height: 36, borderRadius: 18, backgroundColor: c.accent,
     alignItems: 'center', justifyContent: 'center',
   },
   sendBtnDisabled: { opacity: 0.4 },
@@ -439,7 +444,7 @@ const styles = StyleSheet.create({
     paddingVertical: 4, minWidth: 150,
     shadowColor: '#000', shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.3, shadowRadius: 8, elevation: 8,
-    borderWidth: 0.5, borderColor: 'rgba(201,169,110,0.18)',
+    borderWidth: 0.5, borderColor: c.border,
   },
   menuOptionItem: {
     paddingHorizontal: 16, paddingVertical: 14,
@@ -448,6 +453,6 @@ const styles = StyleSheet.create({
     fontSize: 14, fontWeight: '400', color: '#c0bab0', letterSpacing: 0.3,
   },
   menuDivider: {
-    height: 0.5, backgroundColor: 'rgba(201,169,110,0.18)',
+    height: 0.5, backgroundColor: c.border,
   },
 });

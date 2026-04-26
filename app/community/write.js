@@ -8,6 +8,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
 import { db } from '../../config/firebase';
 import { useAuth } from '../../hooks/useAuth';
+import { useTheme } from '../../hooks/useTheme';
 
 // SVG 아이콘
 function CloseIcon({ size = 24, color = '#C9A96E' }) {
@@ -29,6 +30,8 @@ const showAlert = (title, message) => {
 };
 
 export default function WriteScreen() {
+  const { colors } = useTheme();
+  const styles = makeStyles(colors);
   const insets = useSafeAreaInsets();
   const { user } = useAuth();
   const [title, setTitle] = useState('');
@@ -70,7 +73,7 @@ export default function WriteScreen() {
     <View style={[styles.container, { paddingTop: insets.top }]}>
       <View style={styles.header}>
         <TouchableOpacity onPress={() => router.back()}>
-          <CloseIcon />
+          <CloseIcon color={colors.accent} />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>글쓰기</Text>
         <TouchableOpacity
@@ -100,7 +103,7 @@ export default function WriteScreen() {
         <TextInput
           style={styles.titleInput}
           placeholder="제목을 입력하세요"
-          placeholderTextColor="rgba(201,169,110,0.3)"
+          placeholderTextColor={colors.accentMuted}
           value={title}
           onChangeText={setTitle}
           maxLength={100}
@@ -109,7 +112,7 @@ export default function WriteScreen() {
         <TextInput
           style={styles.bodyInput}
           placeholder="내용을 입력하세요"
-          placeholderTextColor="rgba(201,169,110,0.3)"
+          placeholderTextColor={colors.accentMuted}
           value={body}
           onChangeText={setBody}
           multiline
@@ -120,32 +123,32 @@ export default function WriteScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#110E0B' },
+const makeStyles = (c) => StyleSheet.create({
+  container: { flex: 1, backgroundColor: c.bg },
   header: {
     flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center',
-    paddingHorizontal: 20, paddingVertical: 12, borderBottomWidth: 0.5, borderBottomColor: 'rgba(201,169,110,0.15)',
+    paddingHorizontal: 20, paddingVertical: 12, borderBottomWidth: 0.5, borderBottomColor: c.surfaceStrong,
   },
-  headerTitle: { fontSize: 18, fontWeight: '400', color: '#F5F0E8', letterSpacing: 0.5 },
+  headerTitle: { fontSize: 18, fontWeight: '400', color: c.text, letterSpacing: 0.5 },
   submitBtn: {
-    backgroundColor: '#C9A96E', paddingHorizontal: 16, paddingVertical: 8, borderRadius: 4,
+    backgroundColor: c.accent, paddingHorizontal: 16, paddingVertical: 8, borderRadius: 4,
   },
   disabledBtn: { opacity: 0.5 },
-  submitText: { fontSize: 14, fontWeight: '400', color: '#0C0A08', letterSpacing: 0.5 },
+  submitText: { fontSize: 14, fontWeight: '400', color: c.bg, letterSpacing: 0.5 },
   form: { flex: 1, paddingHorizontal: 20, paddingTop: 16 },
   categoryRow: { flexDirection: 'row', gap: 8, marginBottom: 16 },
   categoryChip: {
     paddingHorizontal: 14, paddingVertical: 8, borderRadius: 4,
-    backgroundColor: 'rgba(201,169,110,0.07)', borderWidth: 0.5, borderColor: 'rgba(201,169,110,0.18)',
+    backgroundColor: c.surface, borderWidth: 0.5, borderColor: c.border,
   },
-  categoryChipActive: { backgroundColor: 'transparent', borderColor: '#C9A96E' },
-  categoryChipText: { fontSize: 13, color: '#9e9282', letterSpacing: 0.3 },
-  categoryChipTextActive: { color: '#C9A96E', fontWeight: '400' },
+  categoryChipActive: { backgroundColor: 'transparent', borderColor: c.accent },
+  categoryChipText: { fontSize: 13, color: c.textMuted, letterSpacing: 0.3 },
+  categoryChipTextActive: { color: c.accent, fontWeight: '400' },
   titleInput: {
-    fontSize: 18, fontWeight: '400', color: '#F5F0E8', letterSpacing: 0.3,
-    borderBottomWidth: 0.5, borderBottomColor: 'rgba(201,169,110,0.15)', paddingBottom: 12, marginBottom: 16,
+    fontSize: 18, fontWeight: '400', color: c.text, letterSpacing: 0.3,
+    borderBottomWidth: 0.5, borderBottomColor: c.surfaceStrong, paddingBottom: 12, marginBottom: 16,
   },
   bodyInput: {
-    fontSize: 15, color: '#F5F0E8', lineHeight: 24, minHeight: 200,
+    fontSize: 15, color: c.text, lineHeight: 24, minHeight: 200,
   },
 });

@@ -1,4 +1,5 @@
 import { View, Text, StyleSheet, TouchableOpacity, Alert, Platform } from 'react-native';
+import { useTheme } from '../hooks/useTheme';
 
 const showAlert = (title, message, buttons) => {
   if (Platform.OS === 'web') {
@@ -14,6 +15,8 @@ const showAlert = (title, message, buttons) => {
 };
 
 export default function ChatBubble({ message, isMine, onReport }) {
+  const { colors } = useTheme();
+  const styles = makeStyles(colors);
   const time = message.createdAt?.toDate?.();
   const timeStr = time
     ? `${time.getHours()}:${String(time.getMinutes()).padStart(2, '0')}`
@@ -67,7 +70,7 @@ export default function ChatBubble({ message, isMine, onReport }) {
   );
 }
 
-const styles = StyleSheet.create({
+const makeStyles = (c) => StyleSheet.create({
   row: {
     flexDirection: 'row',
     marginBottom: 12,
@@ -81,7 +84,7 @@ const styles = StyleSheet.create({
     width: 32,
     height: 32,
     borderRadius: 16,
-    backgroundColor: '#C9A96E',
+    backgroundColor: c.accent,
     alignItems: 'center',
     justifyContent: 'center',
     marginTop: 16,
@@ -89,7 +92,7 @@ const styles = StyleSheet.create({
   senderAvatarText: {
     fontSize: 13,
     fontWeight: '400',
-    color: '#0C0A08',
+    color: c.bg,
   },
   bubbleCol: {
     maxWidth: '75%',
@@ -97,7 +100,7 @@ const styles = StyleSheet.create({
   },
   senderName: {
     fontSize: 11,
-    color: '#9e9282',
+    color: c.textMuted,
     marginBottom: 2,
   },
   bubble: {
@@ -106,11 +109,11 @@ const styles = StyleSheet.create({
     borderRadius: 4,
   },
   bubbleOther: {
-    backgroundColor: 'rgba(201,169,110,0.07)',
+    backgroundColor: c.surface,
     borderTopLeftRadius: 0,
   },
   bubbleMine: {
-    backgroundColor: '#C9A96E',
+    backgroundColor: c.accent,
     borderTopRightRadius: 0,
   },
   bubbleText: {
@@ -119,11 +122,11 @@ const styles = StyleSheet.create({
     lineHeight: 20,
   },
   bubbleTextMine: {
-    color: '#0C0A08',
+    color: c.bg,
   },
   timeText: {
     fontSize: 10,
-    color: '#9e9282',
+    color: c.textMuted,
   },
   timeTextMine: {
     textAlign: 'right',

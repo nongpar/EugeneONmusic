@@ -35,6 +35,7 @@ import Svg, { Path, Circle } from 'react-native-svg';
 import ChopinAvatar, { ChopinAvatarSmall } from '../components/ChopinAvatar';
 import { functions, auth } from '../config/firebase';
 import { useAuth } from '../hooks/useAuth';
+import { useTheme } from '../hooks/useTheme';
 
 let Haptics = null;
 if (Platform.OS !== 'web') {
@@ -132,12 +133,12 @@ function ClearIcon({ size = 18 }) {
   );
 }
 
-function ChipIcon({ name }) {
+function ChipIcon({ name, color: chipColor = '#C9A96E' }) {
   switch (name) {
-    case 'moon': return <MoonIcon />;
-    case 'piano': return <PianoIcon />;
-    case 'spark': return <SparkIcon size={16} color="#C9A96E" />;
-    case 'hall': return <HallIcon />;
+    case 'moon': return <MoonIcon color={chipColor} />;
+    case 'piano': return <PianoIcon color={chipColor} />;
+    case 'spark': return <SparkIcon size={16} color={chipColor} />;
+    case 'hall': return <HallIcon color={chipColor} />;
     default: return null;
   }
 }
@@ -173,6 +174,8 @@ function AIConsultScreenInner() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
   const { user, getToken } = useAuth();
+  const { colors } = useTheme();
+  const styles = makeStyles(colors);
   // Serif 명조체 — 클래식·프리미엄 느낌을 위해 Noto Serif KR 3가지 weight 로드
   // Noto Serif KR 폰트는 production 크래시 원인으로 의심되어 일시 제거.
   // 시스템 기본 폰트 사용. 안정화 후 expo-font 로컬 번들 방식으로 재도입 예정.
@@ -406,14 +409,10 @@ function AIConsultScreenInner() {
           }}
         />
       </Animated.View>
-      {/* 어두운 오버레이 — 이미지를 배경으로 물러나게 하고 말풍선 글씨에 집중 */}
+      {/* 어두운 오버레이 — 이미지를 배경으로 물러나게 하고 말풍선 글씨에 집중.
+          colors.overlayDark는 다크/라이트 모드별로 다른 톤을 제공 (다크: 어두운 갈색, 라이트: 크림 베일) */}
       <LinearGradient
-        colors={[
-          'rgba(17,14,11,0.9)',
-          'rgba(17,14,11,0.65)',
-          'rgba(17,14,11,0.7)',
-          'rgba(17,14,11,0.92)',
-        ]}
+        colors={colors.overlayDark}
         locations={[0, 0.3, 0.65, 1]}
         style={styles.bgOverlay}
         pointerEvents="none"
@@ -448,11 +447,11 @@ function AIConsultScreenInner() {
               hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
               accessibilityLabel={muted ? '배경음악 켜기' : '배경음악 끄기'}
             >
-              {muted ? <SpeakerOffIcon /> : <SpeakerOnIcon />}
+              {muted ? <SpeakerOffIcon color={colors.text} /> : <SpeakerOnIcon color={colors.text} />}
             </TouchableOpacity>
           )}
           <TouchableOpacity style={styles.closeBtn} onPress={handleClose} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
-            <CloseIcon />
+            <CloseIcon color={colors.text} />
           </TouchableOpacity>
         </View>
       </View>
@@ -502,7 +501,7 @@ function AIConsultScreenInner() {
                   onPress={() => startConversation(chip.prefill)}
                 >
                   <View style={styles.chipIconWrap}>
-                    <ChipIcon name={chip.iconKey} />
+                    <ChipIcon name={chip.iconKey} color={colors.accent} />
                   </View>
                   <Text style={styles.chipLabel}>{chip.label}</Text>
                 </TouchableOpacity>
@@ -510,7 +509,7 @@ function AIConsultScreenInner() {
             </View>
 
             <TouchableOpacity style={styles.startBtn} onPress={() => startConversation()} activeOpacity={0.85}>
-              <SparkIcon size={14} color="#110E0B" />
+              <SparkIcon size={14} color={colors.accentText} />
               <Text style={styles.startBtnText}>상담 시작하기</Text>
             </TouchableOpacity>
 
@@ -540,7 +539,7 @@ function AIConsultScreenInner() {
                   <ChopinAvatarSmall size={24} />
                 </View>
                 <View style={styles.typingBubble}>
-                  <ActivityIndicator size="small" color="#C9A96E" />
+                  <ActivityIndicator size="small" color={colors.accent} />
                 </View>
               </View>
             )}
@@ -558,7 +557,7 @@ function AIConsultScreenInner() {
               value={input}
               onChangeText={setInput}
               placeholder="편안하게 말씀해주세요..."
-              placeholderTextColor="rgba(201,169,110,0.35)"
+              placeholderTextColor={colors.placeholder}
               multiline
               maxLength={1000}
               editable={!loading}
@@ -583,7 +582,7 @@ function AIConsultScreenInner() {
               disabled={!input.trim() || loading}
               activeOpacity={0.8}
             >
-              <QuillIcon size={18} color={!input.trim() || loading ? 'rgba(17,14,11,0.4)' : '#110E0B'} />
+              <QuillIcon size={18} color={!input.trim() || loading ? colors.accentMuted : colors.accentText} />
             </TouchableOpacity>
           </View>
         )}
@@ -716,13 +715,11 @@ function MessageBubble({ message }) {
 }
 
 // ────────────── 스타일 ──────────────
-const styles = StyleSheet.create({
+const makeStyles = (c) => StyleSheet.create({
   container: {
     flex: 1,
-    // 공연장 조명 톤의 따뜻한 어두운 갈색 — 이미지 로드 전에도 검정과 이질감 최소화
-    backgroundColor: '#1a1410',
+    backgroundColor: c.bgElevated,
   },
-  // 배경 이미지 (EON HALL 공연장) — opacity는 Animated 값으로 fade-in 제어
   bgImage: {
     position: 'absolute',
     top: 0,
@@ -730,7 +727,6 @@ const styles = StyleSheet.create({
     right: 0,
     bottom: 0,
   },
-  // 그라디언트 오버레이 — 이미지 위에 상·하단을 어둡게 덮어 텍스트 가독성 확보
   bgOverlay: {
     position: 'absolute',
     top: 0,
@@ -747,7 +743,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 12,
     borderBottomWidth: 0.5,
-    borderBottomColor: 'rgba(201,169,110,0.15)',
+    borderBottomColor: c.borderSoft,
   },
   headerLeft: {
     flexDirection: 'row',
@@ -757,12 +753,12 @@ const styles = StyleSheet.create({
   headerTitles: { gap: 2 },
   headerTitle: {
     fontSize: 16,
-    color: '#F5F0E8',
+    color: c.text,
     letterSpacing: 0.5,
   },
   headerSub: {
     fontSize: 11,
-    color: '#9e9282',
+    color: c.textMuted,
     letterSpacing: 0.8,
   },
   closeBtn: { padding: 4 },
@@ -778,10 +774,9 @@ const styles = StyleSheet.create({
     paddingVertical: 24,
     gap: 16,
   },
-  // 대화 가이드 칩
   chipsHeading: {
     fontSize: 11,
-    color: '#C9A96E',
+    color: c.accent,
     letterSpacing: 2,
     textTransform: 'uppercase',
     marginTop: 8,
@@ -798,9 +793,9 @@ const styles = StyleSheet.create({
     paddingHorizontal: 14,
     paddingVertical: 12,
     borderRadius: 4,
-    backgroundColor: 'rgba(201,169,110,0.06)',
+    backgroundColor: c.inputBg,
     borderWidth: 0.5,
-    borderColor: 'rgba(201,169,110,0.3)',
+    borderColor: c.accentMuted,
   },
   chipIconWrap: {
     width: 22,
@@ -810,13 +805,13 @@ const styles = StyleSheet.create({
   chipLabel: {
     flex: 1,
     fontSize: 13,
-    color: '#F5F0E8',
+    color: c.text,
     letterSpacing: 0.3,
     lineHeight: 20,
   },
   introTitle: {
     fontSize: 22,
-    color: '#F5F0E8',
+    color: c.text,
     letterSpacing: 0.5,
     marginTop: 20,
     textAlign: 'center',
@@ -830,17 +825,17 @@ const styles = StyleSheet.create({
   goldLine: {
     height: 0.5,
     width: 32,
-    backgroundColor: 'rgba(201,169,110,0.55)',
+    backgroundColor: c.textHint,
   },
   goldDiamond: {
     width: 5,
     height: 5,
-    backgroundColor: '#C9A96E',
+    backgroundColor: c.accent,
     transform: [{ rotate: '45deg' }],
   },
   introDesc: {
     fontSize: 14,
-    color: '#C9BEAC',
+    color: c.textSoft,
     lineHeight: 24,
     textAlign: 'center',
     marginTop: 4,
@@ -849,7 +844,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
-    backgroundColor: '#C9A96E',
+    backgroundColor: c.accent,
     paddingHorizontal: 24,
     paddingVertical: 14,
     borderRadius: 4,
@@ -857,18 +852,18 @@ const styles = StyleSheet.create({
   },
   startBtnText: {
     fontSize: 14,
-    color: '#110E0B',
+    color: c.accentText,
     letterSpacing: 1,
   },
   introHint: {
     fontSize: 11,
-    color: 'rgba(201,169,110,0.5)',
+    color: c.textHint,
     marginTop: 12,
     letterSpacing: 0.5,
   },
   introDisclaimer: {
     fontSize: 10,
-    color: 'rgba(158,146,130,0.7)',
+    color: c.textMuted,
     lineHeight: 16,
     textAlign: 'center',
     marginTop: 24,
@@ -897,15 +892,15 @@ const styles = StyleSheet.create({
   },
   assistantBubble: {
     flex: 1,
-    backgroundColor: 'rgba(201,169,110,0.08)',
+    backgroundColor: c.surface,
     borderWidth: 0.5,
-    borderColor: 'rgba(201,169,110,0.2)',
+    borderColor: c.border,
     borderRadius: 4,
     padding: 14,
   },
   assistantText: {
     fontSize: 15,
-    color: '#F5F0E8',
+    color: c.text,
     lineHeight: 26,
     letterSpacing: 0.2,
   },
@@ -916,19 +911,19 @@ const styles = StyleSheet.create({
   },
   userBubble: {
     maxWidth: '85%',
-    backgroundColor: 'rgba(201,169,110,0.15)',
+    backgroundColor: c.surfaceStrong,
     borderWidth: 0.5,
-    borderColor: '#C9A96E',
+    borderColor: c.accent,
     borderRadius: 4,
     padding: 12,
   },
   userText: {
     fontSize: 15,
-    color: '#F5F0E8',
+    color: c.text,
     lineHeight: 24,
   },
 
-  // 시스템 메시지 (에러 등)
+  // 시스템 메시지 (에러 등) — 빨간 톤은 양쪽 모드에서 동일하게 유지
   systemBubble: {
     alignSelf: 'center',
     backgroundColor: 'rgba(220,140,140,0.08)',
@@ -954,9 +949,9 @@ const styles = StyleSheet.create({
   },
   typingAvatar: { marginTop: 2 },
   typingBubble: {
-    backgroundColor: 'rgba(201,169,110,0.08)',
+    backgroundColor: c.surface,
     borderWidth: 0.5,
-    borderColor: 'rgba(201,169,110,0.2)',
+    borderColor: c.border,
     borderRadius: 4,
     paddingHorizontal: 20,
     paddingVertical: 12,
@@ -964,9 +959,9 @@ const styles = StyleSheet.create({
 
   // 접수증(티켓) — 상담 완료 후 기념품 느낌의 카드
   ticketWrap: {
-    backgroundColor: 'rgba(17,14,11,0.9)',
+    backgroundColor: c.bgElevated,
     borderWidth: 0.5,
-    borderColor: 'rgba(201,169,110,0.45)',
+    borderColor: c.border,
     borderRadius: 6,
     paddingHorizontal: 24,
     paddingVertical: 28,
@@ -975,7 +970,7 @@ const styles = StyleSheet.create({
   },
   ticketLabel: {
     fontSize: 10,
-    color: '#C9A96E',
+    color: c.accent,
     letterSpacing: 3,
     marginBottom: 14,
   },
@@ -987,43 +982,42 @@ const styles = StyleSheet.create({
   },
   ticketCurator: {
     fontSize: 17,
-    color: '#F5F0E8',
+    color: c.text,
     letterSpacing: 0.5,
     marginBottom: 6,
   },
   ticketDateTime: {
     fontSize: 12,
-    color: '#C9BEAC',
+    color: c.textSoft,
     letterSpacing: 1.2,
     marginBottom: 10,
   },
   ticketDashedLine: {
     width: '80%',
     borderBottomWidth: 0.7,
-    borderBottomColor: 'rgba(201,169,110,0.35)',
+    borderBottomColor: c.border,
     borderStyle: 'dashed',
     marginVertical: 12,
   },
   ticketNoLabel: {
     fontSize: 9,
-    color: 'rgba(201,169,110,0.75)',
+    color: c.textHint,
     letterSpacing: 2,
     marginBottom: 6,
   },
   ticketNoValue: {
     fontSize: 20,
-    color: '#C9A96E',
+    color: c.accent,
     letterSpacing: 3,
   },
   ticketMessage: {
     fontSize: 13,
-    color: '#C9BEAC',
+    color: c.textSoft,
     lineHeight: 22,
     textAlign: 'center',
     marginTop: 4,
     marginBottom: 8,
   },
-  // 액션 버튼 영역 (캡처 대상 밖)
   ticketActions: {
     flexDirection: 'row',
     justifyContent: 'center',
@@ -1035,21 +1029,21 @@ const styles = StyleSheet.create({
     paddingHorizontal: 24,
     paddingVertical: 11,
     borderWidth: 0.5,
-    borderColor: '#C9A96E',
+    borderColor: c.accent,
     borderRadius: 4,
     minWidth: 120,
     alignItems: 'center',
   },
   ticketActionPrimary: {
-    backgroundColor: '#C9A96E',
+    backgroundColor: c.accent,
   },
   ticketActionText: {
     fontSize: 12,
-    color: '#C9A96E',
+    color: c.accent,
     letterSpacing: 2.5,
   },
   ticketActionPrimaryText: {
-    color: '#110E0B',
+    color: c.accentText,
   },
 
   // 입력 영역
@@ -1060,24 +1054,23 @@ const styles = StyleSheet.create({
     paddingTop: 10,
     gap: 8,
     borderTopWidth: 0.5,
-    borderTopColor: 'rgba(201,169,110,0.15)',
-    backgroundColor: '#110E0B',
+    borderTopColor: c.borderSoft,
+    backgroundColor: c.bg,
   },
   input: {
     flex: 1,
     minHeight: 42,
     maxHeight: 140,
-    backgroundColor: 'rgba(201,169,110,0.06)',
+    backgroundColor: c.inputBg,
     borderWidth: 0.5,
-    borderColor: 'rgba(201,169,110,0.25)',
+    borderColor: c.border,
     borderRadius: 4,
     paddingHorizontal: 14,
     paddingVertical: 10,
     fontSize: 15,
-    color: '#F5F0E8',
+    color: c.text,
     lineHeight: 22,
   },
-  // 입력 지우기 버튼 — 전송 버튼 왼쪽에 아이콘만 놓음
   clearBtn: {
     height: 42,
     justifyContent: 'center',
@@ -1087,12 +1080,12 @@ const styles = StyleSheet.create({
     width: 42,
     height: 42,
     borderRadius: 4,
-    backgroundColor: '#C9A96E',
+    backgroundColor: c.accent,
     alignItems: 'center',
     justifyContent: 'center',
   },
   sendBtnDisabled: {
-    backgroundColor: 'rgba(201,169,110,0.3)',
+    backgroundColor: c.accentMuted,
   },
 });
 

@@ -26,6 +26,7 @@ import { signInWithCustomToken } from 'firebase/auth';
 import Svg, { Path } from 'react-native-svg';
 import { functions, auth } from '../config/firebase';
 import { useAuth } from '../hooks/useAuth';
+import { useTheme } from '../hooks/useTheme';
 
 let Haptics = null;
 if (Platform.OS !== 'web') {
@@ -83,6 +84,8 @@ function ticketNoFromId(id) {
 }
 
 export default function MyConsultationsScreen() {
+  const { colors } = useTheme();
+  const styles = makeStyles(colors);
   const insets = useSafeAreaInsets();
   const router = useRouter();
   const { user, getToken } = useAuth();
@@ -189,7 +192,7 @@ export default function MyConsultationsScreen() {
           onPress={() => router.back()}
           hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
         >
-          <BackIcon />
+          <BackIcon color={colors.text} />
         </TouchableOpacity>
         <View style={styles.headerTitleWrap}>
           <Text style={styles.headerTitle}>음악 큐레이션 내역</Text>
@@ -201,13 +204,13 @@ export default function MyConsultationsScreen() {
       {/* 본문 */}
       {items === null ? (
         <View style={styles.centerWrap}>
-          <ActivityIndicator size="small" color="#C9A96E" />
+          <ActivityIndicator size="small" color={colors.accent} />
         </View>
       ) : items.length === 0 ? (
         <ScrollView
           contentContainerStyle={styles.emptyWrap}
           refreshControl={
-            <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#C9A96E" />
+            <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.accent} />
           }
         >
           <NoteIcon size={48} />
@@ -234,7 +237,7 @@ export default function MyConsultationsScreen() {
         <ScrollView
           contentContainerStyle={styles.listWrap}
           refreshControl={
-            <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#C9A96E" />
+            <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.accent} />
           }
           showsVerticalScrollIndicator={false}
         >
@@ -265,6 +268,8 @@ export default function MyConsultationsScreen() {
 
 // 스와이프 제스처로 취소·숨기기 가능한 카드 컴포넌트
 function ConsultationCard({ item, statusInfo, categoryLabel, actionLabel, openedRef, onCancel }) {
+  const { colors } = useTheme();
+  const styles = makeStyles(colors);
   const swipeRef = useRef(null);
 
   const renderRightAction = () => (
@@ -319,8 +324,8 @@ function ConsultationCard({ item, statusInfo, categoryLabel, actionLabel, opened
   );
 }
 
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#110E0B' },
+const makeStyles = (c) => StyleSheet.create({
+  container: { flex: 1, backgroundColor: c.bg },
 
   // 헤더
   header: {
@@ -330,18 +335,18 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 12,
     borderBottomWidth: 0.5,
-    borderBottomColor: 'rgba(201,169,110,0.15)',
+    borderBottomColor: c.surfaceStrong,
   },
   backBtn: { padding: 4 },
   headerTitleWrap: { alignItems: 'center' },
   headerTitle: {
     fontSize: 15,
-    color: '#F5F0E8',
+    color: c.text,
     letterSpacing: 0.5,
   },
   headerSub: {
     fontSize: 10,
-    color: '#9e9282',
+    color: c.textMuted,
     letterSpacing: 1,
     marginTop: 2,
   },
@@ -358,7 +363,7 @@ const styles = StyleSheet.create({
   },
   emptyTitle: {
     fontSize: 15,
-    color: '#C9BEAC',
+    color: c.textSoft,
     marginTop: 10,
     textAlign: 'center',
   },
@@ -373,12 +378,12 @@ const styles = StyleSheet.create({
     paddingHorizontal: 28,
     paddingVertical: 12,
     borderWidth: 0.5,
-    borderColor: '#C9A96E',
+    borderColor: c.accent,
     borderRadius: 4,
   },
   startBtnText: {
     fontSize: 13,
-    color: '#C9A96E',
+    color: c.accent,
     letterSpacing: 2,
   },
 
@@ -390,7 +395,7 @@ const styles = StyleSheet.create({
     gap: 12,
   },
   card: {
-    backgroundColor: 'rgba(201,169,110,0.05)',
+    backgroundColor: c.inputBg,
     borderWidth: 0.5,
     borderColor: 'rgba(201,169,110,0.28)',
     borderRadius: 6,
@@ -420,20 +425,20 @@ const styles = StyleSheet.create({
   },
   cardCategory: {
     fontSize: 15,
-    color: '#F5F0E8',
+    color: c.text,
     letterSpacing: 0.3,
     marginBottom: 6,
   },
   cardSummary: {
     fontSize: 13,
-    color: '#C9BEAC',
+    color: c.textSoft,
     lineHeight: 21,
   },
   cardDivider: {
     marginTop: 14,
     marginBottom: 10,
     borderTopWidth: 0.5,
-    borderTopColor: 'rgba(201,169,110,0.18)',
+    borderTopColor: c.border,
     borderStyle: 'dashed',
   },
   cardBottom: {
@@ -448,7 +453,7 @@ const styles = StyleSheet.create({
   },
   cardNo: {
     fontSize: 13,
-    color: '#C9A96E',
+    color: c.accent,
     letterSpacing: 2,
   },
   listFooter: {
@@ -469,7 +474,7 @@ const styles = StyleSheet.create({
   },
   swipeActionText: {
     fontSize: 12,
-    color: '#F5F0E8',
+    color: c.text,
     letterSpacing: 2,
   },
 });

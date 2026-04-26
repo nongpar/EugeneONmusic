@@ -11,6 +11,7 @@ import {
 } from 'firebase/firestore';
 import { db } from '../../config/firebase';
 import { useAuth } from '../../hooks/useAuth';
+import { useTheme } from '../../hooks/useTheme';
 
 // ── SVG 아이콘 ──
 function CloseIcon({ size = 22, color = '#9e9282' }) {
@@ -28,6 +29,8 @@ function getTodayString() {
 
 // ── 메인 화면 ──
 export default function NoteWriteScreen() {
+  const { colors } = useTheme();
+  const styles = makeStyles(colors);
   const { user } = useAuth();
   const insets = useSafeAreaInsets();
 
@@ -149,13 +152,13 @@ export default function NoteWriteScreen() {
       <View style={[styles.container, { paddingTop: insets.top }]}>
         <View style={styles.header}>
           <TouchableOpacity onPress={() => router.back()} style={styles.headerBtn}>
-            <CloseIcon />
+            <CloseIcon color={colors.textMuted} />
           </TouchableOpacity>
           <Text style={styles.headerTitle}>노트 작성</Text>
           <View style={styles.headerBtn} />
         </View>
         <View style={styles.center}>
-          <ActivityIndicator size="large" color="#C9A96E" />
+          <ActivityIndicator size="large" color={colors.accent} />
         </View>
       </View>
     );
@@ -166,7 +169,7 @@ export default function NoteWriteScreen() {
       <View style={[styles.container, { paddingTop: insets.top }]}>
         <View style={styles.header}>
           <TouchableOpacity onPress={() => router.back()} style={styles.headerBtn}>
-            <CloseIcon />
+            <CloseIcon color={colors.textMuted} />
           </TouchableOpacity>
           <Text style={styles.headerTitle}>노트 작성</Text>
           <View style={styles.headerBtn} />
@@ -192,7 +195,7 @@ export default function NoteWriteScreen() {
           disabled={saving}
         >
           {saving ? (
-            <ActivityIndicator size="small" color="#110E0B" />
+            <ActivityIndicator size="small" color={colors.accentText} />
           ) : (
             <Text style={styles.saveBtnText}>저장</Text>
           )}
@@ -214,7 +217,7 @@ export default function NoteWriteScreen() {
           <TextInput
             style={styles.input}
             placeholder="레슨 노트 제목"
-            placeholderTextColor="#9e9282"
+            placeholderTextColor={colors.textMuted}
             value={title}
             onChangeText={setTitle}
             maxLength={100}
@@ -226,7 +229,7 @@ export default function NoteWriteScreen() {
             <TextInput
               style={[styles.input, { flex: 1 }]}
               placeholder="2026-04-10"
-              placeholderTextColor="#9e9282"
+              placeholderTextColor={colors.textMuted}
               value={lessonDate}
               onChangeText={setLessonDate}
               onFocus={() => { if (!lessonDate) setLessonDate(getTodayString()); }}
@@ -245,7 +248,7 @@ export default function NoteWriteScreen() {
           <TextInput
             style={[styles.input, styles.contentInput]}
             placeholder="레슨 내용, 피드백, 연습 메모 등을 작성하세요"
-            placeholderTextColor="#9e9282"
+            placeholderTextColor={colors.textMuted}
             value={content}
             onChangeText={setContent}
             multiline
@@ -258,10 +261,10 @@ export default function NoteWriteScreen() {
 }
 
 // ── 스타일 ──
-const styles = StyleSheet.create({
+const makeStyles = (c) => StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#110E0B',
+    backgroundColor: c.bg,
   },
   header: {
     flexDirection: 'row',
@@ -270,7 +273,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 14,
     borderBottomWidth: 0.5,
-    borderBottomColor: 'rgba(201,169,110,0.15)',
+    borderBottomColor: c.surfaceStrong,
   },
   headerBtn: {
     width: 40,
@@ -281,11 +284,11 @@ const styles = StyleSheet.create({
   headerTitle: {
     fontSize: 18,
     fontWeight: '300',
-    color: '#F5F0E8',
+    color: c.text,
     letterSpacing: 1,
   },
   saveBtn: {
-    backgroundColor: '#C9A96E',
+    backgroundColor: c.accent,
     paddingHorizontal: 18,
     paddingVertical: 8,
     borderRadius: 4,
@@ -297,7 +300,7 @@ const styles = StyleSheet.create({
     opacity: 0.6,
   },
   saveBtnText: {
-    color: '#110E0B',
+    color: c.accentText,
     fontSize: 15,
     fontWeight: '400',
   },
@@ -308,7 +311,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 32,
   },
   emptyText: {
-    color: '#9e9282',
+    color: c.textMuted,
     fontSize: 15,
     textAlign: 'center',
   },
@@ -319,17 +322,17 @@ const styles = StyleSheet.create({
   label: {
     fontSize: 14,
     fontWeight: '400',
-    color: '#9e9282',
+    color: c.textMuted,
     marginBottom: 8,
     marginTop: 16,
     letterSpacing: 0.5,
   },
   input: {
-    backgroundColor: 'rgba(201,169,110,0.07)',
+    backgroundColor: c.surface,
     borderRadius: 4,
     borderWidth: 1,
-    borderColor: 'rgba(201,169,110,0.18)',
-    color: '#F5F0E8',
+    borderColor: c.border,
+    color: c.text,
     fontSize: 15,
     paddingHorizontal: 14,
     paddingVertical: 12,
@@ -345,13 +348,13 @@ const styles = StyleSheet.create({
   todayBtn: {
     marginLeft: 8,
     borderWidth: 1,
-    borderColor: '#C9A96E',
+    borderColor: c.accent,
     borderRadius: 4,
     paddingHorizontal: 12,
     paddingVertical: 10,
   },
   todayBtnText: {
-    color: '#C9A96E',
+    color: c.accent,
     fontSize: 14,
     fontWeight: '400',
   },

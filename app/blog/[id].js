@@ -6,6 +6,7 @@ import {
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import Svg, { Path } from 'react-native-svg';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useTheme } from '../../hooks/useTheme';
 
 // 네이티브에서만 WebView 로드
 let WebView = null;
@@ -39,6 +40,8 @@ function RefreshIcon({ size = 18, color = '#C9A96E' }) {
 }
 
 export default function BlogViewerScreen() {
+  const { colors } = useTheme();
+  const styles = makeStyles(colors);
   const { id, title, url } = useLocalSearchParams();
   const router = useRouter();
   const insets = useSafeAreaInsets();
@@ -77,7 +80,7 @@ export default function BlogViewerScreen() {
       {/* 헤더 */}
       <View style={styles.header}>
         <TouchableOpacity style={styles.headerBtn} onPress={handleBack}>
-          <BackIcon />
+          <BackIcon color={colors.text} />
         </TouchableOpacity>
 
         <View style={styles.headerCenter}>
@@ -87,10 +90,10 @@ export default function BlogViewerScreen() {
 
         <View style={styles.headerRight}>
           <TouchableOpacity style={styles.headerBtn} onPress={handleRefresh}>
-            <RefreshIcon />
+            <RefreshIcon color={colors.accent} />
           </TouchableOpacity>
           <TouchableOpacity style={styles.headerBtn} onPress={handleOpenExternal}>
-            <ExternalIcon />
+            <ExternalIcon color={colors.accent} />
           </TouchableOpacity>
         </View>
       </View>
@@ -133,7 +136,7 @@ export default function BlogViewerScreen() {
               allowsInlineMediaPlayback
               renderLoading={() => (
                 <View style={styles.webviewLoading}>
-                  <ActivityIndicator size="large" color="#C9A96E" />
+                  <ActivityIndicator size="large" color={colors.accent} />
                   <Text style={styles.webviewLoadingText}>블로그를 불러오는 중...</Text>
                 </View>
               )}
@@ -145,13 +148,13 @@ export default function BlogViewerScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#110E0B' },
+const makeStyles = (c) => StyleSheet.create({
+  container: { flex: 1, backgroundColor: c.bg },
 
   header: {
     flexDirection: 'row', alignItems: 'center',
     paddingHorizontal: 12, paddingVertical: 10,
-    borderBottomWidth: 0.5, borderBottomColor: 'rgba(201,169,110,0.15)',
+    borderBottomWidth: 0.5, borderBottomColor: c.surfaceStrong,
     gap: 8,
   },
   headerBtn: {
@@ -159,24 +162,26 @@ const styles = StyleSheet.create({
     alignItems: 'center', justifyContent: 'center',
   },
   headerCenter: { flex: 1, alignItems: 'center' },
-  headerTitle: { fontSize: 15, fontWeight: '400', color: '#F5F0E8' },
-  headerSub: { fontSize: 10, color: '#9e9282', marginTop: 1 },
+  headerTitle: { fontSize: 15, fontWeight: '400', color: c.text },
+  headerSub: { fontSize: 10, color: c.textMuted, marginTop: 1 },
   headerRight: { flexDirection: 'row', gap: 4 },
 
   loadingBar: {
-    height: 2, backgroundColor: 'rgba(201,169,110,0.07)',
+    height: 2, backgroundColor: c.surface,
   },
   loadingProgress: {
-    height: 2, width: '60%', backgroundColor: '#C9A96E',
+    height: 2, width: '60%', backgroundColor: c.accent,
   },
 
   webviewWrap: { flex: 1 },
+  // WebView 배경 — 원래 #F5F0E8(밝은 크림)로 본문 가독성을 위한 의도. 다크모드에서는 c.text가 크림이라 동일.
+  // 라이트모드에서도 본문 영역은 밝게 유지해야 외부 HTML이 자연스럽게 읽힘.
   webview: { flex: 1, backgroundColor: '#F5F0E8' },
 
   webviewLoading: {
     position: 'absolute', top: 0, left: 0, right: 0, bottom: 0,
     alignItems: 'center', justifyContent: 'center',
-    backgroundColor: '#110E0B', gap: 12,
+    backgroundColor: c.bg, gap: 12,
   },
-  webviewLoadingText: { fontSize: 14, color: '#9e9282' },
+  webviewLoadingText: { fontSize: 14, color: c.textMuted },
 });

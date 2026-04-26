@@ -2,6 +2,7 @@ import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Linking, Image } 
 import Svg, { Path, Circle } from 'react-native-svg';
 import { router } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useTheme } from '../../hooks/useTheme';
 
 // ── SVG Icons ──
 function BackIcon({ size = 24, color = '#F5F0E8' }) {
@@ -48,26 +49,30 @@ function ChevronIcon({ size = 18, color = '#9e9282' }) {
 }
 
 function LinkRow({ icon, label, onPress }) {
+  const { colors } = useTheme();
+  const styles = makeStyles(colors);
   return (
     <TouchableOpacity style={styles.linkRow} onPress={onPress}>
       <View style={styles.linkLeft}>
         {icon}
         <Text style={styles.linkLabel}>{label}</Text>
       </View>
-      <ChevronIcon />
+      <ChevronIcon color={colors.textMuted} />
     </TouchableOpacity>
   );
 }
 
 export default function AppInfoScreen() {
   const insets = useSafeAreaInsets();
+  const { colors } = useTheme();
+  const styles = makeStyles(colors);
 
   return (
     <View style={[styles.container, { paddingTop: insets.top }]}>
       {/* Header */}
       <View style={styles.header}>
         <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
-          <BackIcon />
+          <BackIcon color={colors.text} />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>앱 정보</Text>
         <View style={{ width: 24 }} />
@@ -99,17 +104,17 @@ export default function AppInfoScreen() {
         {/* Links */}
         <View style={styles.linksCard}>
           <LinkRow
-            icon={<GlobeIcon />}
+            icon={<GlobeIcon color={colors.accent} />}
             label="공식 웹사이트"
             onPress={() => router.push({ pathname: '/webview', params: { url: 'https://www.eugeneonmusic.com', title: '공식 웹사이트' } })}
           />
           <LinkRow
-            icon={<ShieldIcon />}
+            icon={<ShieldIcon color={colors.accent} />}
             label="개인정보처리방침"
             onPress={() => router.push('/settings/privacy')}
           />
           <LinkRow
-            icon={<FileIcon />}
+            icon={<FileIcon color={colors.accent} />}
             label="이용약관"
             onPress={() => router.push('/settings/terms')}
           />
@@ -122,10 +127,10 @@ export default function AppInfoScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const makeStyles = (c) => StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#110E0B',
+    backgroundColor: c.bg,
   },
   header: {
     flexDirection: 'row',
@@ -140,7 +145,7 @@ const styles = StyleSheet.create({
   headerTitle: {
     fontSize: 18,
     fontWeight: '400',
-    color: '#F5F0E8',
+    color: c.text,
     letterSpacing: 0.3,
   },
   content: {
@@ -156,6 +161,7 @@ const styles = StyleSheet.create({
     width: 100,
     height: 100,
     borderRadius: 4,
+    // 로고 카드 — 브랜드 톤으로 항상 크림 배경 (로고 시인성 확보)
     backgroundColor: '#F5F0E8',
     alignItems: 'center',
     justifyContent: 'center',
@@ -168,54 +174,54 @@ const styles = StyleSheet.create({
   appName: {
     fontSize: 24,
     fontWeight: '300',
-    color: '#F5F0E8',
+    color: c.text,
     marginTop: 12,
     letterSpacing: 0.5,
   },
   appNameEn: {
     fontSize: 14,
-    color: '#9e9282',
+    color: c.textMuted,
   },
   versionBadge: {
-    backgroundColor: 'rgba(201,169,110,0.07)',
+    backgroundColor: c.surface,
     paddingHorizontal: 14,
     paddingVertical: 5,
     borderRadius: 4,
     marginTop: 8,
     borderWidth: 0.5,
-    borderColor: 'rgba(201,169,110,0.18)',
+    borderColor: c.border,
   },
   versionText: {
     fontSize: 12,
-    color: '#C9A96E',
+    color: c.accent,
     fontWeight: '600',
     letterSpacing: 0.5,
   },
   card: {
-    backgroundColor: 'rgba(201,169,110,0.07)',
+    backgroundColor: c.surface,
     borderRadius: 4,
     padding: 16,
     marginBottom: 12,
     borderWidth: 0.5,
-    borderColor: 'rgba(201,169,110,0.18)',
+    borderColor: c.border,
   },
   cardTitle: {
     fontSize: 12,
-    color: '#9e9282',
+    color: c.textMuted,
     marginBottom: 4,
     letterSpacing: 0.5,
   },
   cardValue: {
     fontSize: 15,
-    color: '#F5F0E8',
+    color: c.text,
     fontWeight: '500',
   },
   linksCard: {
-    backgroundColor: 'rgba(201,169,110,0.07)',
+    backgroundColor: c.surface,
     borderRadius: 4,
     overflow: 'hidden',
     borderWidth: 0.5,
-    borderColor: 'rgba(201,169,110,0.18)',
+    borderColor: c.border,
     marginBottom: 24,
   },
   linkRow: {
@@ -225,7 +231,7 @@ const styles = StyleSheet.create({
     paddingVertical: 16,
     paddingHorizontal: 16,
     borderBottomWidth: 0.5,
-    borderBottomColor: '#110E0B',
+    borderBottomColor: c.bg,
   },
   linkLeft: {
     flexDirection: 'row',
@@ -234,11 +240,11 @@ const styles = StyleSheet.create({
   },
   linkLabel: {
     fontSize: 15,
-    color: '#F5F0E8',
+    color: c.text,
   },
   copyright: {
     textAlign: 'center',
     fontSize: 12,
-    color: '#9e9282',
+    color: c.textMuted,
   },
 });

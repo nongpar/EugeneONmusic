@@ -12,6 +12,7 @@ import {
 } from 'firebase/firestore';
 import { db } from '../../config/firebase';
 import { useAuth } from '../../hooks/useAuth';
+import { useTheme } from '../../hooks/useTheme';
 import { sendPushNotification } from '../../hooks/useNotifications';
 
 // ── SVG 아이콘 ──
@@ -70,6 +71,8 @@ function ActiveIcon({ size = 14, color = '#4ade80' }) {
 
 // ── 대기 중 멘토 신청 카드 ──
 function PendingRequestCard({ mentorship, onAccept, onReject, accepting }) {
+  const { colors } = useTheme();
+  const styles = makeStyles(colors);
   const createdAt = mentorship.createdAt?.toDate?.();
   const dateStr = createdAt
     ? `${createdAt.getFullYear()}.${createdAt.getMonth() + 1}.${createdAt.getDate()}`
@@ -110,10 +113,10 @@ function PendingRequestCard({ mentorship, onAccept, onReject, accepting }) {
           disabled={accepting}
         >
           {accepting ? (
-            <ActivityIndicator size="small" color="#0C0A08" />
+            <ActivityIndicator size="small" color={colors.bg} />
           ) : (
             <>
-              <CheckIcon color="#0C0A08" />
+              <CheckIcon color={colors.bg} />
               <Text style={styles.acceptBtnText}>수락</Text>
             </>
           )}
@@ -125,6 +128,8 @@ function PendingRequestCard({ mentorship, onAccept, onReject, accepting }) {
 
 // ── 활성 멘토십 카드 ──
 function ActiveMentorshipCard({ mentorship, onDisconnect }) {
+  const { colors } = useTheme();
+  const styles = makeStyles(colors);
   const handleChat = () => {
     if (mentorship.chatRoomId) {
       router.push(`/chat/${mentorship.chatRoomId}`);
@@ -161,6 +166,8 @@ function ActiveMentorshipCard({ mentorship, onDisconnect }) {
 
 // ── 메인 화면 ──
 export default function MentorManageScreen() {
+  const { colors } = useTheme();
+  const styles = makeStyles(colors);
   const insets = useSafeAreaInsets();
   const { user } = useAuth();
   const [pendingList, setPendingList] = useState([]);
@@ -353,7 +360,7 @@ export default function MentorManageScreen() {
       <View style={[styles.container, { paddingTop: insets.top }]}>
         <View style={styles.header}>
           <TouchableOpacity style={styles.headerBtn} onPress={() => router.back()}>
-            <BackIcon />
+            <BackIcon color={colors.accent} />
           </TouchableOpacity>
           <Text style={styles.headerTitle}>멘토 관리</Text>
           <View style={styles.headerBtn} />
@@ -371,7 +378,7 @@ export default function MentorManageScreen() {
       {/* 헤더 */}
       <View style={styles.header}>
         <TouchableOpacity style={styles.headerBtn} onPress={() => router.back()}>
-          <BackIcon />
+          <BackIcon color={colors.accent} />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>멘토 관리</Text>
         <View style={styles.headerBtn} />
@@ -379,7 +386,7 @@ export default function MentorManageScreen() {
 
       {loading ? (
         <View style={styles.center}>
-          <ActivityIndicator size="large" color="#C9A96E" />
+          <ActivityIndicator size="large" color={colors.accent} />
           <Text style={styles.loadingText}>불러오는 중...</Text>
         </View>
       ) : (
@@ -447,14 +454,14 @@ export default function MentorManageScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#110E0B' },
+const makeStyles = (c) => StyleSheet.create({
+  container: { flex: 1, backgroundColor: c.bg },
 
   /* 헤더 */
   header: {
     flexDirection: 'row', alignItems: 'center',
     paddingHorizontal: 12, paddingVertical: 10,
-    borderBottomWidth: 0.5, borderBottomColor: 'rgba(201,169,110,0.15)',
+    borderBottomWidth: 0.5, borderBottomColor: c.surfaceStrong,
     gap: 8,
   },
   headerBtn: {
@@ -463,11 +470,11 @@ const styles = StyleSheet.create({
   },
   headerTitle: {
     flex: 1, textAlign: 'center',
-    fontSize: 17, fontWeight: '400', color: '#F5F0E8', letterSpacing: 0.5,
+    fontSize: 17, fontWeight: '400', color: c.text, letterSpacing: 0.5,
   },
 
   center: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: 12 },
-  loadingText: { fontSize: 14, color: '#9e9282' },
+  loadingText: { fontSize: 14, color: c.textMuted },
 
   listContent: { paddingHorizontal: 20, paddingBottom: 20 },
 
@@ -477,18 +484,18 @@ const styles = StyleSheet.create({
     marginTop: 20, marginBottom: 12,
   },
   sectionTitle: {
-    fontSize: 15, fontWeight: '400', color: '#F5F0E8', flex: 1, letterSpacing: 0.3,
+    fontSize: 15, fontWeight: '400', color: c.text, flex: 1, letterSpacing: 0.3,
   },
   countBadge: {
     backgroundColor: '#C9A96E25', paddingHorizontal: 10, paddingVertical: 3,
     borderRadius: 4,
   },
-  countText: { fontSize: 12, fontWeight: '400', color: '#C9A96E' },
+  countText: { fontSize: 12, fontWeight: '400', color: c.accent },
 
   /* 대기 중 카드 */
   requestCard: {
-    backgroundColor: 'rgba(201,169,110,0.07)', borderRadius: 4, padding: 16,
-    marginBottom: 10, borderWidth: 0.5, borderColor: 'rgba(201,169,110,0.18)',
+    backgroundColor: c.surface, borderRadius: 4, padding: 16,
+    marginBottom: 10, borderWidth: 0.5, borderColor: c.border,
   },
   requestHeader: {
     flexDirection: 'row', alignItems: 'center', gap: 12,
@@ -499,9 +506,9 @@ const styles = StyleSheet.create({
   },
   avatarText: { fontSize: 16, fontWeight: '400', color: '#fff' },
   requestInfo: { flex: 1, gap: 4 },
-  requestName: { fontSize: 15, fontWeight: '400', color: '#F5F0E8', letterSpacing: 0.3 },
+  requestName: { fontSize: 15, fontWeight: '400', color: c.text, letterSpacing: 0.3 },
   requestMeta: { flexDirection: 'row', alignItems: 'center', gap: 4 },
-  requestDate: { fontSize: 11, color: '#9e9282' },
+  requestDate: { fontSize: 11, color: c.textMuted },
   pendingBadge: {
     backgroundColor: '#fbbf2420', paddingHorizontal: 8, paddingVertical: 3,
     borderRadius: 4,
@@ -522,39 +529,39 @@ const styles = StyleSheet.create({
   acceptBtn: {
     backgroundColor: '#4ade80', borderWidth: 0.5, borderColor: '#4ade80',
   },
-  acceptBtnText: { fontSize: 14, fontWeight: '400', color: '#0C0A08' },
+  acceptBtnText: { fontSize: 14, fontWeight: '400', color: c.bg },
 
   /* 활성 카드 */
   activeCard: {
     flexDirection: 'row', alignItems: 'center', gap: 12,
-    backgroundColor: 'rgba(201,169,110,0.07)', borderRadius: 4, padding: 16,
-    marginBottom: 8, borderWidth: 0.5, borderColor: 'rgba(201,169,110,0.18)',
+    backgroundColor: c.surface, borderRadius: 4, padding: 16,
+    marginBottom: 8, borderWidth: 0.5, borderColor: c.border,
   },
   activeInfo: { flex: 1, gap: 4 },
-  activeName: { fontSize: 15, fontWeight: '400', color: '#F5F0E8', letterSpacing: 0.3 },
+  activeName: { fontSize: 15, fontWeight: '400', color: c.text, letterSpacing: 0.3 },
   activeMetaRow: { flexDirection: 'row', alignItems: 'center', gap: 4 },
   activeStatus: { fontSize: 12, color: '#4ade80' },
   chatBtnSmall: {
-    backgroundColor: '#C9A96E', paddingHorizontal: 14, paddingVertical: 7,
+    backgroundColor: c.accent, paddingHorizontal: 14, paddingVertical: 7,
     borderRadius: 4,
   },
-  chatBtnSmallText: { fontSize: 13, fontWeight: '400', color: '#0C0A08', letterSpacing: 0.3 },
+  chatBtnSmallText: { fontSize: 13, fontWeight: '400', color: c.bg, letterSpacing: 0.3 },
   disconnectBtn: {
     backgroundColor: '#e74c3c20', paddingHorizontal: 12, paddingVertical: 7,
     borderRadius: 4, borderWidth: 0.5, borderColor: '#e74c3c40',
   },
-  disconnectBtnText: { fontSize: 13, fontWeight: '400', color: '#e74c3c', letterSpacing: 0.3 },
+  disconnectBtnText: { fontSize: 13, fontWeight: '400', color: c.danger, letterSpacing: 0.3 },
 
   /* 빈 상태 */
   emptySection: {
     backgroundColor: 'rgba(201,169,110,0.04)', borderRadius: 4, padding: 24,
-    alignItems: 'center', borderWidth: 0.5, borderColor: 'rgba(201,169,110,0.18)',
+    alignItems: 'center', borderWidth: 0.5, borderColor: c.border,
   },
-  emptySectionText: { fontSize: 13, color: '#9e9282' },
+  emptySectionText: { fontSize: 13, color: c.textMuted },
 
   emptyContainer: {
     flex: 1, alignItems: 'center', justifyContent: 'center', gap: 8,
   },
-  emptyTitle: { fontSize: 18, fontWeight: '300', color: '#F5F0E8', letterSpacing: 0.5 },
-  emptySub: { fontSize: 14, color: '#9e9282' },
+  emptyTitle: { fontSize: 18, fontWeight: '300', color: c.text, letterSpacing: 0.5 },
+  emptySub: { fontSize: 14, color: c.textMuted },
 });

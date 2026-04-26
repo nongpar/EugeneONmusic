@@ -7,6 +7,7 @@ import { useAuth } from '../../hooks/useAuth';
 import * as Haptics from 'expo-haptics';
 import { deleteDoc, doc, collection, query, where, getDocs, writeBatch } from 'firebase/firestore';
 import { db } from '../../config/firebase';
+import { useTheme } from '../../hooks/useTheme';
 
 // 컬렉션에서 쿼리 결과를 일괄 삭제하는 헬퍼
 async function deleteQueryResults(q) {
@@ -81,6 +82,8 @@ function TrashIcon({ size = 18, color = '#e74c3c' }) {
 
 export default function ProfileScreen() {
   const insets = useSafeAreaInsets();
+  const { colors } = useTheme();
+  const styles = makeStyles(colors);
   const { user, logout, getToken } = useAuth();
 
   const [displayName, setDisplayName] = useState(
@@ -234,7 +237,7 @@ export default function ProfileScreen() {
       {/* Header */}
       <View style={styles.header}>
         <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
-          <BackIcon />
+          <BackIcon color={colors.text} />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>프로필 편집</Text>
         <View style={{ width: 24 }} />
@@ -256,7 +259,7 @@ export default function ProfileScreen() {
             value={displayName}
             onChangeText={setDisplayName}
             placeholder="이름을 입력하세요"
-            placeholderTextColor="rgba(201,169,110,0.3)"
+            placeholderTextColor={colors.accentMuted}
           />
         </View>
 
@@ -278,16 +281,16 @@ export default function ProfileScreen() {
           style={styles.webLink}
           onPress={() => router.push({ pathname: '/webview', params: { url: 'https://www.eon-music.com/my-account/', title: '프로필 관리', autoLogin: 'true' } })}
         >
-          <GlobeIcon />
+          <GlobeIcon color={colors.accent} />
           <Text style={styles.webLinkText}>eon-music.com에서 프로필 관리</Text>
           <Svg width={16} height={16} viewBox="0 0 24 24" fill="none">
-            <Path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6M15 3h6v6M10 14L21 3" stroke="#C9A96E" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round" />
+            <Path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6M15 3h6v6M10 14L21 3" stroke={colors.accent} strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round" />
           </Svg>
         </TouchableOpacity>
 
         {/* Delete Account */}
         <TouchableOpacity style={styles.deleteBtn} onPress={handleDeleteAccount}>
-          <TrashIcon />
+          <TrashIcon color={colors.danger} />
           <Text style={styles.deleteBtnText}>계정 삭제</Text>
         </TouchableOpacity>
       </ScrollView>
@@ -295,10 +298,10 @@ export default function ProfileScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const makeStyles = (c) => StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#110E0B',
+    backgroundColor: c.bg,
   },
   header: {
     flexDirection: 'row',
@@ -313,7 +316,7 @@ const styles = StyleSheet.create({
   headerTitle: {
     fontSize: 18,
     fontWeight: '400',
-    color: '#F5F0E8',
+    color: c.text,
     letterSpacing: 0.3,
   },
   content: {
@@ -328,60 +331,60 @@ const styles = StyleSheet.create({
     width: 80,
     height: 80,
     borderRadius: 40,
-    backgroundColor: '#C9A96E',
+    backgroundColor: c.accent,
     alignItems: 'center',
     justifyContent: 'center',
   },
   avatarText: {
     fontSize: 32,
     fontWeight: '300',
-    color: '#110E0B',
+    color: c.bg,
   },
   card: {
-    backgroundColor: 'rgba(201,169,110,0.07)',
+    backgroundColor: c.surface,
     borderRadius: 4,
     padding: 16,
     marginBottom: 12,
     borderWidth: 0.5,
-    borderColor: 'rgba(201,169,110,0.18)',
+    borderColor: c.border,
   },
   fieldLabel: {
     fontSize: 12,
-    color: '#9e9282',
+    color: c.textMuted,
     marginBottom: 8,
     fontWeight: '600',
     letterSpacing: 0.5,
   },
   textInput: {
-    backgroundColor: '#0C0A08',
+    backgroundColor: c.bg,
     borderRadius: 4,
     paddingHorizontal: 14,
     paddingVertical: 12,
     fontSize: 15,
-    color: '#F5F0E8',
+    color: c.text,
     borderWidth: 0.5,
-    borderColor: 'rgba(201,169,110,0.18)',
+    borderColor: c.border,
   },
   readOnlyField: {
-    backgroundColor: '#0C0A08',
+    backgroundColor: c.bg,
     borderRadius: 4,
     paddingHorizontal: 14,
     paddingVertical: 12,
     borderWidth: 0.5,
-    borderColor: 'rgba(201,169,110,0.18)',
+    borderColor: c.border,
   },
   readOnlyText: {
     fontSize: 15,
-    color: '#9e9282',
+    color: c.textMuted,
   },
   fieldHint: {
     fontSize: 11,
-    color: 'rgba(201,169,110,0.3)',
+    color: c.accentMuted,
     marginTop: 6,
     marginLeft: 4,
   },
   saveBtn: {
-    backgroundColor: '#C9A96E',
+    backgroundColor: c.accent,
     borderRadius: 4,
     paddingVertical: 14,
     alignItems: 'center',
@@ -391,7 +394,7 @@ const styles = StyleSheet.create({
   saveBtnText: {
     fontSize: 16,
     fontWeight: '400',
-    color: '#110E0B',
+    color: c.bg,
     letterSpacing: 0.5,
   },
   webLink: {
@@ -400,7 +403,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     gap: 8,
     paddingVertical: 14,
-    backgroundColor: 'rgba(201,169,110,0.07)',
+    backgroundColor: c.surface,
     borderRadius: 4,
     borderWidth: 0.5,
     borderColor: '#C9A96E30',
@@ -408,7 +411,7 @@ const styles = StyleSheet.create({
   webLinkText: {
     fontSize: 14,
     fontWeight: '600',
-    color: '#C9A96E',
+    color: c.accent,
   },
   deleteBtn: {
     flexDirection: 'row',
@@ -426,6 +429,6 @@ const styles = StyleSheet.create({
   deleteBtnText: {
     fontSize: 14,
     fontWeight: '600',
-    color: '#e74c3c',
+    color: c.danger,
   },
 });

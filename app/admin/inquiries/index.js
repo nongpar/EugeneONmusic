@@ -15,6 +15,7 @@ import { useRouter } from 'expo-router';
 import { collection, query, orderBy, onSnapshot } from 'firebase/firestore';
 import { db } from '../../../config/firebase';
 import { useAuth } from '../../../hooks/useAuth';
+import { useTheme } from '../../../hooks/useTheme';
 
 let Haptics = null;
 if (Platform.OS !== 'web') {
@@ -59,6 +60,8 @@ function formatTime(ts) {
 }
 
 export default function InquiriesListScreen() {
+  const { colors } = useTheme();
+  const styles = makeStyles(colors);
   const insets = useSafeAreaInsets();
   const router = useRouter();
   const { user, loading: authLoading } = useAuth();
@@ -155,7 +158,7 @@ export default function InquiriesListScreen() {
       {/* Header */}
       <View style={styles.header}>
         <TouchableOpacity style={styles.backBtn} onPress={() => router.back()}>
-          <BackIcon />
+          <BackIcon color={colors.text} />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>예술 상담 신청서</Text>
         <View style={{ width: 40 }} />
@@ -186,7 +189,7 @@ export default function InquiriesListScreen() {
 
       {loading ? (
         <View style={styles.center}>
-          <ActivityIndicator size="large" color="#C9A96E" />
+          <ActivityIndicator size="large" color={colors.accent} />
         </View>
       ) : (
         <FlatList
@@ -209,35 +212,35 @@ export default function InquiriesListScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#110E0B' },
+const makeStyles = (c) => StyleSheet.create({
+  container: { flex: 1, backgroundColor: c.bg },
   header: {
     flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
     paddingHorizontal: 16, paddingVertical: 14,
-    borderBottomWidth: 0.5, borderBottomColor: 'rgba(201,169,110,0.15)',
+    borderBottomWidth: 0.5, borderBottomColor: c.surfaceStrong,
   },
   backBtn: { width: 40, height: 40, alignItems: 'center', justifyContent: 'center' },
-  headerTitle: { fontSize: 17, fontWeight: '300', color: '#F5F0E8', letterSpacing: 1 },
+  headerTitle: { fontSize: 17, fontWeight: '300', color: c.text, letterSpacing: 1 },
 
   filterRow: {
     flexDirection: 'row', paddingHorizontal: 16, paddingVertical: 12, gap: 8,
-    borderBottomWidth: 0.5, borderBottomColor: 'rgba(201,169,110,0.1)',
+    borderBottomWidth: 0.5, borderBottomColor: c.surface,
   },
   filterBtn: {
     flexDirection: 'row', alignItems: 'center', gap: 6,
     paddingHorizontal: 12, paddingVertical: 7, borderRadius: 4,
-    backgroundColor: 'rgba(201,169,110,0.07)',
-    borderWidth: 0.5, borderColor: 'rgba(201,169,110,0.18)',
+    backgroundColor: c.surface,
+    borderWidth: 0.5, borderColor: c.border,
   },
-  filterBtnActive: { backgroundColor: 'transparent', borderColor: '#C9A96E' },
-  filterLabel: { fontSize: 13, color: '#9e9282', letterSpacing: 0.3 },
-  filterLabelActive: { color: '#C9A96E' },
+  filterBtnActive: { backgroundColor: 'transparent', borderColor: c.accent },
+  filterLabel: { fontSize: 13, color: c.textMuted, letterSpacing: 0.3 },
+  filterLabelActive: { color: c.accent },
   filterCount: {
-    fontSize: 11, color: '#9e9282', fontWeight: '500',
+    fontSize: 11, color: c.textMuted, fontWeight: '500',
     backgroundColor: 'rgba(201,169,110,0.12)',
     paddingHorizontal: 5, borderRadius: 2,
   },
-  filterCountActive: { color: '#110E0B', backgroundColor: '#C9A96E' },
+  filterCountActive: { color: c.bg, backgroundColor: c.accent },
 
   listContent: { paddingHorizontal: 16, paddingTop: 10, paddingBottom: 40 },
   center: { flex: 1, alignItems: 'center', justifyContent: 'center' },
@@ -245,33 +248,33 @@ const styles = StyleSheet.create({
   card: {
     backgroundColor: 'rgba(245,240,225,0.04)',
     borderRadius: 4, borderWidth: 0.5, borderColor: 'rgba(180,150,100,0.18)',
-    borderLeftWidth: 2, borderLeftColor: '#C9A96E',
+    borderLeftWidth: 2, borderLeftColor: c.accent,
     padding: 14, marginBottom: 10, gap: 8,
   },
   cardTopRow: { flexDirection: 'row', alignItems: 'center', gap: 6 },
   cardTicketNo: {
     fontSize: 11,
-    color: '#C9A96E',
+    color: c.accent,
     fontWeight: '600',
     letterSpacing: 1.5,
     marginRight: 2,
   },
   typeBadge: {
     paddingHorizontal: 8, paddingVertical: 2, borderRadius: 2,
-    backgroundColor: 'rgba(201,169,110,0.15)',
+    backgroundColor: c.surfaceStrong,
   },
-  typeBadgeText: { fontSize: 10, color: '#C9A96E', letterSpacing: 1, fontWeight: '500' },
+  typeBadgeText: { fontSize: 10, color: c.accent, letterSpacing: 1, fontWeight: '500' },
   statusBadge: {
     paddingHorizontal: 8, paddingVertical: 2, borderRadius: 2,
     borderWidth: 0.5,
   },
   statusBadgeText: { fontSize: 10, letterSpacing: 1, fontWeight: '500' },
-  cardTime: { fontSize: 11, color: '#9e9282' },
-  cardSummary: { fontSize: 14, color: '#F5F0E8', lineHeight: 20 },
+  cardTime: { fontSize: 11, color: c.textMuted },
+  cardSummary: { fontSize: 14, color: c.text, lineHeight: 20 },
   cardMetaRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 4, marginTop: 2 },
-  cardMeta: { fontSize: 12, color: '#9e9282' },
+  cardMeta: { fontSize: 12, color: c.textMuted },
 
   emptyContainer: { alignItems: 'center', paddingVertical: 80, gap: 8 },
-  emptyTitle: { fontSize: 16, color: '#9e9282', fontWeight: '300' },
-  emptySubtitle: { fontSize: 13, color: 'rgba(201,169,110,0.4)' },
+  emptyTitle: { fontSize: 16, color: c.textMuted, fontWeight: '300' },
+  emptySubtitle: { fontSize: 13, color: c.accentMuted },
 });

@@ -2,6 +2,7 @@ import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Linking } from 'r
 import Svg, { Path, Circle, Rect } from 'react-native-svg';
 import { router } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useTheme } from '../../hooks/useTheme';
 
 // ── SVG Icons ──
 function BackIcon({ size = 24, color = '#F5F0E8' }) {
@@ -48,6 +49,8 @@ function ClockIcon({ size = 20, color = '#C9A96E' }) {
 }
 
 function ContactItem({ icon, label, value, onPress }) {
+  const { colors } = useTheme();
+  const styles = makeStyles(colors);
   return (
     <TouchableOpacity style={styles.contactItem} onPress={onPress} activeOpacity={0.7}>
       <View style={styles.contactIcon}>{icon}</View>
@@ -56,7 +59,7 @@ function ContactItem({ icon, label, value, onPress }) {
         <Text style={styles.contactValue}>{value}</Text>
       </View>
       <Svg width={18} height={18} viewBox="0 0 24 24" fill="none">
-        <Path d="M9 18l6-6-6-6" stroke="#9e9282" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" />
+        <Path d="M9 18l6-6-6-6" stroke={colors.textMuted} strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" />
       </Svg>
     </TouchableOpacity>
   );
@@ -64,13 +67,15 @@ function ContactItem({ icon, label, value, onPress }) {
 
 export default function HelpScreen() {
   const insets = useSafeAreaInsets();
+  const { colors } = useTheme();
+  const styles = makeStyles(colors);
 
   return (
     <View style={[styles.container, { paddingTop: insets.top }]}>
       {/* Header */}
       <View style={styles.header}>
         <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
-          <BackIcon />
+          <BackIcon color={colors.text} />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>고객센터</Text>
         <View style={{ width: 24 }} />
@@ -81,19 +86,19 @@ export default function HelpScreen() {
         <Text style={styles.sectionTitle}>문의하기</Text>
         <View style={styles.card}>
           <ContactItem
-            icon={<MailIcon />}
+            icon={<MailIcon color={colors.accent} />}
             label="이메일"
             value="help@eugeneonmusic.com"
             onPress={() => Linking.openURL('mailto:help@eugeneonmusic.com')}
           />
           <ContactItem
-            icon={<PhoneIcon />}
+            icon={<PhoneIcon color={colors.accent} />}
             label="전화 (대표)"
             value="02-718-8954"
             onPress={() => Linking.openURL('tel:02-718-8954')}
           />
           <ContactItem
-            icon={<MobileIcon />}
+            icon={<MobileIcon color={colors.accent} />}
             label="전화 (휴대폰)"
             value="010-2823-8954"
             onPress={() => Linking.openURL('tel:010-2823-8954')}
@@ -104,7 +109,7 @@ export default function HelpScreen() {
         <Text style={styles.sectionTitle}>운영시간</Text>
         <View style={styles.card}>
           <View style={styles.hoursRow}>
-            <ClockIcon />
+            <ClockIcon color={colors.accent} />
             <View style={styles.hoursInfo}>
               <View style={styles.hourLine}>
                 <Text style={styles.hourDay}>평일</Text>
@@ -126,10 +131,10 @@ export default function HelpScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const makeStyles = (c) => StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#110E0B',
+    backgroundColor: c.bg,
   },
   header: {
     flexDirection: 'row',
@@ -144,7 +149,7 @@ const styles = StyleSheet.create({
   headerTitle: {
     fontSize: 18,
     fontWeight: '400',
-    color: '#F5F0E8',
+    color: c.text,
     letterSpacing: 0.3,
   },
   content: {
@@ -154,18 +159,18 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: 14,
     fontWeight: '600',
-    color: '#9e9282',
+    color: c.textMuted,
     marginBottom: 10,
     marginTop: 20,
     marginLeft: 4,
     letterSpacing: 0.5,
   },
   card: {
-    backgroundColor: 'rgba(201,169,110,0.07)',
+    backgroundColor: c.surface,
     borderRadius: 4,
     overflow: 'hidden',
     borderWidth: 0.5,
-    borderColor: 'rgba(201,169,110,0.18)',
+    borderColor: c.border,
   },
   contactItem: {
     flexDirection: 'row',
@@ -173,7 +178,7 @@ const styles = StyleSheet.create({
     paddingVertical: 16,
     paddingHorizontal: 16,
     borderBottomWidth: 0.5,
-    borderBottomColor: '#110E0B',
+    borderBottomColor: c.bg,
   },
   contactIcon: {
     width: 40,
@@ -189,13 +194,13 @@ const styles = StyleSheet.create({
   },
   contactLabel: {
     fontSize: 12,
-    color: '#9e9282',
+    color: c.textMuted,
     marginBottom: 2,
     letterSpacing: 0.5,
   },
   contactValue: {
     fontSize: 15,
-    color: '#F5F0E8',
+    color: c.text,
     fontWeight: '500',
   },
   hoursRow: {
@@ -214,20 +219,20 @@ const styles = StyleSheet.create({
   },
   hourDay: {
     fontSize: 14,
-    color: '#F5F0E8',
+    color: c.text,
     fontWeight: '500',
   },
   hourTime: {
     fontSize: 14,
-    color: '#C9A96E',
+    color: c.accent,
     fontWeight: '500',
   },
   hourDayClosed: {
     fontSize: 14,
-    color: '#9e9282',
+    color: c.textMuted,
   },
   hourTimeClosed: {
     fontSize: 14,
-    color: '#9e9282',
+    color: c.textMuted,
   },
 });

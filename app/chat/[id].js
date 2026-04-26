@@ -12,6 +12,7 @@ import {
 } from 'firebase/firestore';
 import { db } from '../../config/firebase';
 import { useAuth } from '../../hooks/useAuth';
+import { useTheme } from '../../hooks/useTheme';
 import { sendPushNotification } from '../../hooks/useNotifications';
 import ChatBubble from '../../components/ChatBubble';
 
@@ -51,6 +52,8 @@ export default function ChatDetailScreen() {
   const { id } = useLocalSearchParams();
   const insets = useSafeAreaInsets();
   const { user } = useAuth();
+  const { colors } = useTheme();
+  const styles = makeStyles(colors);
   const [messages, setMessages] = useState([]);
   const [inputText, setInputText] = useState('');
   const [roomName, setRoomName] = useState('채팅');
@@ -302,7 +305,7 @@ export default function ChatDetailScreen() {
       {/* 헤더 */}
       <View style={styles.header}>
         <TouchableOpacity style={styles.headerBtn} onPress={() => router.back()}>
-          <BackIcon />
+          <BackIcon color={colors.accent} />
         </TouchableOpacity>
         <View style={styles.headerCenter}>
           <Text style={styles.headerTitle}>{roomName}</Text>
@@ -316,7 +319,7 @@ export default function ChatDetailScreen() {
           )}
         </View>
         <TouchableOpacity style={styles.headerBtn} onPress={() => setShowMoreMenu(true)}>
-          <MoreIcon />
+          <MoreIcon color={colors.accent} />
         </TouchableOpacity>
       </View>
 
@@ -362,7 +365,7 @@ export default function ChatDetailScreen() {
         <TextInput
           style={styles.input}
           placeholder="메시지를 입력하세요"
-          placeholderTextColor="rgba(201,169,110,0.3)"
+          placeholderTextColor={colors.accentMuted}
           value={inputText}
           onChangeText={setInputText}
           onSubmitEditing={handleSend}
@@ -379,14 +382,14 @@ export default function ChatDetailScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#110E0B' },
+const makeStyles = (c) => StyleSheet.create({
+  container: { flex: 1, backgroundColor: c.bg },
 
   /* 헤더 */
   header: {
     flexDirection: 'row', alignItems: 'center',
     paddingHorizontal: 12, paddingVertical: 10,
-    borderBottomWidth: 0.5, borderBottomColor: 'rgba(201,169,110,0.15)',
+    borderBottomWidth: 0.5, borderBottomColor: c.surfaceStrong,
     gap: 8,
   },
   headerBtn: {
@@ -394,7 +397,7 @@ const styles = StyleSheet.create({
     alignItems: 'center', justifyContent: 'center',
   },
   headerCenter: { flex: 1, alignItems: 'center', gap: 4 },
-  headerTitle: { fontSize: 16, fontWeight: '400', color: '#F5F0E8', letterSpacing: 0.3 },
+  headerTitle: { fontSize: 16, fontWeight: '400', color: c.text, letterSpacing: 0.3 },
   headerRoleBadge: {
     flexDirection: 'row', alignItems: 'center', gap: 4,
     paddingHorizontal: 8, paddingVertical: 2, borderRadius: 4,
@@ -405,20 +408,20 @@ const styles = StyleSheet.create({
   /* 메시지 */
   messageList: { paddingVertical: 12, flexGrow: 1 },
   emptyChat: { flex: 1, alignItems: 'center', justifyContent: 'center', paddingVertical: 100 },
-  emptyChatText: { fontSize: 14, color: '#9e9282' },
+  emptyChatText: { fontSize: 14, color: c.textMuted },
 
   /* 입력 바 */
   inputBar: {
     flexDirection: 'row', alignItems: 'center', gap: 8,
     paddingHorizontal: 12, paddingTop: 8,
-    backgroundColor: 'rgba(201,169,110,0.07)', borderTopWidth: 0.5, borderTopColor: 'rgba(201,169,110,0.18)',
+    backgroundColor: c.surface, borderTopWidth: 0.5, borderTopColor: c.border,
   },
   input: {
-    flex: 1, backgroundColor: '#110E0B', borderRadius: 4,
-    paddingHorizontal: 16, paddingVertical: 10, fontSize: 14, color: '#F5F0E8',
+    flex: 1, backgroundColor: c.bg, borderRadius: 4,
+    paddingHorizontal: 16, paddingVertical: 10, fontSize: 14, color: c.text,
   },
   sendBtn: {
-    width: 36, height: 36, borderRadius: 18, backgroundColor: '#C9A96E',
+    width: 36, height: 36, borderRadius: 18, backgroundColor: c.accent,
     alignItems: 'center', justifyContent: 'center',
   },
   sendBtnDisabled: { opacity: 0.4 },
@@ -429,11 +432,11 @@ const styles = StyleSheet.create({
   },
   menuBox: {
     position: 'absolute', right: 16,
-    backgroundColor: '#1a1510', borderRadius: 4,
+    backgroundColor: c.bgElevated, borderRadius: 4,
     paddingVertical: 4, minWidth: 150,
     shadowColor: '#000', shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.3, shadowRadius: 8, elevation: 8,
-    borderWidth: 0.5, borderColor: 'rgba(201,169,110,0.18)',
+    borderWidth: 0.5, borderColor: c.border,
   },
   menuOptionItem: {
     paddingHorizontal: 16, paddingVertical: 14,
@@ -442,6 +445,6 @@ const styles = StyleSheet.create({
     fontSize: 14, fontWeight: '400', color: '#c0bab0', letterSpacing: 0.3,
   },
   menuDivider: {
-    height: 0.5, backgroundColor: 'rgba(201,169,110,0.18)',
+    height: 0.5, backgroundColor: c.border,
   },
 });

@@ -3,6 +3,7 @@ import Svg, { Path, Circle, Rect, Line, Polyline } from 'react-native-svg';
 import { router } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAuth } from '../../hooks/useAuth';
+import { useTheme } from '../../hooks/useTheme';
 
 const GOLD = '#C9A96E';
 const GOLD_DIM = 'rgba(201,169,110,0.6)';
@@ -104,6 +105,8 @@ function ChevronIcon({ size = 16, color = 'rgba(201,169,110,0.3)' }) {
 
 // 장식 디바이더
 function OrnamentLine() {
+  const { colors } = useTheme();
+  const styles = makeStyles(colors);
   return (
     <View style={styles.ornamentLine}>
       <View style={styles.ornamentLeft} />
@@ -114,6 +117,8 @@ function OrnamentLine() {
 }
 
 function MenuCard({ icon, title, subtitle, onPress }) {
+  const { colors } = useTheme();
+  const styles = makeStyles(colors);
   return (
     <TouchableOpacity style={styles.menuCard} onPress={onPress} activeOpacity={0.7}>
       <View style={styles.menuIconWrap}>
@@ -123,12 +128,14 @@ function MenuCard({ icon, title, subtitle, onPress }) {
         <Text style={styles.menuTitle}>{title}</Text>
         <Text style={styles.menuSubtitle}>{subtitle}</Text>
       </View>
-      <ChevronIcon />
+      <ChevronIcon color={colors.accentMuted} />
     </TouchableOpacity>
   );
 }
 
 export default function LessonScreen() {
+  const { colors } = useTheme();
+  const styles = makeStyles(colors);
   const insets = useSafeAreaInsets();
   const { user } = useAuth();
   const isTeacher = user?.role === 'teacher';
@@ -146,7 +153,7 @@ export default function LessonScreen() {
           <>
             <Text style={styles.sectionTitle}>선생님 메뉴</Text>
             <MenuCard
-              icon={<MentorManageIcon />}
+              icon={<MentorManageIcon color={colors.accent} />}
               title="멘토 관리"
               subtitle="학생 멘토 신청 확인 및 배정"
               onPress={() => router.push('/mentor')}
@@ -157,19 +164,19 @@ export default function LessonScreen() {
         {/* 레슨 관리 */}
         <Text style={styles.sectionTitle}>레슨 관리</Text>
         <MenuCard
-          icon={<CalendarIcon />}
+          icon={<CalendarIcon color={colors.accent} />}
           title="레슨 스케줄"
           subtitle="다음 레슨 일정을 확인하세요"
           onPress={() => router.push('/lesson/schedule')}
         />
         <MenuCard
-          icon={<NoteIcon />}
+          icon={<NoteIcon color={colors.accent} />}
           title="레슨 노트"
           subtitle="선생님과 학생이 남긴 피드백"
           onPress={() => router.push('/lesson/notes')}
         />
         <MenuCard
-          icon={<TaskIcon />}
+          icon={<TaskIcon color={colors.accent} />}
           title="과제 목록"
           subtitle="이번 주 연습 과제"
           onPress={() => router.push('/lesson/assignments')}
@@ -180,7 +187,7 @@ export default function LessonScreen() {
         {/* 연습 */}
         <Text style={styles.sectionTitle}>연습</Text>
         <MenuCard
-          icon={<TimerIcon />}
+          icon={<TimerIcon color={colors.accent} />}
           title="연습 타이머"
           subtitle="연습 시간을 기록하세요"
           onPress={() => router.push('/practice')}
@@ -191,13 +198,13 @@ export default function LessonScreen() {
         {/* 소통 */}
         <Text style={styles.sectionTitle}>소통</Text>
         <MenuCard
-          icon={<CommunityIcon />}
+          icon={<CommunityIcon color={colors.accent} />}
           title="커뮤니티"
           subtitle="질문, 후기, 정보를 나눠보세요"
           onPress={() => router.push('/community')}
         />
         <MenuCard
-          icon={<ChatIcon />}
+          icon={<ChatIcon color={colors.accent} />}
           title="1:1 멘토링 채팅"
           subtitle="멘토 신청 후 담당 선생님과 대화하세요"
           onPress={() => router.push('/chat')}
@@ -208,13 +215,13 @@ export default function LessonScreen() {
         {/* 학습 자료 */}
         <Text style={styles.sectionTitle}>학습 자료</Text>
         <MenuCard
-          icon={<SheetIcon />}
+          icon={<SheetIcon color={colors.accent} />}
           title="악보 라이브러리"
           subtitle="나만의 악보 컬렉션"
           onPress={() => router.push('/lesson/sheet-music')}
         />
         <MenuCard
-          icon={<VideoIcon />}
+          icon={<VideoIcon color={colors.accent} />}
           title="레슨 영상"
           subtitle="연습 영상 업로드 · 다시보기"
           onPress={() => router.push('/lesson/videos')}
@@ -226,17 +233,17 @@ export default function LessonScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#110E0B' },
+const makeStyles = (c) => StyleSheet.create({
+  container: { flex: 1, backgroundColor: c.bg },
   header: {
     paddingHorizontal: 24, paddingTop: 16, paddingBottom: 14,
-    borderBottomWidth: 0.5, borderBottomColor: 'rgba(201,169,110,0.15)',
+    borderBottomWidth: 0.5, borderBottomColor: c.surfaceStrong,
   },
   headerTitle: {
-    fontSize: 22, fontWeight: '300', color: '#F5F0E8', letterSpacing: 1,
+    fontSize: 22, fontWeight: '300', color: c.text, letterSpacing: 1,
   },
   headerSub: {
-    fontSize: 10, color: GOLD, marginTop: 4, fontWeight: '400', letterSpacing: 2.5,
+    fontSize: 10, color: c.accent, marginTop: 4, fontWeight: '400', letterSpacing: 2.5,
   },
   scrollContent: {
     paddingHorizontal: 20,
@@ -246,7 +253,7 @@ const styles = StyleSheet.create({
     maxWidth: 540,
   },
   sectionTitle: {
-    fontSize: 10, fontWeight: '500', color: GOLD_DIM,
+    fontSize: 10, fontWeight: '500', color: c.textHint,
     textTransform: 'uppercase', letterSpacing: 2.5,
     marginTop: 24, marginBottom: 12,
   },
@@ -261,36 +268,36 @@ const styles = StyleSheet.create({
   },
   ornamentLeft: {
     flex: 1, height: 0.5,
-    backgroundColor: 'rgba(201,169,110,0.2)',
+    backgroundColor: c.border,
   },
   ornamentDot: {
     width: 4, height: 4, borderRadius: 2,
-    backgroundColor: 'rgba(201,169,110,0.3)',
+    backgroundColor: c.accentMuted,
   },
   ornamentRight: {
     flex: 1, height: 0.5,
-    backgroundColor: 'rgba(201,169,110,0.2)',
+    backgroundColor: c.border,
   },
 
   // 메뉴 카드
   menuCard: {
     flexDirection: 'row', alignItems: 'center',
-    backgroundColor: 'rgba(201,169,110,0.07)',
+    backgroundColor: c.surface,
     borderRadius: 4, padding: 16,
     marginBottom: 8, gap: 14,
-    borderWidth: 0.5, borderColor: 'rgba(201,169,110,0.18)',
+    borderWidth: 0.5, borderColor: c.border,
   },
   menuIconWrap: {
     width: 44, height: 44, borderRadius: 22,
-    backgroundColor: 'rgba(201,169,110,0.1)',
+    backgroundColor: c.surface,
     alignItems: 'center', justifyContent: 'center',
-    borderWidth: 0.5, borderColor: 'rgba(201,169,110,0.25)',
+    borderWidth: 0.5, borderColor: c.border,
   },
   menuText: { flex: 1, gap: 3 },
   menuTitle: {
-    fontSize: 15, fontWeight: '400', color: '#F5F0E8', letterSpacing: 0.3,
+    fontSize: 15, fontWeight: '400', color: c.text, letterSpacing: 0.3,
   },
   menuSubtitle: {
-    fontSize: 12, color: '#9e9282', letterSpacing: 0.2,
+    fontSize: 12, color: c.textMuted, letterSpacing: 0.2,
   },
 });

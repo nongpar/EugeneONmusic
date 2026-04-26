@@ -2,6 +2,7 @@ import { View, Text, StyleSheet, TouchableOpacity, ScrollView } from 'react-nati
 import Svg, { Path } from 'react-native-svg';
 import { router } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useTheme } from '../../hooks/useTheme';
 
 function BackIcon({ size = 24, color = '#F5F0E8' }) {
   return (
@@ -13,12 +14,14 @@ function BackIcon({ size = 24, color = '#F5F0E8' }) {
 
 export default function PrivacyScreen() {
   const insets = useSafeAreaInsets();
+  const { colors } = useTheme();
+  const styles = makeStyles(colors);
 
   return (
     <View style={[styles.container, { paddingTop: insets.top }]}>
       <View style={styles.header}>
         <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
-          <BackIcon />
+          <BackIcon color={colors.text} />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>개인정보처리방침</Text>
         <View style={{ width: 24 }} />
@@ -140,10 +143,10 @@ export default function PrivacyScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const makeStyles = (c) => StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#110E0B',
+    backgroundColor: c.bg,
   },
   header: {
     flexDirection: 'row',
@@ -152,7 +155,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 12,
     borderBottomWidth: 0.5,
-    borderBottomColor: 'rgba(201,169,110,0.18)',
+    borderBottomColor: c.border,
   },
   backBtn: {
     padding: 4,
@@ -160,7 +163,7 @@ const styles = StyleSheet.create({
   headerTitle: {
     fontSize: 18,
     fontWeight: '400',
-    color: '#F5F0E8',
+    color: c.text,
     letterSpacing: 0.3,
   },
   content: {
@@ -170,41 +173,41 @@ const styles = StyleSheet.create({
   },
   updatedAt: {
     fontSize: 12,
-    color: '#C9A96E',
+    color: c.accent,
     marginBottom: 16,
     fontWeight: '600',
     letterSpacing: 0.5,
   },
   intro: {
     fontSize: 14,
-    color: '#9e9282',
+    color: c.textMuted,
     lineHeight: 22,
     marginBottom: 24,
   },
   sectionTitle: {
     fontSize: 15,
     fontWeight: '400',
-    color: '#F5F0E8',
+    color: c.text,
     marginTop: 20,
     marginBottom: 10,
     letterSpacing: 0.3,
   },
   body: {
     fontSize: 14,
-    color: '#C9A96E',
+    color: c.accent,
     lineHeight: 22,
     marginBottom: 8,
   },
   listItem: {
     fontSize: 13,
-    color: '#C9A96E',
+    color: c.accent,
     lineHeight: 22,
     marginBottom: 4,
     paddingLeft: 8,
   },
   subItem: {
     fontSize: 13,
-    color: '#9e9282',
+    color: c.textMuted,
     lineHeight: 22,
     marginBottom: 2,
     paddingLeft: 24,

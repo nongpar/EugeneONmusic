@@ -23,6 +23,7 @@ if (Platform.OS !== 'web') {
   try { Haptics = require('expo-haptics'); } catch {}
 }
 import { useAuth } from '../../hooks/useAuth';
+import { useTheme } from '../../hooks/useTheme';
 
 // ── SVG Icons ──────────────────────────────────────────────
 
@@ -102,6 +103,8 @@ function TrashIcon({ size = 18, color = '#e74c3c' }) {
 // ── Manuscript Decorations ─────────────────────────────────
 
 function StaffLines() {
+  const { colors } = useTheme();
+  const styles = makeStyles(colors);
   return (
     <View style={styles.staffLines} pointerEvents="none">
       {[0, 1, 2, 3, 4].map(i => (
@@ -112,13 +115,15 @@ function StaffLines() {
 }
 
 function MusicalDivider() {
+  const { colors } = useTheme();
+  const styles = makeStyles(colors);
   return (
     <View style={styles.musicalDivider}>
       <View style={styles.mDivLine} />
       <Svg width={18} height={22} viewBox="0 0 18 22" fill="none">
-        <Path d="M10 2v15" stroke="rgba(201,169,110,0.25)" strokeWidth={1.2} strokeLinecap="round" />
-        <SvgCircle cx="7" cy="17" r="3.5" stroke="rgba(201,169,110,0.25)" strokeWidth={1.2} fill="rgba(201,169,110,0.08)" />
-        <Path d="M10 2c2 1 4 3 4 5s-2 3-4 2" stroke="rgba(201,169,110,0.2)" strokeWidth={1} fill="rgba(201,169,110,0.06)" />
+        <Path d="M10 2v15" stroke={colors.border} strokeWidth={1.2} strokeLinecap="round" />
+        <SvgCircle cx="7" cy="17" r="3.5" stroke={colors.border} strokeWidth={1.2} fill={colors.surface} />
+        <Path d="M10 2c2 1 4 3 4 5s-2 3-4 2" stroke={colors.border} strokeWidth={1} fill={colors.inputBg} />
       </Svg>
       <View style={styles.mDivLine} />
     </View>
@@ -126,6 +131,8 @@ function MusicalDivider() {
 }
 
 function ParchmentCorner({ position = 'topLeft' }) {
+  const { colors } = useTheme();
+  const styles = makeStyles(colors);
   const isTop = position.includes('top');
   const isLeft = position.includes('Left');
   return (
@@ -137,7 +144,7 @@ function ParchmentCorner({ position = 'topLeft' }) {
       !isTop && !isLeft && { transform: [{ scaleX: -1 }, { scaleY: -1 }] },
     ]} pointerEvents="none">
       <Svg width={20} height={20} viewBox="0 0 20 20" fill="none">
-        <Path d="M2 2 C2 2 2 8 8 8 C2 8 2 14 2 14" stroke="rgba(201,169,110,0.2)" strokeWidth={0.8} />
+        <Path d="M2 2 C2 2 2 8 8 8 C2 8 2 14 2 14" stroke={colors.border} strokeWidth={0.8} />
       </Svg>
     </View>
   );
@@ -185,6 +192,8 @@ const DURATION_OPTIONS = [30, 45, 60, 90];
 // ── Main Component ─────────────────────────────────────────
 
 export default function LessonScheduleScreen() {
+  const { colors } = useTheme();
+  const styles = makeStyles(colors);
   const insets = useSafeAreaInsets();
   const router = useRouter();
   const { user } = useAuth();
@@ -428,7 +437,7 @@ export default function LessonScheduleScreen() {
       <ParchmentCorner position="topRight" />
       <View style={styles.cardHeader}>
         <View style={styles.cardTitleRow}>
-          <CalendarIcon />
+          <CalendarIcon color={colors.accent} />
           <Text style={styles.cardTitle}>{item.title}</Text>
         </View>
         <View style={styles.cardHeaderRight}>
@@ -436,14 +445,14 @@ export default function LessonScheduleScreen() {
             <Text style={styles.statusText}>{STATUS_LABELS[item.status] || item.status}</Text>
           </View>
           <TouchableOpacity style={styles.deleteBtn} onPress={() => confirmDelete(item.id)}>
-            <TrashIcon size={16} color="#e74c3c" />
+            <TrashIcon size={16} color={colors.danger} />
           </TouchableOpacity>
         </View>
       </View>
 
       <View style={styles.cardBody}>
         <View style={styles.cardInfoRow}>
-          <ClockIcon />
+          <ClockIcon color={colors.textMuted} />
           <Text style={styles.cardInfoText}>
             {item.time} ({item.duration}분)
           </Text>
@@ -453,7 +462,7 @@ export default function LessonScheduleScreen() {
 
       {item.status === 'scheduled' && (
         <TouchableOpacity style={styles.completeBtn} onPress={() => handleMarkCompleted(item)}>
-          <CheckIcon size={14} />
+          <CheckIcon size={14} color={colors.text} />
           <Text style={styles.completeBtnText}>완료</Text>
         </TouchableOpacity>
       )}
@@ -483,7 +492,7 @@ export default function LessonScheduleScreen() {
     if (mentorships.length === 0) {
       return (
         <View style={styles.emptyContainer}>
-          <NoteIcon size={64} color="rgba(201,169,110,0.3)" />
+          <NoteIcon size={64} color={colors.accentMuted} />
           <Text style={styles.emptyTitle}>멘토십이 없습니다</Text>
           <Text style={styles.emptySubtitle}>채팅 탭에서 멘토를 신청하세요</Text>
         </View>
@@ -491,7 +500,7 @@ export default function LessonScheduleScreen() {
     }
     return (
       <View style={styles.emptyContainer}>
-        <CalendarIcon size={48} color="rgba(201,169,110,0.3)" />
+        <CalendarIcon size={48} color={colors.accentMuted} />
         <Text style={styles.emptyTitle}>등록된 일정이 없습니다</Text>
         <Text style={styles.emptySubtitle}>+ 버튼을 눌러 레슨 일정을 추가하세요</Text>
       </View>
@@ -548,7 +557,7 @@ export default function LessonScheduleScreen() {
                   value={formTitle}
                   onChangeText={setFormTitle}
                   placeholder="피아노 레슨"
-                  placeholderTextColor="#9e9282"
+                  placeholderTextColor={colors.textMuted}
                 />
               </View>
 
@@ -562,7 +571,7 @@ export default function LessonScheduleScreen() {
                     onChangeText={setFormDate}
                     onFocus={() => { if (!formDate) setFormDate(getTodayString()); }}
                     placeholder="2026-04-10"
-                    placeholderTextColor="#9e9282"
+                    placeholderTextColor={colors.textMuted}
                     keyboardType="default"
                     maxLength={10}
                   />
@@ -582,7 +591,7 @@ export default function LessonScheduleScreen() {
                     onChangeText={setFormTime}
                     onFocus={() => { if (!formTime) setFormTime(getCurrentTime()); }}
                     placeholder="14:00"
-                    placeholderTextColor="#9e9282"
+                    placeholderTextColor={colors.textMuted}
                     keyboardType="default"
                     maxLength={5}
                   />
@@ -618,7 +627,7 @@ export default function LessonScheduleScreen() {
                   value={formMemo}
                   onChangeText={setFormMemo}
                   placeholder="메모를 입력하세요"
-                  placeholderTextColor="#9e9282"
+                  placeholderTextColor={colors.textMuted}
                   multiline
                   numberOfLines={3}
                   textAlignVertical="top"
@@ -643,7 +652,7 @@ export default function LessonScheduleScreen() {
                   disabled={saving}
                 >
                   {saving ? (
-                    <ActivityIndicator size="small" color="#110E0B" />
+                    <ActivityIndicator size="small" color={colors.accentText} />
                   ) : (
                     <Text style={styles.submitBtnText}>등록</Text>
                   )}
@@ -663,7 +672,7 @@ export default function LessonScheduleScreen() {
       {/* Header */}
       <View style={styles.header}>
         <TouchableOpacity style={styles.backBtn} onPress={() => router.back()}>
-          <BackIcon />
+          <BackIcon color={colors.text} />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>레슨 일정</Text>
         <View style={styles.headerRight} />
@@ -672,7 +681,7 @@ export default function LessonScheduleScreen() {
       {/* Content */}
       {loading ? (
         <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color="#C9A96E" />
+          <ActivityIndicator size="large" color={colors.accent} />
         </View>
       ) : (
         <FlatList
@@ -695,7 +704,7 @@ export default function LessonScheduleScreen() {
           activeOpacity={0.8}
           onPress={() => setShowForm(true)}
         >
-          <PlusIcon />
+          <PlusIcon color={colors.accentText} />
         </TouchableOpacity>
       )}
 
@@ -707,10 +716,10 @@ export default function LessonScheduleScreen() {
 
 // ── Styles ────────────────────────────────────────────────
 
-const styles = StyleSheet.create({
+const makeStyles = (c) => StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#110E0B',
+    backgroundColor: c.bg,
   },
 
   // Header
@@ -721,7 +730,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 14,
     borderBottomWidth: 0.5,
-    borderBottomColor: 'rgba(201,169,110,0.15)',
+    borderBottomColor: c.surfaceStrong,
   },
   backBtn: {
     width: 40,
@@ -732,7 +741,7 @@ const styles = StyleSheet.create({
   headerTitle: {
     fontSize: 18,
     fontWeight: '300',
-    color: '#F5F0E8',
+    color: c.text,
     letterSpacing: 1,
   },
   headerRight: {
@@ -769,12 +778,12 @@ const styles = StyleSheet.create({
   groupDateLine: {
     flex: 1,
     height: 0.5,
-    backgroundColor: 'rgba(201,169,110,0.15)',
+    backgroundColor: c.surfaceStrong,
   },
   groupDate: {
     fontSize: 13,
     fontWeight: '400',
-    color: '#C9A96E',
+    color: c.accent,
     letterSpacing: 1.5,
     fontStyle: 'italic',
   },
@@ -817,7 +826,7 @@ const styles = StyleSheet.create({
     borderWidth: 0.5,
     borderColor: 'rgba(180,150,100,0.2)',
     borderTopWidth: 1.5,
-    borderTopColor: 'rgba(201,169,110,0.25)',
+    borderTopColor: c.border,
     position: 'relative',
     overflow: 'hidden',
   },
@@ -836,7 +845,7 @@ const styles = StyleSheet.create({
   cardTitle: {
     fontSize: 16,
     fontWeight: '400',
-    color: '#F5F0E8',
+    color: c.text,
   },
   cardHeaderRight: {
     flexDirection: 'row',
@@ -859,7 +868,7 @@ const styles = StyleSheet.create({
   statusText: {
     fontSize: 12,
     fontWeight: '400',
-    color: '#F5F0E8',
+    color: c.text,
     letterSpacing: 0.5,
   },
   cardBody: {
@@ -872,11 +881,11 @@ const styles = StyleSheet.create({
   },
   cardInfoText: {
     fontSize: 14,
-    color: '#9e9282',
+    color: c.textMuted,
   },
   cardMemo: {
     fontSize: 13,
-    color: '#9e9282',
+    color: c.textMuted,
     marginTop: 4,
     paddingLeft: 2,
   },
@@ -908,12 +917,12 @@ const styles = StyleSheet.create({
   emptyTitle: {
     fontSize: 17,
     fontWeight: '300',
-    color: '#9e9282',
+    color: c.textMuted,
     marginTop: 8,
   },
   emptySubtitle: {
     fontSize: 14,
-    color: '#9e9282',
+    color: c.textMuted,
     textAlign: 'center',
     lineHeight: 20,
   },
@@ -925,7 +934,7 @@ const styles = StyleSheet.create({
     width: 56,
     height: 56,
     borderRadius: 28,
-    backgroundColor: '#C9A96E',
+    backgroundColor: c.accent,
     alignItems: 'center',
     justifyContent: 'center',
     elevation: 6,
@@ -953,18 +962,18 @@ const styles = StyleSheet.create({
     justifyContent: 'flex-end',
   },
   formContainer: {
-    backgroundColor: '#1a1613',
+    backgroundColor: c.bgElevated,
     borderTopLeftRadius: 4,
     borderTopRightRadius: 4,
     padding: 24,
     paddingBottom: 40,
     borderTopWidth: 1,
-    borderColor: 'rgba(201,169,110,0.18)',
+    borderColor: c.border,
   },
   formTitle: {
     fontSize: 20,
     fontWeight: '300',
-    color: '#F5F0E8',
+    color: c.text,
     marginBottom: 20,
     textAlign: 'center',
     letterSpacing: 1,
@@ -977,7 +986,7 @@ const styles = StyleSheet.create({
   fieldLabel: {
     fontSize: 13,
     fontWeight: '400',
-    color: '#9e9282',
+    color: c.textMuted,
     marginBottom: 8,
     letterSpacing: 0.5,
   },
@@ -987,14 +996,14 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   input: {
-    backgroundColor: '#110E0B',
+    backgroundColor: c.bg,
     borderWidth: 1,
-    borderColor: 'rgba(201,169,110,0.18)',
+    borderColor: c.border,
     borderRadius: 4,
     paddingHorizontal: 14,
     paddingVertical: 12,
     fontSize: 15,
-    color: '#F5F0E8',
+    color: c.text,
   },
   memoInput: {
     height: 80,
@@ -1004,14 +1013,14 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     paddingVertical: 10,
     borderRadius: 4,
-    backgroundColor: 'rgba(201, 169, 110, 0.15)',
+    backgroundColor: c.surfaceStrong,
     borderWidth: 1,
-    borderColor: '#C9A96E',
+    borderColor: c.accent,
   },
   quickChipText: {
     fontSize: 13,
     fontWeight: '400',
-    color: '#C9A96E',
+    color: c.accent,
   },
 
   // Chips
@@ -1024,22 +1033,22 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 8,
     borderRadius: 4,
-    backgroundColor: '#110E0B',
+    backgroundColor: c.bg,
     borderWidth: 1,
-    borderColor: 'rgba(201,169,110,0.18)',
+    borderColor: c.border,
     marginRight: 4,
   },
   chipActive: {
-    backgroundColor: 'rgba(201, 169, 110, 0.15)',
-    borderColor: '#C9A96E',
+    backgroundColor: c.surfaceStrong,
+    borderColor: c.accent,
   },
   chipText: {
     fontSize: 14,
-    color: '#9e9282',
+    color: c.textMuted,
     fontWeight: '400',
   },
   chipTextActive: {
-    color: '#C9A96E',
+    color: c.accent,
   },
 
   // Form buttons
@@ -1055,12 +1064,12 @@ const styles = StyleSheet.create({
     paddingVertical: 14,
     borderRadius: 4,
     borderWidth: 1,
-    borderColor: 'rgba(201,169,110,0.18)',
+    borderColor: c.border,
   },
   cancelBtnText: {
     fontSize: 15,
     fontWeight: '400',
-    color: '#9e9282',
+    color: c.textMuted,
   },
   submitBtn: {
     flex: 1,
@@ -1068,7 +1077,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     paddingVertical: 14,
     borderRadius: 4,
-    backgroundColor: '#C9A96E',
+    backgroundColor: c.accent,
   },
   submitBtnDisabled: {
     opacity: 0.6,
@@ -1076,6 +1085,6 @@ const styles = StyleSheet.create({
   submitBtnText: {
     fontSize: 15,
     fontWeight: '400',
-    color: '#110E0B',
+    color: c.accentText,
   },
 });

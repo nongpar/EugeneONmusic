@@ -8,6 +8,7 @@ import { router } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import * as ImagePicker from 'expo-image-picker';
 import { useAuth } from '../../hooks/useAuth';
+import { useTheme } from '../../hooks/useTheme';
 
 const WP_BASE = 'https://www.eon-music.com/wp-json';
 const VIDEO_TAG = 'eon-lesson-video';
@@ -79,6 +80,8 @@ function formatFileSize(bytes) {
 
 // ── 영상 카드 ──
 function VideoCard({ item, onDelete, onPlay, canDelete }) {
+  const { colors } = useTheme();
+  const styles = makeStyles(colors);
   const time = new Date(item.date);
   const dateStr = `${time.getFullYear()}.${time.getMonth() + 1}.${time.getDate()}`;
   const title = item.title?.rendered?.replace(/&#8211;/g, '-')?.replace(/&amp;/g, '&') || '레슨 영상';
@@ -87,7 +90,7 @@ function VideoCard({ item, onDelete, onPlay, canDelete }) {
     <TouchableOpacity style={styles.videoCard} activeOpacity={0.8} onPress={() => onPlay(item)}>
       <View style={styles.thumbnailWrap}>
         <View style={[styles.thumbnail, styles.thumbnailPlaceholder]}>
-          <VideoEmptyIcon size={32} color="rgba(201,169,110,0.3)" />
+          <VideoEmptyIcon size={32} color={colors.accentMuted} />
         </View>
         <View style={styles.playOverlay}>
           <PlayIcon />
@@ -115,7 +118,7 @@ function VideoCard({ item, onDelete, onPlay, canDelete }) {
             onDelete(item);
           }}
         >
-          <TrashIcon />
+          <TrashIcon color={colors.danger} />
         </TouchableOpacity>
       )}
     </TouchableOpacity>
@@ -123,6 +126,8 @@ function VideoCard({ item, onDelete, onPlay, canDelete }) {
 }
 
 export default function LessonVideosScreen() {
+  const { colors } = useTheme();
+  const styles = makeStyles(colors);
   const insets = useSafeAreaInsets();
   const { user, getToken } = useAuth();
   const isTeacher = user?.role === 'teacher';
@@ -279,7 +284,7 @@ export default function LessonVideosScreen() {
     <View style={[styles.container, { paddingTop: insets.top }]}>
       <View style={styles.header}>
         <TouchableOpacity onPress={() => router.back()} style={styles.headerBtn}>
-          <BackIcon />
+          <BackIcon color={colors.textMuted} />
         </TouchableOpacity>
         <View style={styles.headerCenter}>
           <Text style={styles.headerTitle}>레슨 영상</Text>
@@ -287,7 +292,7 @@ export default function LessonVideosScreen() {
         </View>
         {isTeacher ? (
           <TouchableOpacity style={styles.headerBtn} onPress={handleUpload}>
-            <UploadIcon />
+            <UploadIcon color={colors.accent} />
           </TouchableOpacity>
         ) : <View style={styles.headerBtn} />}
       </View>
@@ -307,7 +312,7 @@ export default function LessonVideosScreen() {
 
       {loading ? (
         <View style={styles.center}>
-          <ActivityIndicator size="large" color="#C9A96E" />
+          <ActivityIndicator size="large" color={colors.accent} />
         </View>
       ) : videos.length === 0 ? (
         <FlatList
@@ -315,7 +320,7 @@ export default function LessonVideosScreen() {
           renderItem={null}
           ListEmptyComponent={
             <View style={styles.emptyWrap}>
-              <VideoEmptyIcon size={64} />
+              <VideoEmptyIcon size={64} color={colors.accentMuted} />
               <Text style={styles.emptyTitle}>레슨 영상이 없습니다</Text>
               <Text style={styles.emptyDesc}>
                 {isTeacher
@@ -324,13 +329,13 @@ export default function LessonVideosScreen() {
               </Text>
               {isTeacher && (
                 <TouchableOpacity style={styles.emptyUploadBtn} onPress={handleUpload}>
-                  <UploadIcon size={18} />
+                  <UploadIcon size={18} color={colors.accentText} />
                   <Text style={styles.emptyUploadText}>영상 업로드</Text>
                 </TouchableOpacity>
               )}
             </View>
           }
-          refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#C9A96E" />}
+          refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.accent} />}
         />
       ) : (
         <FlatList
@@ -346,53 +351,53 @@ export default function LessonVideosScreen() {
           )}
           contentContainerStyle={styles.listContent}
           showsVerticalScrollIndicator={false}
-          refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#C9A96E" />}
+          refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.accent} />}
         />
       )}
     </View>
   );
 }
 
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#110E0B' },
+const makeStyles = (c) => StyleSheet.create({
+  container: { flex: 1, backgroundColor: c.bg },
   center: { flex: 1, alignItems: 'center', justifyContent: 'center' },
 
   header: {
     flexDirection: 'row', alignItems: 'center',
     paddingHorizontal: 16, paddingVertical: 12,
-    borderBottomWidth: 0.5, borderBottomColor: 'rgba(201,169,110,0.15)', gap: 12,
+    borderBottomWidth: 0.5, borderBottomColor: c.surfaceStrong, gap: 12,
   },
   headerBtn: { width: 36, height: 36, borderRadius: 4, alignItems: 'center', justifyContent: 'center' },
   headerCenter: { flex: 1, alignItems: 'center' },
-  headerTitle: { fontSize: 17, fontWeight: '300', color: '#F5F0E8', letterSpacing: 1 },
-  headerSub: { fontSize: 11, color: '#9e9282', marginTop: 1, letterSpacing: 0.5 },
+  headerTitle: { fontSize: 17, fontWeight: '300', color: c.text, letterSpacing: 1 },
+  headerSub: { fontSize: 11, color: c.textMuted, marginTop: 1, letterSpacing: 0.5 },
 
-  uploadBar: { height: 28, backgroundColor: 'rgba(201,169,110,0.07)', justifyContent: 'center' },
-  uploadProgress: { position: 'absolute', left: 0, top: 0, bottom: 0, backgroundColor: 'rgba(201,169,110,0.15)' },
-  uploadText: { fontSize: 11, color: '#C9A96E', textAlign: 'center', fontWeight: '400' },
+  uploadBar: { height: 28, backgroundColor: c.surface, justifyContent: 'center' },
+  uploadProgress: { position: 'absolute', left: 0, top: 0, bottom: 0, backgroundColor: c.surfaceStrong },
+  uploadText: { fontSize: 11, color: c.accent, textAlign: 'center', fontWeight: '400' },
 
-  infoBar: { paddingVertical: 8, paddingHorizontal: 20, backgroundColor: 'rgba(201,169,110,0.07)' },
-  infoText: { fontSize: 11, color: '#9e9282', textAlign: 'center' },
+  infoBar: { paddingVertical: 8, paddingHorizontal: 20, backgroundColor: c.surface },
+  infoText: { fontSize: 11, color: c.textMuted, textAlign: 'center' },
 
   emptyWrap: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: 12, paddingHorizontal: 40, paddingTop: 100 },
-  emptyTitle: { fontSize: 18, fontWeight: '300', color: '#F5F0E8', marginTop: 8, letterSpacing: 0.5 },
-  emptyDesc: { fontSize: 13, color: '#9e9282', textAlign: 'center', lineHeight: 20 },
+  emptyTitle: { fontSize: 18, fontWeight: '300', color: c.text, marginTop: 8, letterSpacing: 0.5 },
+  emptyDesc: { fontSize: 13, color: c.textMuted, textAlign: 'center', lineHeight: 20 },
   emptyUploadBtn: {
     flexDirection: 'row', alignItems: 'center', gap: 8,
-    backgroundColor: '#C9A96E', paddingVertical: 14, paddingHorizontal: 28,
+    backgroundColor: c.accent, paddingVertical: 14, paddingHorizontal: 28,
     borderRadius: 4, marginTop: 12,
   },
-  emptyUploadText: { fontSize: 15, fontWeight: '400', color: '#110E0B' },
+  emptyUploadText: { fontSize: 15, fontWeight: '400', color: c.accentText },
 
   listContent: { paddingHorizontal: 16, paddingTop: 12, paddingBottom: 20 },
 
   videoCard: {
-    flexDirection: 'row', backgroundColor: 'rgba(201,169,110,0.07)', borderRadius: 4,
+    flexDirection: 'row', backgroundColor: c.surface, borderRadius: 4,
     marginBottom: 10, overflow: 'hidden',
-    borderWidth: 1, borderColor: 'rgba(201,169,110,0.18)',
+    borderWidth: 1, borderColor: c.border,
   },
   thumbnailWrap: {
-    width: 140, height: 90, backgroundColor: '#110E0B',
+    width: 140, height: 90, backgroundColor: c.bg,
     position: 'relative',
   },
   thumbnail: { width: '100%', height: '100%' },
@@ -403,10 +408,10 @@ const styles = StyleSheet.create({
   },
 
   videoInfo: { flex: 1, padding: 12, justifyContent: 'center', gap: 6 },
-  videoTitle: { fontSize: 14, fontWeight: '400', color: '#F5F0E8', lineHeight: 20 },
+  videoTitle: { fontSize: 14, fontWeight: '400', color: c.text, lineHeight: 20 },
   videoMeta: { flexDirection: 'row', alignItems: 'center', gap: 4, flexWrap: 'wrap' },
-  videoMetaText: { fontSize: 11, color: '#9e9282' },
-  videoMetaDot: { fontSize: 11, color: 'rgba(201,169,110,0.3)' },
+  videoMetaText: { fontSize: 11, color: c.textMuted },
+  videoMetaDot: { fontSize: 11, color: c.accentMuted },
 
   deleteBtn: {
     position: 'absolute', top: 8, right: 8,

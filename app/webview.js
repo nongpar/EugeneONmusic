@@ -5,6 +5,7 @@ import { router, useLocalSearchParams } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Svg, { Path } from 'react-native-svg';
 import { useAuth } from '../hooks/useAuth';
+import { useTheme } from '../hooks/useTheme';
 
 function BackIcon({ size = 22, color = '#C9A96E' }) {
   return (
@@ -15,6 +16,8 @@ function BackIcon({ size = 22, color = '#C9A96E' }) {
 }
 
 export default function WebViewScreen() {
+  const { colors } = useTheme();
+  const styles = makeStyles(colors);
   const insets = useSafeAreaInsets();
   const { url, title, autoLogin } = useLocalSearchParams();
   const { user, getCredentials } = useAuth();
@@ -56,7 +59,7 @@ export default function WebViewScreen() {
     <View style={[styles.container, { paddingTop: insets.top }]}>
       <View style={styles.header}>
         <TouchableOpacity style={styles.backBtn} onPress={() => router.back()}>
-          <BackIcon />
+          <BackIcon color={colors.accent} />
         </TouchableOpacity>
         <Text style={styles.headerTitle} numberOfLines={1}>{title || ''}</Text>
         <View style={{ width: 22 }} />
@@ -72,7 +75,7 @@ export default function WebViewScreen() {
         <View style={{ flex: 1 }}>
           {showLoginOverlay && (
             <View style={styles.loginOverlay}>
-              <ActivityIndicator size="large" color="#C9A96E" />
+              <ActivityIndicator size="large" color={colors.accent} />
               <Text style={styles.loginOverlayTitle}>연결 중...</Text>
               <Text style={styles.loginOverlayDesc}>자동 로그인 후 페이지로 이동합니다</Text>
             </View>
@@ -125,10 +128,10 @@ export default function WebViewScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const makeStyles = (c) => StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#110E0B',
+    backgroundColor: c.bg,
   },
   header: {
     flexDirection: 'row',
@@ -137,7 +140,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 12,
     borderBottomWidth: 0.5,
-    borderBottomColor: 'rgba(201,169,110,0.18)',
+    borderBottomColor: c.border,
   },
   backBtn: {
     padding: 4,
@@ -145,7 +148,7 @@ const styles = StyleSheet.create({
   headerTitle: {
     fontSize: 16,
     fontWeight: '400',
-    color: '#F5F0E8',
+    color: c.text,
     letterSpacing: 0.3,
     flex: 1,
     textAlign: 'center',
@@ -153,7 +156,7 @@ const styles = StyleSheet.create({
   },
   webview: {
     flex: 1,
-    backgroundColor: '#110E0B',
+    backgroundColor: c.bg,
   },
   webFallback: {
     flex: 1,
@@ -162,13 +165,13 @@ const styles = StyleSheet.create({
     padding: 20,
   },
   webFallbackText: {
-    color: '#9e9282',
+    color: c.textMuted,
     fontSize: 15,
   },
   loginOverlay: {
     position: 'absolute',
     top: 0, left: 0, right: 0, bottom: 0,
-    backgroundColor: '#110E0B',
+    backgroundColor: c.bg,
     alignItems: 'center',
     justifyContent: 'center',
     gap: 14,
@@ -176,13 +179,13 @@ const styles = StyleSheet.create({
   },
   loginOverlayTitle: {
     fontSize: 15,
-    color: '#F5F0E8',
+    color: c.text,
     fontWeight: '400',
     letterSpacing: 0.5,
   },
   loginOverlayDesc: {
     fontSize: 13,
-    color: '#9e9282',
+    color: c.textMuted,
     letterSpacing: 0.3,
   },
 });

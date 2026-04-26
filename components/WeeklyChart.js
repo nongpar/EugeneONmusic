@@ -1,4 +1,5 @@
 import { View, Text, StyleSheet } from 'react-native';
+import { useTheme } from '../hooks/useTheme';
 
 const TODAY_INDEX = (() => {
   const d = new Date().getDay();
@@ -14,6 +15,8 @@ function formatTime(mins) {
 }
 
 export default function WeeklyChart({ weeklyData }) {
+  const { colors } = useTheme();
+  const styles = makeStyles(colors);
   const data = weeklyData || [
     { day: '월', minutes: 0 },
     { day: '화', minutes: 0 },
@@ -54,10 +57,10 @@ export default function WeeklyChart({ weeklyData }) {
                     {
                       height: `${Math.max(heightPercent, 4)}%`,
                       backgroundColor: isToday
-                        ? '#C9A96E'
+                        ? colors.accent
                         : hasPractice
-                        ? 'rgba(201,169,110,0.4)'
-                        : 'rgba(201,169,110,0.07)',
+                        ? colors.accentMuted
+                        : colors.surface,
                     },
                   ]}
                 />
@@ -92,15 +95,15 @@ export default function WeeklyChart({ weeklyData }) {
   );
 }
 
-const styles = StyleSheet.create({
+const makeStyles = (c) => StyleSheet.create({
   container: {
     marginHorizontal: 20,
-    backgroundColor: 'rgba(201,169,110,0.07)',
+    backgroundColor: c.surface,
     borderRadius: 4,
     padding: 20,
     gap: 16,
     borderWidth: 0.5,
-    borderColor: 'rgba(201,169,110,0.15)',
+    borderColor: c.surfaceStrong,
   },
   header: {
     flexDirection: 'row',
@@ -110,13 +113,13 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 17,
     fontWeight: '400',
-    color: '#F5F0E8',
+    color: c.text,
     letterSpacing: 0.3,
   },
   totalTime: {
     fontSize: 15,
     fontWeight: '400',
-    color: '#C9A96E',
+    color: c.accent,
   },
   chartArea: {
     flexDirection: 'row',
@@ -134,7 +137,7 @@ const styles = StyleSheet.create({
   },
   barValue: {
     fontSize: 9,
-    color: '#9e9282',
+    color: c.textMuted,
     height: 14,
   },
   barTrack: {
@@ -150,18 +153,18 @@ const styles = StyleSheet.create({
   },
   dayLabel: {
     fontSize: 12,
-    color: '#9e9282',
+    color: c.textMuted,
     marginTop: 4,
   },
   todayLabel: {
-    color: '#C9A96E',
+    color: c.accent,
     fontWeight: '400',
   },
   statsRow: {
     flexDirection: 'row',
     justifyContent: 'space-around',
     alignItems: 'center',
-    backgroundColor: '#0C0A08',
+    backgroundColor: c.bg,
     borderRadius: 4,
     paddingVertical: 14,
   },
@@ -172,15 +175,15 @@ const styles = StyleSheet.create({
   statValue: {
     fontSize: 16,
     fontWeight: '300',
-    color: '#F5F0E8',
+    color: c.text,
   },
   statLabel: {
     fontSize: 12,
-    color: '#9e9282',
+    color: c.textMuted,
   },
   divider: {
     width: 0.5,
     height: 30,
-    backgroundColor: 'rgba(201,169,110,0.18)',
+    backgroundColor: c.border,
   },
 });

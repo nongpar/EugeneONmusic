@@ -9,6 +9,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import * as DocumentPicker from 'expo-document-picker';
 import * as ImagePicker from 'expo-image-picker';
 import { useAuth } from '../../hooks/useAuth';
+import { useTheme } from '../../hooks/useTheme';
 
 const WP_BASE = 'https://www.eon-music.com/wp-json';
 // WordPress 미디어 카테고리 태그 (악보 구분용)
@@ -78,6 +79,8 @@ function TrashIcon({ size = 16, color = '#e74c3c' }) {
 
 // ── 악보 카드 ──
 function SheetCard({ item, onDelete, canDelete }) {
+  const { colors } = useTheme();
+  const styles = makeStyles(colors);
   const isImage = item.mime_type?.startsWith('image/');
   const time = new Date(item.date);
   const dateStr = `${time.getFullYear()}.${time.getMonth() + 1}.${time.getDate()}`;
@@ -104,7 +107,7 @@ function SheetCard({ item, onDelete, canDelete }) {
         {isImage && item.source_url ? (
           <Image source={{ uri: item.source_url }} style={styles.bookThumbnail} resizeMode="cover" />
         ) : (
-          <SheetDocIcon size={36} />
+          <SheetDocIcon size={36} color={colors.accent} />
         )}
         <View style={styles.bookSpine} />
       </View>
@@ -121,7 +124,7 @@ function SheetCard({ item, onDelete, canDelete }) {
             onDelete(item);
           }}
         >
-          <TrashIcon />
+          <TrashIcon color={colors.danger} />
         </TouchableOpacity>
       )}
     </TouchableOpacity>
@@ -129,6 +132,8 @@ function SheetCard({ item, onDelete, canDelete }) {
 }
 
 export default function SheetMusicScreen() {
+  const { colors } = useTheme();
+  const styles = makeStyles(colors);
   const insets = useSafeAreaInsets();
   const { user, getToken } = useAuth();
   const isTeacher = user?.role === 'teacher';
@@ -281,7 +286,7 @@ export default function SheetMusicScreen() {
       {/* 헤더 */}
       <View style={styles.header}>
         <TouchableOpacity onPress={() => router.back()} style={styles.headerBtn}>
-          <BackIcon />
+          <BackIcon color={colors.textMuted} />
         </TouchableOpacity>
         <View style={styles.headerCenter}>
           <Text style={styles.headerTitle}>악보 라이브러리</Text>
@@ -297,7 +302,7 @@ export default function SheetMusicScreen() {
               ]);
             }}
           >
-            <PlusIcon />
+            <PlusIcon color={colors.accent} />
           </TouchableOpacity>
         ) : <View style={styles.headerBtn} />}
       </View>
@@ -312,17 +317,17 @@ export default function SheetMusicScreen() {
 
       {loading ? (
         <View style={styles.center}>
-          <ActivityIndicator size="large" color="#C9A96E" />
+          <ActivityIndicator size="large" color={colors.accent} />
         </View>
       ) : sheets.length === 0 ? (
         <ScrollView
           contentContainerStyle={styles.emptyShelf}
-          refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#C9A96E" />}
+          refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.accent} />}
         >
           <View style={styles.shelfRow}>
             <View style={styles.shelfBoard} />
           </View>
-          <SheetDocIcon size={56} color="rgba(201,169,110,0.3)" />
+          <SheetDocIcon size={56} color={colors.accentMuted} />
           <Text style={styles.emptyTitle}>악보가 아직 없습니다</Text>
           <Text style={styles.emptyDesc}>
             {isTeacher
@@ -332,11 +337,11 @@ export default function SheetMusicScreen() {
           {isTeacher && (
             <View style={styles.uploadBtns}>
               <TouchableOpacity style={styles.uploadBtn} onPress={() => handleUpload('document')}>
-                <SheetDocIcon size={20} />
+                <SheetDocIcon size={20} color={colors.accent} />
                 <Text style={styles.uploadBtnText}>PDF / 파일</Text>
               </TouchableOpacity>
               <TouchableOpacity style={styles.uploadBtn} onPress={() => handleUpload('image')}>
-                <ImageIcon size={20} />
+                <ImageIcon size={20} color={colors.accent} />
                 <Text style={styles.uploadBtnText}>사진 촬영본</Text>
               </TouchableOpacity>
             </View>
@@ -349,16 +354,16 @@ export default function SheetMusicScreen() {
         <ScrollView
           showsVerticalScrollIndicator={false}
           contentContainerStyle={styles.shelfContainer}
-          refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#C9A96E" />}
+          refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.accent} />}
         >
           {isTeacher && (
             <View style={styles.uploadBtnsRow}>
               <TouchableOpacity style={styles.uploadBtnSmall} onPress={() => handleUpload('document')}>
-                <SheetDocIcon size={16} />
+                <SheetDocIcon size={16} color={colors.textMuted} />
                 <Text style={styles.uploadBtnSmallText}>PDF / 파일</Text>
               </TouchableOpacity>
               <TouchableOpacity style={styles.uploadBtnSmall} onPress={() => handleUpload('image')}>
-                <ImageIcon size={16} />
+                <ImageIcon size={16} color={colors.textMuted} />
                 <Text style={styles.uploadBtnSmallText}>사진</Text>
               </TouchableOpacity>
             </View>
@@ -381,27 +386,27 @@ export default function SheetMusicScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#110E0B' },
+const makeStyles = (c) => StyleSheet.create({
+  container: { flex: 1, backgroundColor: c.bg },
   center: { flex: 1, alignItems: 'center', justifyContent: 'center' },
 
   header: {
     flexDirection: 'row', alignItems: 'center',
     paddingHorizontal: 16, paddingVertical: 12,
-    borderBottomWidth: 0.5, borderBottomColor: 'rgba(201,169,110,0.15)', gap: 12,
+    borderBottomWidth: 0.5, borderBottomColor: c.surfaceStrong, gap: 12,
   },
   headerBtn: { width: 36, height: 36, borderRadius: 4, alignItems: 'center', justifyContent: 'center' },
   headerCenter: { flex: 1, alignItems: 'center' },
-  headerTitle: { fontSize: 17, fontWeight: '300', color: '#F5F0E8', letterSpacing: 1 },
-  headerSub: { fontSize: 11, color: '#9e9282', marginTop: 1, letterSpacing: 0.5 },
+  headerTitle: { fontSize: 17, fontWeight: '300', color: c.text, letterSpacing: 1 },
+  headerSub: { fontSize: 11, color: c.textMuted, marginTop: 1, letterSpacing: 0.5 },
 
-  uploadBar: { height: 28, backgroundColor: 'rgba(201,169,110,0.07)', justifyContent: 'center' },
-  uploadProgress: { position: 'absolute', left: 0, top: 0, bottom: 0, backgroundColor: 'rgba(201,169,110,0.15)' },
-  uploadText: { fontSize: 11, color: '#C9A96E', textAlign: 'center', fontWeight: '400' },
+  uploadBar: { height: 28, backgroundColor: c.surface, justifyContent: 'center' },
+  uploadProgress: { position: 'absolute', left: 0, top: 0, bottom: 0, backgroundColor: c.surfaceStrong },
+  uploadText: { fontSize: 11, color: c.accent, textAlign: 'center', fontWeight: '400' },
 
   emptyShelf: { flexGrow: 1, alignItems: 'center', justifyContent: 'center', gap: 12, paddingHorizontal: 40 },
-  emptyTitle: { fontSize: 18, fontWeight: '300', color: '#F5F0E8', marginTop: 8, letterSpacing: 0.5 },
-  emptyDesc: { fontSize: 13, color: '#9e9282', textAlign: 'center', lineHeight: 20 },
+  emptyTitle: { fontSize: 18, fontWeight: '300', color: c.text, marginTop: 8, letterSpacing: 0.5 },
+  emptyDesc: { fontSize: 13, color: c.textMuted, textAlign: 'center', lineHeight: 20 },
 
   shelfRow: { width: '100%', paddingHorizontal: 20, marginVertical: 16 },
   shelfBoard: {
@@ -413,47 +418,47 @@ const styles = StyleSheet.create({
   uploadBtns: { flexDirection: 'row', gap: 12, marginTop: 12 },
   uploadBtn: {
     flexDirection: 'row', alignItems: 'center', gap: 8,
-    backgroundColor: 'rgba(201,169,110,0.07)', paddingVertical: 14, paddingHorizontal: 20,
-    borderRadius: 4, borderWidth: 1, borderColor: 'rgba(201,169,110,0.18)',
+    backgroundColor: c.surface, paddingVertical: 14, paddingHorizontal: 20,
+    borderRadius: 4, borderWidth: 1, borderColor: c.border,
   },
-  uploadBtnText: { fontSize: 13, fontWeight: '400', color: '#C9A96E' },
+  uploadBtnText: { fontSize: 13, fontWeight: '400', color: c.accent },
 
   uploadBtnsRow: {
     flexDirection: 'row', gap: 8, paddingHorizontal: 20, marginTop: 16, marginBottom: 8,
   },
   uploadBtnSmall: {
     flexDirection: 'row', alignItems: 'center', gap: 6,
-    backgroundColor: 'rgba(201,169,110,0.07)', paddingVertical: 8, paddingHorizontal: 14,
-    borderRadius: 4, borderWidth: 1, borderColor: 'rgba(201,169,110,0.18)',
+    backgroundColor: c.surface, paddingVertical: 8, paddingHorizontal: 14,
+    borderRadius: 4, borderWidth: 1, borderColor: c.border,
   },
-  uploadBtnSmallText: { fontSize: 12, fontWeight: '400', color: '#9e9282' },
+  uploadBtnSmallText: { fontSize: 12, fontWeight: '400', color: c.textMuted },
 
   shelfContainer: { paddingBottom: 20 },
   shelfGrid: { flexDirection: 'row', flexWrap: 'wrap', paddingHorizontal: 16 },
   shelfSlot: { width: '50%', paddingHorizontal: 6, marginBottom: 4 },
 
   sheetCard: {
-    backgroundColor: 'rgba(201,169,110,0.07)', borderRadius: 4, padding: 12,
+    backgroundColor: c.surface, borderRadius: 4, padding: 12,
     alignItems: 'center', marginBottom: 8,
-    borderWidth: 1, borderColor: 'rgba(201,169,110,0.18)',
+    borderWidth: 1, borderColor: c.border,
   },
   bookCover: {
-    width: '100%', height: 120, backgroundColor: '#110E0B',
+    width: '100%', height: 120, backgroundColor: c.bg,
     borderRadius: 4, alignItems: 'center', justifyContent: 'center',
     marginBottom: 10, overflow: 'hidden',
-    borderWidth: 1, borderColor: 'rgba(201,169,110,0.18)',
+    borderWidth: 1, borderColor: c.border,
   },
   bookThumbnail: { width: '100%', height: '100%' },
   bookSpine: {
     position: 'absolute', left: 0, top: 0, bottom: 0, width: 4,
-    backgroundColor: 'rgba(201,169,110,0.25)', borderTopLeftRadius: 4, borderBottomLeftRadius: 4,
+    backgroundColor: c.border, borderTopLeftRadius: 4, borderBottomLeftRadius: 4,
   },
-  sheetTitle: { fontSize: 13, fontWeight: '400', color: '#F5F0E8', textAlign: 'center', lineHeight: 18 },
-  sheetDate: { fontSize: 10, color: '#9e9282', marginTop: 4 },
+  sheetTitle: { fontSize: 13, fontWeight: '400', color: c.text, textAlign: 'center', lineHeight: 18 },
+  sheetDate: { fontSize: 10, color: c.textMuted, marginTop: 4 },
   deleteBtn: {
     position: 'absolute', top: 8, right: 8,
     width: 28, height: 28, borderRadius: 4,
-    backgroundColor: 'rgba(201,169,110,0.07)', alignItems: 'center', justifyContent: 'center',
+    backgroundColor: c.surface, alignItems: 'center', justifyContent: 'center',
     borderWidth: 1, borderColor: '#e74c3c30',
   },
 

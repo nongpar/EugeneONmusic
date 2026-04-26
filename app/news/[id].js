@@ -7,6 +7,7 @@ import Svg, { Path, Circle, Rect } from 'react-native-svg';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useTheme } from '../../hooks/useTheme';
 
 const WP_API = 'https://www.eugeneonmusic.com/wp-json/wp/v2';
 
@@ -190,6 +191,8 @@ function parseContentToBlocks(html) {
 
 // ── 콘텐츠 블록 렌더러 ──
 function ContentBlock({ block, screenWidth }) {
+  const { colors } = useTheme();
+  const styles = makeStyles(colors);
   const imageWidth = screenWidth - 40; // padding 20 each side
 
   if (block.type === 'heading') {
@@ -232,6 +235,8 @@ function ContentBlock({ block, screenWidth }) {
 
 // ── 메인 화면 ──
 export default function NewsDetailScreen() {
+  const { colors } = useTheme();
+  const styles = makeStyles(colors);
   const { id } = useLocalSearchParams();
   const router = useRouter();
   const insets = useSafeAreaInsets();
@@ -284,13 +289,13 @@ export default function NewsDetailScreen() {
       <View style={[styles.container, { paddingTop: insets.top }]}>
         <View style={styles.header}>
           <TouchableOpacity style={styles.headerBtn} onPress={handleBack}>
-            <BackIcon />
+            <BackIcon color={colors.accent} />
           </TouchableOpacity>
           <Text style={styles.headerTitle}>소식</Text>
           <View style={styles.headerBtn} />
         </View>
         <View style={styles.center}>
-          <ActivityIndicator size="large" color="#C9A96E" />
+          <ActivityIndicator size="large" color={colors.accent} />
           <Text style={styles.loadingText}>불러오는 중...</Text>
         </View>
       </View>
@@ -302,7 +307,7 @@ export default function NewsDetailScreen() {
       <View style={[styles.container, { paddingTop: insets.top }]}>
         <View style={styles.header}>
           <TouchableOpacity style={styles.headerBtn} onPress={handleBack}>
-            <BackIcon />
+            <BackIcon color={colors.accent} />
           </TouchableOpacity>
           <Text style={styles.headerTitle}>소식</Text>
           <View style={styles.headerBtn} />
@@ -326,11 +331,11 @@ export default function NewsDetailScreen() {
       {/* 헤더 */}
       <View style={styles.header}>
         <TouchableOpacity style={styles.headerBtn} onPress={handleBack}>
-          <BackIcon />
+          <BackIcon color={colors.accent} />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>소식</Text>
         <TouchableOpacity style={styles.headerBtn} onPress={handleOpenExternal}>
-          <ExternalIcon />
+          <ExternalIcon color={colors.accent} />
         </TouchableOpacity>
       </View>
 
@@ -368,12 +373,12 @@ export default function NewsDetailScreen() {
           </View>
 
           <View style={styles.metaRow}>
-            <CalendarIcon />
+            <CalendarIcon color={colors.textMuted} />
             <Text style={styles.metaText}>{date}</Text>
             {authorName ? (
               <>
                 <View style={styles.metaSep}>
-                  <QuaverIcon size={11} color="rgba(201,169,110,0.5)" />
+                  <QuaverIcon size={11} color={colors.textHint} />
                 </View>
                 <Text style={styles.metaText}>{authorName}</Text>
               </>
@@ -400,10 +405,10 @@ export default function NewsDetailScreen() {
         {/* 원본 링크 */}
         <TouchableOpacity style={styles.originalLink} onPress={handleOpenExternal} activeOpacity={0.8}>
           <View style={styles.originalLinkLeft}>
-            <ExternalIcon size={15} />
+            <ExternalIcon size={15} color={colors.accent} />
             <Text style={styles.originalLinkText}>원본 글 보기</Text>
           </View>
-          <ChevronRightIcon size={14} />
+          <ChevronRightIcon size={14} color={colors.accent} />
         </TouchableOpacity>
         <Text style={styles.originalLinkSub}>eugeneonmusic.com</Text>
 
@@ -413,14 +418,14 @@ export default function NewsDetailScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#110E0B' },
+const makeStyles = (c) => StyleSheet.create({
+  container: { flex: 1, backgroundColor: c.bg },
 
   /* 헤더 */
   header: {
     flexDirection: 'row', alignItems: 'center',
     paddingHorizontal: 12, paddingVertical: 10,
-    borderBottomWidth: 0.5, borderBottomColor: 'rgba(201,169,110,0.15)',
+    borderBottomWidth: 0.5, borderBottomColor: c.surfaceStrong,
     gap: 8,
   },
   headerBtn: {
@@ -429,11 +434,11 @@ const styles = StyleSheet.create({
   },
   headerTitle: {
     flex: 1, textAlign: 'center',
-    fontSize: 16, fontWeight: '400', color: '#F5F0E8', letterSpacing: 0.3,
+    fontSize: 16, fontWeight: '400', color: c.text, letterSpacing: 0.3,
   },
 
   center: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: 12 },
-  loadingText: { fontSize: 14, color: '#9e9282' },
+  loadingText: { fontSize: 14, color: c.textMuted },
   errorText: { fontSize: 14, color: '#f87171' },
 
   scrollContent: { paddingBottom: 20 },
@@ -441,11 +446,11 @@ const styles = StyleSheet.create({
   /* 대표 이미지 */
   featuredWrap: {
     position: 'relative',
-    backgroundColor: '#110E0B',
+    backgroundColor: c.bg,
   },
   featuredImage: {
     height: 260,
-    backgroundColor: 'rgba(201,169,110,0.07)',
+    backgroundColor: c.surface,
   },
   featuredFade: {
     position: 'absolute',
@@ -463,14 +468,14 @@ const styles = StyleSheet.create({
     borderRadius: 2,
     borderWidth: 0.5,
     borderColor: 'rgba(201,169,110,0.55)',
-    backgroundColor: 'rgba(201,169,110,0.06)',
+    backgroundColor: c.inputBg,
   },
   categoryText: {
-    fontSize: 10, fontWeight: '500', color: '#C9A96E',
+    fontSize: 10, fontWeight: '500', color: c.accent,
     letterSpacing: 2,
   },
   title: {
-    fontSize: 23, fontWeight: '300', color: '#F5F0E8',
+    fontSize: 23, fontWeight: '300', color: c.text,
     lineHeight: 32, letterSpacing: 0.4,
   },
   titleOrnament: {
@@ -483,14 +488,14 @@ const styles = StyleSheet.create({
   },
   goldDiamond: {
     width: 5, height: 5,
-    backgroundColor: '#C9A96E',
+    backgroundColor: c.accent,
     transform: [{ rotate: '45deg' }],
   },
   metaRow: {
     flexDirection: 'row', alignItems: 'center', gap: 8,
   },
   metaText: {
-    fontSize: 12, color: '#9e9282', letterSpacing: 0.4,
+    fontSize: 12, color: c.textMuted, letterSpacing: 0.4,
   },
   metaSep: {
     paddingHorizontal: 2,
@@ -512,33 +517,33 @@ const styles = StyleSheet.create({
   },
   contentHeadingAccent: {
     width: 2, alignSelf: 'stretch',
-    backgroundColor: '#C9A96E',
+    backgroundColor: c.accent,
     marginTop: 6, marginBottom: 6,
     borderRadius: 1,
   },
   contentHeading: {
-    flex: 1, fontWeight: '400', color: '#F5F0E8',
+    flex: 1, fontWeight: '400', color: c.text,
     lineHeight: 28, letterSpacing: 0.3,
   },
   contentParagraph: {
-    fontSize: 15, color: '#C9BEAC', lineHeight: 27, letterSpacing: 0.2,
+    fontSize: 15, color: c.textSoft, lineHeight: 27, letterSpacing: 0.2,
   },
   contentImageWrap: {
     marginVertical: 10, borderRadius: 4, overflow: 'hidden',
     alignSelf: 'center',
-    borderWidth: 0.5, borderColor: 'rgba(201,169,110,0.25)',
+    borderWidth: 0.5, borderColor: c.border,
   },
   contentImage: {
-    borderRadius: 4, backgroundColor: 'rgba(201,169,110,0.07)',
+    borderRadius: 4, backgroundColor: c.surface,
   },
   contentListItem: {
     flexDirection: 'row', gap: 10, paddingLeft: 4,
   },
   contentBullet: {
-    fontSize: 10, color: '#C9A96E', lineHeight: 27,
+    fontSize: 10, color: c.accent, lineHeight: 27,
     paddingTop: 1,
   },
-  contentListText: { fontSize: 15, color: '#C9BEAC', lineHeight: 27, flex: 1 },
+  contentListText: { fontSize: 15, color: c.textSoft, lineHeight: 27, flex: 1 },
 
   /* 원본 링크 */
   originalLink: {
@@ -546,14 +551,14 @@ const styles = StyleSheet.create({
     marginTop: 28, marginHorizontal: 22,
     paddingVertical: 14, paddingHorizontal: 16,
     borderRadius: 2,
-    borderWidth: 0.5, borderColor: 'rgba(201,169,110,0.3)',
+    borderWidth: 0.5, borderColor: c.accentMuted,
     backgroundColor: 'rgba(201,169,110,0.04)',
   },
   originalLinkLeft: {
     flexDirection: 'row', alignItems: 'center', gap: 10,
   },
   originalLinkText: {
-    fontSize: 13, color: '#C9A96E', fontWeight: '400', letterSpacing: 1.2,
+    fontSize: 13, color: c.accent, fontWeight: '400', letterSpacing: 1.2,
   },
   originalLinkSub: {
     fontSize: 11, color: '#6d6558', letterSpacing: 0.8,

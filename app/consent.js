@@ -7,6 +7,7 @@ import { router } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useAuth } from '../hooks/useAuth';
+import { useTheme } from '../hooks/useTheme';
 
 let Haptics = null;
 if (Platform.OS !== 'web') {
@@ -61,6 +62,8 @@ function DocIcon({ size = 40, color = '#C9A96E' }) {
 }
 
 function Checkbox({ checked, onPress, label, required, onViewDetail }) {
+  const { colors } = useTheme();
+  const styles = makeStyles(colors);
   return (
     <View style={styles.checkRow}>
       <TouchableOpacity
@@ -69,7 +72,7 @@ function Checkbox({ checked, onPress, label, required, onViewDetail }) {
         activeOpacity={0.7}
       >
         <View style={[styles.checkbox, checked && styles.checkboxChecked]}>
-          {checked && <CheckIcon size={14} />}
+          {checked && <CheckIcon size={14} color={colors.bg} />}
         </View>
         <View style={styles.checkLabelWrap}>
           {required && <Text style={styles.requiredBadge}>필수</Text>}
@@ -79,7 +82,7 @@ function Checkbox({ checked, onPress, label, required, onViewDetail }) {
       {onViewDetail && (
         <TouchableOpacity style={styles.viewBtn} onPress={onViewDetail}>
           <Text style={styles.viewBtnText}>보기</Text>
-          <ArrowIcon size={14} />
+          <ArrowIcon size={14} color={colors.accent} />
         </TouchableOpacity>
       )}
     </View>
@@ -87,6 +90,8 @@ function Checkbox({ checked, onPress, label, required, onViewDetail }) {
 }
 
 export default function ConsentScreen() {
+  const { colors } = useTheme();
+  const styles = makeStyles(colors);
   const insets = useSafeAreaInsets();
   const { user, logout } = useAuth();
   const [agreeTerms, setAgreeTerms] = useState(false);
@@ -152,7 +157,7 @@ export default function ConsentScreen() {
       >
         {/* 헤더 */}
         <View style={styles.iconWrap}>
-          <DocIcon />
+          <DocIcon color={colors.accent} />
         </View>
         <Text style={styles.title}>서비스 이용 동의</Text>
         <Text style={styles.subtitle}>
@@ -170,7 +175,7 @@ export default function ConsentScreen() {
         {/* 전체 동의 */}
         <TouchableOpacity style={styles.allAgreeBox} onPress={toggleAll} activeOpacity={0.7}>
           <View style={[styles.checkbox, styles.checkboxLarge, allAgreed && styles.checkboxChecked]}>
-            {allAgreed && <CheckIcon size={18} />}
+            {allAgreed && <CheckIcon size={18} color={colors.bg} />}
           </View>
           <Text style={styles.allAgreeText}>모두 동의합니다</Text>
         </TouchableOpacity>
@@ -224,8 +229,8 @@ export default function ConsentScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#110E0B' },
+const makeStyles = (c) => StyleSheet.create({
+  container: { flex: 1, backgroundColor: c.bg },
   content: {
     paddingHorizontal: 24,
     paddingTop: 32,
@@ -234,25 +239,25 @@ const styles = StyleSheet.create({
   iconWrap: {
     alignSelf: 'center',
     width: 72, height: 72, borderRadius: 8,
-    backgroundColor: 'rgba(201,169,110,0.1)',
-    borderWidth: 0.5, borderColor: 'rgba(201,169,110,0.25)',
+    backgroundColor: c.surface,
+    borderWidth: 0.5, borderColor: c.border,
     alignItems: 'center', justifyContent: 'center',
     marginBottom: 20,
   },
 
   title: {
-    fontSize: 22, fontWeight: '400', color: '#F5F0E8',
+    fontSize: 22, fontWeight: '400', color: c.text,
     textAlign: 'center', letterSpacing: 0.5, marginBottom: 8,
   },
   subtitle: {
-    fontSize: 14, color: '#9e9282',
+    fontSize: 14, color: c.textMuted,
     textAlign: 'center', lineHeight: 22, marginBottom: 28,
   },
 
   infoBox: {
-    backgroundColor: 'rgba(201,169,110,0.05)',
+    backgroundColor: c.inputBg,
     borderRadius: 4,
-    borderLeftWidth: 2, borderLeftColor: '#C9A96E',
+    borderLeftWidth: 2, borderLeftColor: c.accent,
     padding: 14, marginBottom: 20,
   },
   infoText: {
@@ -262,17 +267,17 @@ const styles = StyleSheet.create({
   allAgreeBox: {
     flexDirection: 'row', alignItems: 'center', gap: 12,
     paddingVertical: 16, paddingHorizontal: 16,
-    backgroundColor: 'rgba(201,169,110,0.07)',
+    backgroundColor: c.surface,
     borderRadius: 4,
-    borderWidth: 0.5, borderColor: 'rgba(201,169,110,0.25)',
+    borderWidth: 0.5, borderColor: c.border,
     marginBottom: 16,
   },
   allAgreeText: {
-    fontSize: 16, fontWeight: '500', color: '#F5F0E8', letterSpacing: 0.3,
+    fontSize: 16, fontWeight: '500', color: c.text, letterSpacing: 0.3,
   },
 
   divider: {
-    height: 0.5, backgroundColor: 'rgba(201,169,110,0.18)',
+    height: 0.5, backgroundColor: c.border,
     marginBottom: 8,
   },
 
@@ -286,7 +291,7 @@ const styles = StyleSheet.create({
   },
   checkbox: {
     width: 20, height: 20, borderRadius: 3,
-    borderWidth: 1.5, borderColor: '#9e9282',
+    borderWidth: 1.5, borderColor: c.textMuted,
     alignItems: 'center', justifyContent: 'center',
     backgroundColor: 'transparent',
   },
@@ -294,19 +299,19 @@ const styles = StyleSheet.create({
     width: 24, height: 24, borderRadius: 4,
   },
   checkboxChecked: {
-    backgroundColor: '#C9A96E', borderColor: '#C9A96E',
+    backgroundColor: c.accent, borderColor: c.accent,
   },
   checkLabelWrap: {
     flexDirection: 'row', alignItems: 'center', gap: 8, flex: 1,
   },
   requiredBadge: {
-    fontSize: 10, fontWeight: '600', color: '#C9A96E',
-    backgroundColor: 'rgba(201,169,110,0.15)',
+    fontSize: 10, fontWeight: '600', color: c.accent,
+    backgroundColor: c.surfaceStrong,
     paddingHorizontal: 6, paddingVertical: 2, borderRadius: 3,
     letterSpacing: 0.5,
   },
   checkLabel: {
-    fontSize: 14, color: '#F5F0E8', letterSpacing: 0.3,
+    fontSize: 14, color: c.text, letterSpacing: 0.3,
   },
 
   viewBtn: {
@@ -314,7 +319,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 10, paddingVertical: 6,
   },
   viewBtnText: {
-    fontSize: 12, color: '#C9A96E', letterSpacing: 0.3,
+    fontSize: 12, color: c.accent, letterSpacing: 0.3,
   },
 
   noticeBox: {
@@ -323,25 +328,25 @@ const styles = StyleSheet.create({
     padding: 14, marginTop: 16,
   },
   noticeText: {
-    fontSize: 11, color: '#9e9282', lineHeight: 18, letterSpacing: 0.2,
+    fontSize: 11, color: c.textMuted, lineHeight: 18, letterSpacing: 0.2,
   },
 
   footer: {
     paddingHorizontal: 24, paddingTop: 12,
-    borderTopWidth: 0.5, borderTopColor: 'rgba(201,169,110,0.15)',
-    backgroundColor: '#110E0B',
+    borderTopWidth: 0.5, borderTopColor: c.surfaceStrong,
+    backgroundColor: c.bg,
     gap: 10,
   },
   primaryBtn: {
-    backgroundColor: '#C9A96E',
+    backgroundColor: c.accent,
     paddingVertical: 16, borderRadius: 4,
     alignItems: 'center', justifyContent: 'center',
   },
   primaryBtnDisabled: {
-    backgroundColor: 'rgba(201,169,110,0.2)',
+    backgroundColor: c.border,
   },
   primaryBtnText: {
-    fontSize: 15, fontWeight: '500', color: '#0C0A08', letterSpacing: 0.5,
+    fontSize: 15, fontWeight: '500', color: c.bg, letterSpacing: 0.5,
   },
   primaryBtnTextDisabled: {
     color: 'rgba(245,240,232,0.4)',
@@ -351,6 +356,6 @@ const styles = StyleSheet.create({
     alignItems: 'center', justifyContent: 'center',
   },
   secondaryBtnText: {
-    fontSize: 13, color: '#9e9282', letterSpacing: 0.3,
+    fontSize: 13, color: c.textMuted, letterSpacing: 0.3,
   },
 });

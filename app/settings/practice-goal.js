@@ -4,6 +4,7 @@ import Svg, { Path, Circle } from 'react-native-svg';
 import { router } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useTheme } from '../../hooks/useTheme';
 
 const STORAGE_KEY = '@eon_practice_goal';
 
@@ -52,6 +53,8 @@ function CheckIcon({ size = 20, color = '#C9A96E' }) {
 
 export default function PracticeGoalScreen() {
   const insets = useSafeAreaInsets();
+  const { colors } = useTheme();
+  const styles = makeStyles(colors);
   const [selectedMinutes, setSelectedMinutes] = useState(60);
 
   // Load saved goal
@@ -100,7 +103,7 @@ export default function PracticeGoalScreen() {
       {/* Header */}
       <View style={styles.header}>
         <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
-          <BackIcon />
+          <BackIcon color={colors.text} />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>연습 목표 설정</Text>
         <View style={{ width: 24 }} />
@@ -109,7 +112,7 @@ export default function PracticeGoalScreen() {
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.content}>
         {/* Icon */}
         <View style={styles.iconSection}>
-          <MusicIcon />
+          <MusicIcon color={colors.accent} />
           <Text style={styles.iconTitle}>일일 연습 목표</Text>
           <Text style={styles.iconSubtitle}>매일 달성할 연습 시간을 설정하세요</Text>
         </View>
@@ -134,7 +137,7 @@ export default function PracticeGoalScreen() {
                     {goal.label}
                   </Text>
                 </View>
-                {isSelected && <CheckIcon />}
+                {isSelected && <CheckIcon color={colors.accent} />}
               </TouchableOpacity>
             );
           })}
@@ -157,10 +160,10 @@ export default function PracticeGoalScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const makeStyles = (c) => StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#110E0B',
+    backgroundColor: c.bg,
   },
   header: {
     flexDirection: 'row',
@@ -175,7 +178,7 @@ const styles = StyleSheet.create({
   headerTitle: {
     fontSize: 18,
     fontWeight: '400',
-    color: '#F5F0E8',
+    color: c.text,
     letterSpacing: 0.3,
   },
   content: {
@@ -190,20 +193,20 @@ const styles = StyleSheet.create({
   iconTitle: {
     fontSize: 20,
     fontWeight: '400',
-    color: '#F5F0E8',
+    color: c.text,
     marginTop: 12,
     letterSpacing: 0.3,
   },
   iconSubtitle: {
     fontSize: 13,
-    color: '#9e9282',
+    color: c.textMuted,
   },
   card: {
-    backgroundColor: 'rgba(201,169,110,0.07)',
+    backgroundColor: c.surface,
     borderRadius: 4,
     overflow: 'hidden',
     borderWidth: 0.5,
-    borderColor: 'rgba(201,169,110,0.18)',
+    borderColor: c.border,
   },
   goalRow: {
     flexDirection: 'row',
@@ -212,7 +215,7 @@ const styles = StyleSheet.create({
     paddingVertical: 16,
     paddingHorizontal: 16,
     borderBottomWidth: 0.5,
-    borderBottomColor: '#110E0B',
+    borderBottomColor: c.bg,
   },
   goalLeft: {
     flexDirection: 'row',
@@ -224,19 +227,19 @@ const styles = StyleSheet.create({
     height: 10,
     borderRadius: 5,
     borderWidth: 2,
-    borderColor: '#9e9282',
+    borderColor: c.textMuted,
     backgroundColor: 'transparent',
   },
   goalDotSelected: {
-    borderColor: '#C9A96E',
-    backgroundColor: '#C9A96E',
+    borderColor: c.accent,
+    backgroundColor: c.accent,
   },
   goalLabel: {
     fontSize: 16,
-    color: '#F5F0E8',
+    color: c.text,
   },
   goalLabelSelected: {
-    color: '#C9A96E',
+    color: c.accent,
     fontWeight: '600',
   },
   selectedDisplay: {
@@ -249,14 +252,14 @@ const styles = StyleSheet.create({
   selectedValue: {
     fontSize: 32,
     fontWeight: '300',
-    color: '#C9A96E',
+    color: c.accent,
   },
   selectedSub: {
     fontSize: 16,
-    color: '#9e9282',
+    color: c.textMuted,
   },
   saveBtn: {
-    backgroundColor: '#C9A96E',
+    backgroundColor: c.accent,
     borderRadius: 4,
     paddingVertical: 14,
     alignItems: 'center',
@@ -265,7 +268,7 @@ const styles = StyleSheet.create({
   saveBtnText: {
     fontSize: 16,
     fontWeight: '400',
-    color: '#110E0B',
+    color: c.bg,
     letterSpacing: 0.5,
   },
 });

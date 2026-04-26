@@ -2,6 +2,7 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Platform, Alert, Animated, AppState } from 'react-native';
 import Svg, { Circle, Path, Line } from 'react-native-svg';
 import { savePracticeSession, loadGoalMinutes } from '../hooks/usePracticeStats';
+import { useTheme } from '../hooks/useTheme';
 
 // 화면 켜짐 유지 (Android/iOS 동일)
 let KeepAwake = null;
@@ -63,6 +64,8 @@ const CIRCUMFERENCE = 2 * Math.PI * RADIUS;
 const SIZE = (RADIUS + STROKE_WIDTH) * 2;
 
 export default function PracticeTimer({ userId, todaySeconds: externalTodaySeconds = 0, autoStart = false }) {
+  const { colors } = useTheme();
+  const styles = makeStyles(colors);
   const [seconds, setSeconds] = useState(0);
   const [isRunning, setIsRunning] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -221,7 +224,7 @@ export default function PracticeTimer({ userId, todaySeconds: externalTodaySecon
   const progressPercent = Math.round(progress * 100);
 
   // 프로그래스 원 색상
-  const progressColor = progress >= 1 ? '#4ade80' : '#C9A96E';
+  const progressColor = progress >= 1 ? '#4ade80' : colors.accent;
 
   // 오늘 기존 연습 시간 표시
   const todayMins = Math.floor(externalTodaySeconds / 60);
@@ -230,7 +233,7 @@ export default function PracticeTimer({ userId, todaySeconds: externalTodaySecon
     <View style={styles.container}>
       {/* 목표 정보 헤더 */}
       <View style={styles.goalHeader}>
-        <TrophySvg size={16} color={progress >= 1 ? '#4ade80' : '#9e9282'} />
+        <TrophySvg size={16} color={progress >= 1 ? '#4ade80' : colors.textMuted} />
         <Text style={[styles.goalText, progress >= 1 && styles.goalTextMet]}>
           {progress >= 1
             ? '오늘 목표 달성!'
@@ -242,7 +245,7 @@ export default function PracticeTimer({ userId, todaySeconds: externalTodaySecon
       <View style={styles.timerWrap}>
         <Svg width={SIZE} height={SIZE}>
           {/* 배경 원 */}
-          <Circle cx={SIZE / 2} cy={SIZE / 2} r={RADIUS} stroke="rgba(201,169,110,0.15)" strokeWidth={STROKE_WIDTH} fill="transparent" />
+          <Circle cx={SIZE / 2} cy={SIZE / 2} r={RADIUS} stroke={colors.surfaceStrong} strokeWidth={STROKE_WIDTH} fill="transparent" />
           {/* 오늘 기존 연습분 (어두운 색) */}
           {externalTodaySeconds > 0 && (
             <Circle
@@ -295,7 +298,7 @@ export default function PracticeTimer({ userId, todaySeconds: externalTodaySecon
 
       <View style={styles.controls}>
         <TouchableOpacity style={styles.sideBtn} onPress={reset}>
-          <RefreshSvg />
+          <RefreshSvg color={colors.accent} />
         </TouchableOpacity>
         <TouchableOpacity style={[styles.mainBtn, isRunning && styles.mainBtnStop]} onPress={toggle}>
           {isRunning ? <PauseSvg /> : <PlaySvg />}
@@ -305,7 +308,7 @@ export default function PracticeTimer({ userId, todaySeconds: externalTodaySecon
           onPress={handleSave}
           disabled={saving || seconds === 0}
         >
-          <SaveSvg color={seconds > 0 ? '#C9A96E' : '#9e9282'} />
+          <SaveSvg color={seconds > 0 ? colors.accent : colors.textMuted} />
         </TouchableOpacity>
       </View>
 
@@ -325,23 +328,23 @@ function formatFullTime(totalSecs) {
   return `${s}초`;
 }
 
-const styles = StyleSheet.create({
+const makeStyles = (c) => StyleSheet.create({
   container: { alignItems: 'center', paddingVertical: 12 },
 
   goalHeader: {
     flexDirection: 'row', alignItems: 'center', gap: 6,
     marginBottom: 8,
-    backgroundColor: 'rgba(201,169,110,0.07)', paddingHorizontal: 14, paddingVertical: 6,
+    backgroundColor: c.surface, paddingHorizontal: 14, paddingVertical: 6,
     borderRadius: 4,
   },
-  goalText: { fontSize: 13, color: '#9e9282', fontWeight: '400', letterSpacing: 0.3 },
+  goalText: { fontSize: 13, color: c.textMuted, fontWeight: '400', letterSpacing: 0.3 },
   goalTextMet: { color: '#4ade80' },
 
   timerWrap: { width: SIZE, height: SIZE, alignItems: 'center', justifyContent: 'center' },
   timeDisplay: { position: 'absolute', alignItems: 'center', gap: 4 },
-  timeText: { fontSize: 44, fontWeight: '200', color: '#F5F0E8', fontVariant: ['tabular-nums'] },
-  sessionLabel: { fontSize: 14, color: '#9e9282' },
-  progressText: { fontSize: 22, fontWeight: '300', color: '#C9A96E', marginTop: 4 },
+  timeText: { fontSize: 44, fontWeight: '200', color: c.text, fontVariant: ['tabular-nums'] },
+  sessionLabel: { fontSize: 14, color: c.textMuted },
+  progressText: { fontSize: 22, fontWeight: '300', color: c.accent, marginTop: 4 },
   progressTextMet: { color: '#4ade80' },
 
   celebrateBanner: {
@@ -349,14 +352,14 @@ const styles = StyleSheet.create({
     backgroundColor: '#4ade80', paddingHorizontal: 20, paddingVertical: 10,
     borderRadius: 4,
   },
-  celebrateText: { fontSize: 16, fontWeight: '400', color: '#0C0A08' },
+  celebrateText: { fontSize: 16, fontWeight: '400', color: c.bg },
 
-  todayAccum: { fontSize: 12, color: '#9e9282', marginTop: 4, marginBottom: 4 },
+  todayAccum: { fontSize: 12, color: c.textMuted, marginTop: 4, marginBottom: 4 },
 
   controls: { flexDirection: 'row', alignItems: 'center', gap: 24, marginTop: 16 },
-  sideBtn: { width: 48, height: 48, borderRadius: 24, backgroundColor: 'rgba(201,169,110,0.07)', alignItems: 'center', justifyContent: 'center' },
+  sideBtn: { width: 48, height: 48, borderRadius: 24, backgroundColor: c.surface, alignItems: 'center', justifyContent: 'center' },
   saveBtnActive: { borderWidth: 0.5, borderColor: '#C9A96E40' },
-  mainBtn: { width: 64, height: 64, borderRadius: 32, backgroundColor: '#C9A96E', alignItems: 'center', justifyContent: 'center' },
-  mainBtnStop: { backgroundColor: '#e74c3c' },
-  saveHint: { fontSize: 12, color: '#C9A96E', marginTop: 12, opacity: 0.7, letterSpacing: 0.3 },
+  mainBtn: { width: 64, height: 64, borderRadius: 32, backgroundColor: c.accent, alignItems: 'center', justifyContent: 'center' },
+  mainBtnStop: { backgroundColor: c.danger },
+  saveHint: { fontSize: 12, color: c.accent, marginTop: 12, opacity: 0.7, letterSpacing: 0.3 },
 });

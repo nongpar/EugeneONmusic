@@ -6,6 +6,7 @@ import {
 import Svg, { Path, Circle, Rect } from 'react-native-svg';
 import { router } from 'expo-router';
 import { useAuth } from '../../hooks/useAuth';
+import { useTheme } from '../../hooks/useTheme';
 import * as Haptics from 'expo-haptics';
 
 // ── SVG 아이콘 ──
@@ -55,6 +56,8 @@ function EyeIcon({ size = 20, color = '#9e9282', open = true }) {
 }
 
 export default function LoginScreen() {
+  const { colors } = useTheme();
+  const styles = makeStyles(colors);
   const { login } = useAuth();
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
@@ -97,7 +100,7 @@ export default function LoginScreen() {
       >
         {/* 뒤로가기 */}
         <TouchableOpacity style={styles.backBtn} onPress={() => router.back()}>
-          <BackIcon />
+          <BackIcon color={colors.accent} />
         </TouchableOpacity>
 
         {/* 로고 */}
@@ -116,12 +119,12 @@ export default function LoginScreen() {
         <View style={styles.form}>
           <View style={styles.inputWrap}>
             <View style={styles.inputIconWrap}>
-              <UserIcon />
+              <UserIcon color={colors.textMuted} />
             </View>
             <TextInput
               style={styles.input}
               placeholder="아이디 또는 이메일"
-              placeholderTextColor="#9e9282"
+              placeholderTextColor={colors.textMuted}
               value={username}
               onChangeText={setUsername}
               autoCapitalize="none"
@@ -131,18 +134,18 @@ export default function LoginScreen() {
 
           <View style={styles.inputWrap}>
             <View style={styles.inputIconWrap}>
-              <LockIcon />
+              <LockIcon color={colors.textMuted} />
             </View>
             <TextInput
               style={styles.input}
               placeholder="비밀번호"
-              placeholderTextColor="#9e9282"
+              placeholderTextColor={colors.textMuted}
               value={password}
               onChangeText={setPassword}
               secureTextEntry={!showPassword}
             />
             <TouchableOpacity onPress={() => setShowPassword(!showPassword)} style={styles.eyeBtn}>
-              <EyeIcon open={showPassword} />
+              <EyeIcon open={showPassword} color={colors.textMuted} />
             </TouchableOpacity>
           </View>
 
@@ -175,48 +178,48 @@ export default function LoginScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#110E0B' },
+const makeStyles = (c) => StyleSheet.create({
+  container: { flex: 1, backgroundColor: c.bg },
   scrollContent: {
     flexGrow: 1, paddingHorizontal: 24, paddingTop: 60, paddingBottom: 40,
   },
   backBtn: {
     width: 40, height: 40, borderRadius: 4,
-    backgroundColor: 'rgba(201,169,110,0.07)', alignItems: 'center', justifyContent: 'center',
+    backgroundColor: c.surface, alignItems: 'center', justifyContent: 'center',
     marginBottom: 24,
   },
   logoSection: { alignItems: 'center', gap: 4, marginBottom: 40 },
   logoImage: { width: 64, height: 64, marginBottom: 8 },
-  logoText: { fontSize: 22, fontWeight: '300', color: '#F5F0E8', letterSpacing: 1 },
-  logoAccent: { fontSize: 14, fontWeight: '400', color: '#C9A96E', letterSpacing: 1 },
-  subtitle: { fontSize: 13, color: '#9e9282', marginTop: 8, letterSpacing: 0.3 },
+  logoText: { fontSize: 22, fontWeight: '300', color: c.text, letterSpacing: 1 },
+  logoAccent: { fontSize: 14, fontWeight: '400', color: c.accent, letterSpacing: 1 },
+  subtitle: { fontSize: 13, color: c.textMuted, marginTop: 8, letterSpacing: 0.3 },
 
   form: { gap: 14 },
   inputWrap: {
     flexDirection: 'row', alignItems: 'center',
-    backgroundColor: 'rgba(201,169,110,0.07)', borderRadius: 4,
+    backgroundColor: c.surface, borderRadius: 4,
     paddingHorizontal: 14, height: 52,
-    borderWidth: 0.5, borderColor: 'rgba(201,169,110,0.15)',
+    borderWidth: 0.5, borderColor: c.surfaceStrong,
   },
   inputIconWrap: { marginRight: 10 },
-  input: { flex: 1, fontSize: 15, color: '#F5F0E8' },
+  input: { flex: 1, fontSize: 15, color: c.text },
   eyeBtn: { padding: 4 },
 
   primaryBtn: {
-    backgroundColor: '#C9A96E', borderRadius: 4,
+    backgroundColor: c.accent, borderRadius: 4,
     height: 52, alignItems: 'center', justifyContent: 'center', marginTop: 4,
   },
   disabledBtn: { opacity: 0.6 },
-  primaryBtnText: { fontSize: 16, fontWeight: '400', color: '#110E0B', letterSpacing: 0.5 },
+  primaryBtnText: { fontSize: 16, fontWeight: '400', color: c.bg, letterSpacing: 0.5 },
 
   infoBox: {
-    backgroundColor: 'rgba(201,169,110,0.07)', borderRadius: 4,
+    backgroundColor: c.surface, borderRadius: 4,
     padding: 16, marginTop: 24,
-    borderWidth: 0.5, borderColor: 'rgba(201,169,110,0.18)',
+    borderWidth: 0.5, borderColor: c.border,
   },
-  infoText: { fontSize: 13, color: '#9e9282', lineHeight: 20, textAlign: 'center' },
+  infoText: { fontSize: 13, color: c.textMuted, lineHeight: 20, textAlign: 'center' },
 
   signUpRow: { flexDirection: 'row', justifyContent: 'center', marginTop: 20 },
-  toggleText: { color: '#9e9282', fontSize: 14 },
-  toggleLink: { color: '#C9A96E', fontSize: 14, fontWeight: '400' },
+  toggleText: { color: c.textMuted, fontSize: 14 },
+  toggleLink: { color: c.accent, fontSize: 14, fontWeight: '400' },
 });

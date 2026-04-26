@@ -6,6 +6,7 @@ import {
 import Svg, { Path, Circle, Rect, Line } from 'react-native-svg';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
+import { useTheme } from '../../hooks/useTheme';
 
 let Haptics = null;
 if (Platform.OS !== 'web') {
@@ -184,6 +185,8 @@ function formatViews(count) {
 }
 
 function VideoCard({ video }) {
+  const { colors } = useTheme();
+  const styles = makeStyles(colors);
   return (
     <TouchableOpacity
       style={styles.videoCard}
@@ -205,6 +208,8 @@ function VideoCard({ video }) {
 }
 
 function BlogThumb({ uri }) {
+  const { colors } = useTheme();
+  const styles = makeStyles(colors);
   const [failed, setFailed] = useState(false);
   if (!uri || failed) {
     return (
@@ -224,6 +229,8 @@ function BlogThumb({ uri }) {
 }
 
 function BlogCard({ post }) {
+  const { colors } = useTheme();
+  const styles = makeStyles(colors);
   const handlePress = () => {
     if (post.link) {
       // 앱 내 블로그 미리보기
@@ -254,6 +261,8 @@ function BlogCard({ post }) {
 }
 
 export default function SNSScreen() {
+  const { colors } = useTheme();
+  const styles = makeStyles(colors);
   const insets = useSafeAreaInsets();
   const [activeTab, setActiveTab] = useState('all');
   const [videos, setVideos] = useState([]);
@@ -356,7 +365,7 @@ export default function SNSScreen() {
             </View>
             {loading ? (
               <View style={styles.loadingBox}>
-                <ActivityIndicator size="large" color="#C9A96E" />
+                <ActivityIndicator size="large" color={colors.accent} />
                 <Text style={styles.loadingText}>영상을 불러오는 중...</Text>
               </View>
             ) : (
@@ -374,7 +383,7 @@ export default function SNSScreen() {
             </View>
             {blogLoading ? (
               <View style={styles.loadingBox}>
-                <ActivityIndicator size="large" color="#C9A96E" />
+                <ActivityIndicator size="large" color={colors.accent} />
                 <Text style={styles.loadingText}>블로그 글을 불러오는 중...</Text>
               </View>
             ) : blogError ? (
@@ -399,7 +408,7 @@ export default function SNSScreen() {
                 <View style={styles.channelCardInfo}>
                   <Text style={styles.channelCardName}>{ch.name}</Text>
                 </View>
-                <ArrowIcon />
+                <ArrowIcon color={colors.accentMuted} />
               </TouchableOpacity>
             ))}
           </>
@@ -410,14 +419,14 @@ export default function SNSScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#110E0B' },
+const makeStyles = (c) => StyleSheet.create({
+  container: { flex: 1, backgroundColor: c.bg },
   header: {
     paddingHorizontal: 24, paddingTop: 16, paddingBottom: 14,
-    borderBottomWidth: 0.5, borderBottomColor: 'rgba(201,169,110,0.15)',
+    borderBottomWidth: 0.5, borderBottomColor: c.surfaceStrong,
   },
-  headerTitle: { fontSize: 22, fontWeight: '300', color: '#F5F0E8', letterSpacing: 1 },
-  headerSub: { fontSize: 10, color: '#C9A96E', marginTop: 4, fontWeight: '400', letterSpacing: 2.5 },
+  headerTitle: { fontSize: 22, fontWeight: '300', color: c.text, letterSpacing: 1 },
+  headerSub: { fontSize: 10, color: c.accent, marginTop: 4, fontWeight: '400', letterSpacing: 2.5 },
   scrollContent: {
     paddingHorizontal: 20,
     paddingBottom: 20,
@@ -428,44 +437,44 @@ const styles = StyleSheet.create({
 
   channelRow: { gap: 16, paddingVertical: 16 },
   channelChip: { alignItems: 'center', gap: 6, width: 68 },
-  channelChipIcon: { width: 50, height: 50, borderRadius: 25, alignItems: 'center', justifyContent: 'center', borderWidth: 0.5, borderColor: 'rgba(201,169,110,0.18)' },
-  channelChipLabel: { fontSize: 11, color: '#9e9282', fontWeight: '400', letterSpacing: 0.3 },
+  channelChipIcon: { width: 50, height: 50, borderRadius: 25, alignItems: 'center', justifyContent: 'center', borderWidth: 0.5, borderColor: c.border },
+  channelChipLabel: { fontSize: 11, color: c.textMuted, fontWeight: '400', letterSpacing: 0.3 },
 
   tabRow: { flexDirection: 'row', gap: 8, marginBottom: 16 },
-  tabBtn: { paddingHorizontal: 16, paddingVertical: 8, borderRadius: 4, backgroundColor: 'rgba(201,169,110,0.07)', borderWidth: 0.5, borderColor: 'rgba(201,169,110,0.18)' },
-  tabBtnActive: { backgroundColor: 'transparent', borderColor: '#C9A96E' },
-  tabLabel: { fontSize: 13, fontWeight: '400', color: '#9e9282', letterSpacing: 0.3 },
-  tabLabelActive: { color: '#C9A96E' },
+  tabBtn: { paddingHorizontal: 16, paddingVertical: 8, borderRadius: 4, backgroundColor: c.surface, borderWidth: 0.5, borderColor: c.border },
+  tabBtnActive: { backgroundColor: 'transparent', borderColor: c.accent },
+  tabLabel: { fontSize: 13, fontWeight: '400', color: c.textMuted, letterSpacing: 0.3 },
+  tabLabelActive: { color: c.accent },
 
   sectionHeader: { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 12, marginTop: 4 },
-  sectionTitleText: { fontSize: 16, fontWeight: '400', color: '#F5F0E8', letterSpacing: 0.3 },
-  sectionLabel: { fontSize: 10, fontWeight: '500', color: 'rgba(201,169,110,0.6)', textTransform: 'uppercase', letterSpacing: 2.5, marginTop: 24, marginBottom: 12 },
+  sectionTitleText: { fontSize: 16, fontWeight: '400', color: c.text, letterSpacing: 0.3 },
+  sectionLabel: { fontSize: 10, fontWeight: '500', color: c.textHint, textTransform: 'uppercase', letterSpacing: 2.5, marginTop: 24, marginBottom: 12 },
 
   loadingBox: { alignItems: 'center', paddingVertical: 40, gap: 12 },
-  loadingText: { fontSize: 13, color: '#9e9282' },
+  loadingText: { fontSize: 13, color: c.textMuted },
 
-  videoCard: { backgroundColor: 'rgba(201,169,110,0.07)', borderRadius: 4, marginBottom: 12, overflow: 'hidden', borderWidth: 0.5, borderColor: 'rgba(201,169,110,0.18)' },
-  thumbnailBox: { height: 200, backgroundColor: '#0C0A08', position: 'relative' },
+  videoCard: { backgroundColor: c.surface, borderRadius: 4, marginBottom: 12, overflow: 'hidden', borderWidth: 0.5, borderColor: c.border },
+  thumbnailBox: { height: 200, backgroundColor: c.bg, position: 'relative' },
   thumbnailImage: { width: '100%', height: '100%' },
   playOverlay: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, alignItems: 'center', justifyContent: 'center' },
   videoInfo: { padding: 14, gap: 6 },
-  videoTitle: { fontSize: 14, fontWeight: '400', color: '#F5F0E8', lineHeight: 20, letterSpacing: 0.2 },
-  videoMeta: { fontSize: 12, color: '#9e9282' },
+  videoTitle: { fontSize: 14, fontWeight: '400', color: c.text, lineHeight: 20, letterSpacing: 0.2 },
+  videoMeta: { fontSize: 12, color: c.textMuted },
 
-  blogCard: { backgroundColor: 'rgba(201,169,110,0.07)', borderRadius: 4, padding: 12, marginBottom: 10, borderWidth: 0.5, borderColor: 'rgba(201,169,110,0.18)' },
+  blogCard: { backgroundColor: c.surface, borderRadius: 4, padding: 12, marginBottom: 10, borderWidth: 0.5, borderColor: c.border },
   blogRow: { flexDirection: 'row', gap: 12 },
-  blogThumb: { width: 80, height: 80, borderRadius: 4, backgroundColor: '#0C0A08', overflow: 'hidden' },
+  blogThumb: { width: 80, height: 80, borderRadius: 4, backgroundColor: c.bg, overflow: 'hidden' },
   blogThumbPlaceholder: { alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(201,169,110,0.04)' },
   blogContent: { flex: 1, gap: 6 },
   blogHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
   sourceBadge: { paddingHorizontal: 8, paddingVertical: 3, borderRadius: 2 },
   sourceText: { fontSize: 11, fontWeight: '600', letterSpacing: 0.3 },
-  blogDate: { fontSize: 11, color: '#9e9282' },
-  blogTitle: { fontSize: 14, fontWeight: '400', color: '#F5F0E8', lineHeight: 20, letterSpacing: 0.2 },
-  blogPreview: { fontSize: 12, color: '#9e9282', lineHeight: 17 },
+  blogDate: { fontSize: 11, color: c.textMuted },
+  blogTitle: { fontSize: 14, fontWeight: '400', color: c.text, lineHeight: 20, letterSpacing: 0.2 },
+  blogPreview: { fontSize: 12, color: c.textMuted, lineHeight: 17 },
 
-  channelCard: { flexDirection: 'row', alignItems: 'center', backgroundColor: 'rgba(201,169,110,0.07)', borderRadius: 4, padding: 14, marginBottom: 8, gap: 14, borderWidth: 0.5, borderColor: 'rgba(201,169,110,0.18)' },
+  channelCard: { flexDirection: 'row', alignItems: 'center', backgroundColor: c.surface, borderRadius: 4, padding: 14, marginBottom: 8, gap: 14, borderWidth: 0.5, borderColor: c.border },
   channelCardIcon: { width: 42, height: 42, borderRadius: 4, alignItems: 'center', justifyContent: 'center' },
   channelCardInfo: { flex: 1 },
-  channelCardName: { fontSize: 14, fontWeight: '400', color: '#F5F0E8', letterSpacing: 0.3 },
+  channelCardName: { fontSize: 14, fontWeight: '400', color: c.text, letterSpacing: 0.3 },
 });

@@ -4,6 +4,7 @@ import { router } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAuth } from '../../hooks/useAuth';
 import { usePracticeStats } from '../../hooks/usePracticeStats';
+import { useTheme } from '../../hooks/useTheme';
 
 // ── SVG Icons ──
 function BackIcon({ size = 24, color = '#F5F0E8' }) {
@@ -25,6 +26,8 @@ function formatTime(seconds) {
 
 // ── Weekly Bar Chart ──
 function WeeklyBarChart({ weeklyData }) {
+  const { colors } = useTheme();
+  const styles = makeStyles(colors);
   const maxMinutes = Math.max(...weeklyData.map((d) => d.minutes), 1);
   const barMaxHeight = 120;
 
@@ -44,7 +47,7 @@ function WeeklyBarChart({ weeklyData }) {
                   styles.barFill,
                   {
                     height: barHeight,
-                    backgroundColor: isToday ? '#C9A96E' : item.minutes > 0 ? '#2C5F8A' : 'rgba(201,169,110,0.18)',
+                    backgroundColor: isToday ? colors.accent : item.minutes > 0 ? '#2C5F8A' : colors.border,
                   },
                 ]}
               />
@@ -61,6 +64,8 @@ function WeeklyBarChart({ weeklyData }) {
 
 // ── Stat Card ──
 function StatCard({ label, value, unit, color = '#C9A96E' }) {
+  const { colors } = useTheme();
+  const styles = makeStyles(colors);
   return (
     <View style={styles.statCard}>
       <Text style={[styles.statValue, { color }]}>{value}</Text>
@@ -72,6 +77,8 @@ function StatCard({ label, value, unit, color = '#C9A96E' }) {
 
 export default function PracticeStatsScreen() {
   const insets = useSafeAreaInsets();
+  const { colors } = useTheme();
+  const styles = makeStyles(colors);
   const { user } = useAuth();
   const { todaySeconds, streakDays, totalDays, totalHours, weeklyData, loading } = usePracticeStats(user?.uid);
 
@@ -82,7 +89,7 @@ export default function PracticeStatsScreen() {
       {/* Header */}
       <View style={styles.header}>
         <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
-          <BackIcon />
+          <BackIcon color={colors.text} />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>연습 통계</Text>
         <View style={{ width: 24 }} />
@@ -122,7 +129,7 @@ export default function PracticeStatsScreen() {
               <View style={styles.statsGrid}>
                 <StatCard label="총 연습일" value={totalDays} unit="일" color="#4ade80" />
                 <StatCard label="총 연습시간" value={totalHours} unit="시간" color="#60a5fa" />
-                <StatCard label="연속 연습" value={streakDays} unit="일" color="#C9A96E" />
+                <StatCard label="연속 연습" value={streakDays} unit="일" color={colors.accent} />
                 <StatCard label="이번 주" value={weekTotal} unit="분" color="#f472b6" />
               </View>
             </View>
@@ -151,10 +158,10 @@ export default function PracticeStatsScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const makeStyles = (c) => StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#110E0B',
+    backgroundColor: c.bg,
   },
   header: {
     flexDirection: 'row',
@@ -163,7 +170,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 12,
     borderBottomWidth: 0.5,
-    borderBottomColor: 'rgba(201,169,110,0.18)',
+    borderBottomColor: c.border,
   },
   backBtn: {
     padding: 4,
@@ -171,7 +178,7 @@ const styles = StyleSheet.create({
   headerTitle: {
     fontSize: 18,
     fontWeight: '400',
-    color: '#F5F0E8',
+    color: c.text,
     letterSpacing: 0.3,
   },
   content: {
@@ -186,12 +193,12 @@ const styles = StyleSheet.create({
   },
   emptyText: {
     fontSize: 15,
-    color: '#9e9282',
+    color: c.textMuted,
   },
 
   // 오늘 카드
   todayCard: {
-    backgroundColor: 'rgba(201,169,110,0.07)',
+    backgroundColor: c.surface,
     borderRadius: 4,
     padding: 24,
     alignItems: 'center',
@@ -201,14 +208,14 @@ const styles = StyleSheet.create({
   },
   todayLabel: {
     fontSize: 13,
-    color: '#C9A96E',
+    color: c.accent,
     marginBottom: 8,
     letterSpacing: 0.5,
   },
   todayValue: {
     fontSize: 32,
     fontWeight: '300',
-    color: '#C9A96E',
+    color: c.accent,
     letterSpacing: -1,
   },
 
@@ -225,24 +232,24 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: 15,
     fontWeight: '400',
-    color: '#F5F0E8',
+    color: c.text,
     marginBottom: 12,
     letterSpacing: 0.3,
   },
   sectionSub: {
     fontSize: 13,
-    color: '#C9A96E',
+    color: c.accent,
     fontWeight: '600',
     marginBottom: 12,
   },
 
   // 차트
   chartCard: {
-    backgroundColor: 'rgba(201,169,110,0.07)',
+    backgroundColor: c.surface,
     borderRadius: 4,
     padding: 20,
     borderWidth: 0.5,
-    borderColor: 'rgba(201,169,110,0.18)',
+    borderColor: c.border,
   },
   chartContainer: {
     flexDirection: 'row',
@@ -255,14 +262,14 @@ const styles = StyleSheet.create({
   },
   chartMinutes: {
     fontSize: 11,
-    color: '#9e9282',
+    color: c.textMuted,
     marginBottom: 6,
     fontWeight: '600',
   },
   barTrack: {
     width: 28,
     height: 120,
-    backgroundColor: '#110E0B',
+    backgroundColor: c.bg,
     borderRadius: 6,
     justifyContent: 'flex-end',
     overflow: 'hidden',
@@ -273,12 +280,12 @@ const styles = StyleSheet.create({
   },
   chartDay: {
     fontSize: 12,
-    color: '#9e9282',
+    color: c.textMuted,
     marginTop: 8,
     fontWeight: '500',
   },
   chartDayToday: {
-    color: '#C9A96E',
+    color: c.accent,
     fontWeight: '400',
   },
 
@@ -291,12 +298,12 @@ const styles = StyleSheet.create({
   statCard: {
     flex: 1,
     minWidth: '45%',
-    backgroundColor: 'rgba(201,169,110,0.07)',
+    backgroundColor: c.surface,
     borderRadius: 4,
     padding: 16,
     alignItems: 'center',
     borderWidth: 0.5,
-    borderColor: 'rgba(201,169,110,0.18)',
+    borderColor: c.border,
   },
   statValue: {
     fontSize: 28,
@@ -305,12 +312,12 @@ const styles = StyleSheet.create({
   },
   statUnit: {
     fontSize: 12,
-    color: '#9e9282',
+    color: c.textMuted,
     marginTop: 2,
   },
   statLabel: {
     fontSize: 12,
-    color: '#C9A96E',
+    color: c.accent,
     marginTop: 8,
     fontWeight: '400',
     letterSpacing: 0.5,
@@ -318,12 +325,12 @@ const styles = StyleSheet.create({
 
   // 동기부여
   motivationCard: {
-    backgroundColor: 'rgba(201,169,110,0.07)',
+    backgroundColor: c.surface,
     borderRadius: 4,
     padding: 20,
     alignItems: 'center',
     borderWidth: 0.5,
-    borderColor: 'rgba(201,169,110,0.18)',
+    borderColor: c.border,
     gap: 8,
   },
   motivationEmoji: {
@@ -331,7 +338,7 @@ const styles = StyleSheet.create({
   },
   motivationText: {
     fontSize: 14,
-    color: '#C9A96E',
+    color: c.accent,
     textAlign: 'center',
     lineHeight: 22,
   },

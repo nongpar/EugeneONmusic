@@ -20,6 +20,7 @@ import {
 } from 'firebase/firestore';
 import { db } from '../../../config/firebase';
 import { useAuth } from '../../../hooks/useAuth';
+import { useTheme } from '../../../hooks/useTheme';
 
 let Haptics = null;
 if (Platform.OS !== 'web') {
@@ -94,6 +95,8 @@ function formatDateTime(ts) {
 }
 
 export default function InquiryDetailScreen() {
+  const { colors } = useTheme();
+  const styles = makeStyles(colors);
   const insets = useSafeAreaInsets();
   const router = useRouter();
   const { id } = useLocalSearchParams();
@@ -202,7 +205,7 @@ export default function InquiryDetailScreen() {
   if (loading || authLoading) {
     return (
       <View style={[styles.container, styles.center, { paddingTop: insets.top }]}>
-        <ActivityIndicator size="large" color="#C9A96E" />
+        <ActivityIndicator size="large" color={colors.accent} />
       </View>
     );
   }
@@ -212,7 +215,7 @@ export default function InquiryDetailScreen() {
       <View style={[styles.container, { paddingTop: insets.top }]}>
         <View style={styles.header}>
           <TouchableOpacity style={styles.backBtn} onPress={() => router.back()}>
-            <BackIcon />
+            <BackIcon color={colors.text} />
           </TouchableOpacity>
           <Text style={styles.headerTitle}>신청서</Text>
           <View style={{ width: 40 }} />
@@ -238,7 +241,7 @@ export default function InquiryDetailScreen() {
       {/* Header — 제목에 접수번호를 포함해 사용자 티켓과 즉시 대조 가능 */}
       <View style={styles.header}>
         <TouchableOpacity style={styles.backBtn} onPress={() => router.back()}>
-          <BackIcon />
+          <BackIcon color={colors.text} />
         </TouchableOpacity>
         <View style={styles.headerTitleWrap}>
           <Text style={styles.headerTitle}>신청서 상세</Text>
@@ -296,11 +299,11 @@ export default function InquiryDetailScreen() {
           {(contact.phone) && (
             <View style={styles.contactActions}>
               <TouchableOpacity style={styles.actionBtn} onPress={() => callContact(contact.phone)}>
-                <PhoneIcon />
+                <PhoneIcon color={colors.bg} />
                 <Text style={styles.actionBtnText}>전화</Text>
               </TouchableOpacity>
               <TouchableOpacity style={styles.actionBtn} onPress={() => smsContact(contact.phone)}>
-                <MessageIcon />
+                <MessageIcon color={colors.bg} />
                 <Text style={styles.actionBtnText}>문자</Text>
               </TouchableOpacity>
             </View>
@@ -335,7 +338,7 @@ export default function InquiryDetailScreen() {
             onPress={loadConversation}
           >
             <Text style={styles.sectionTitle}>AI 대화 이력</Text>
-            <ChevronIcon open={showConversation} />
+            <ChevronIcon open={showConversation} color={colors.textMuted} />
           </TouchableOpacity>
         )}
         {showConversation && conversation && (
@@ -420,7 +423,7 @@ export default function InquiryDetailScreen() {
               value={noteText}
               onChangeText={setNoteText}
               placeholder="메모 입력..."
-              placeholderTextColor="rgba(201,169,110,0.35)"
+              placeholderTextColor={colors.placeholder}
               multiline
               editable={!savingNote}
               maxLength={500}
@@ -442,6 +445,8 @@ export default function InquiryDetailScreen() {
 }
 
 function Section({ title, children }) {
+  const { colors } = useTheme();
+  const styles = makeStyles(colors);
   return (
     <View style={styles.section}>
       <Text style={styles.sectionTitle}>{title}</Text>
@@ -451,6 +456,8 @@ function Section({ title, children }) {
 }
 
 function Row({ label, value }) {
+  const { colors } = useTheme();
+  const styles = makeStyles(colors);
   if (value == null || value === '') return null;
   return (
     <View style={styles.row}>
@@ -460,20 +467,20 @@ function Row({ label, value }) {
   );
 }
 
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#110E0B' },
+const makeStyles = (c) => StyleSheet.create({
+  container: { flex: 1, backgroundColor: c.bg },
   center: { alignItems: 'center', justifyContent: 'center', flex: 1 },
   header: {
     flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
     paddingHorizontal: 16, paddingVertical: 14,
-    borderBottomWidth: 0.5, borderBottomColor: 'rgba(201,169,110,0.15)',
+    borderBottomWidth: 0.5, borderBottomColor: c.surfaceStrong,
   },
   backBtn: { width: 40, height: 40, alignItems: 'center', justifyContent: 'center' },
   headerTitleWrap: { alignItems: 'center' },
-  headerTitle: { fontSize: 17, fontWeight: '300', color: '#F5F0E8', letterSpacing: 1 },
+  headerTitle: { fontSize: 17, fontWeight: '300', color: c.text, letterSpacing: 1 },
   headerTicketNo: {
     fontSize: 11,
-    color: '#C9A96E',
+    color: c.accent,
     fontWeight: '600',
     letterSpacing: 2,
     marginTop: 2,
@@ -483,21 +490,21 @@ const styles = StyleSheet.create({
   topRow: { flexDirection: 'row', alignItems: 'center', gap: 6 },
   typeBadge: {
     paddingHorizontal: 8, paddingVertical: 3, borderRadius: 2,
-    backgroundColor: 'rgba(201,169,110,0.15)',
+    backgroundColor: c.surfaceStrong,
   },
-  typeBadgeText: { fontSize: 10, color: '#C9A96E', letterSpacing: 1, fontWeight: '500' },
+  typeBadgeText: { fontSize: 10, color: c.accent, letterSpacing: 1, fontWeight: '500' },
   statusBadge: { paddingHorizontal: 8, paddingVertical: 3, borderRadius: 2, borderWidth: 0.5 },
   statusBadgeText: { fontSize: 10, letterSpacing: 1, fontWeight: '500' },
-  timeText: { fontSize: 11, color: '#9e9282' },
+  timeText: { fontSize: 11, color: c.textMuted },
 
   // 접수번호 박스 — 사용자 티켓과 1:1 매칭용
   ticketBox: {
     marginTop: 12,
     marginBottom: 4,
     padding: 14,
-    backgroundColor: 'rgba(201,169,110,0.06)',
+    backgroundColor: c.inputBg,
     borderWidth: 0.5,
-    borderColor: 'rgba(201,169,110,0.3)',
+    borderColor: c.accentMuted,
     borderRadius: 4,
     alignItems: 'center',
   },
@@ -510,7 +517,7 @@ const styles = StyleSheet.create({
   },
   ticketNoBig: {
     fontSize: 18,
-    color: '#C9A96E',
+    color: c.accent,
     fontWeight: '600',
     letterSpacing: 3,
     marginBottom: 4,
@@ -522,16 +529,16 @@ const styles = StyleSheet.create({
   },
 
   summaryBox: {
-    backgroundColor: 'rgba(201,169,110,0.08)',
-    borderWidth: 0.5, borderColor: 'rgba(201,169,110,0.3)',
+    backgroundColor: c.surface,
+    borderWidth: 0.5, borderColor: c.accentMuted,
     borderRadius: 4, padding: 14, gap: 6,
   },
-  summaryLabel: { fontSize: 10, color: '#C9A96E', letterSpacing: 1.5, fontWeight: '500' },
-  summaryText: { fontSize: 14, color: '#F5F0E8', lineHeight: 22 },
+  summaryLabel: { fontSize: 10, color: c.accent, letterSpacing: 1.5, fontWeight: '500' },
+  summaryText: { fontSize: 14, color: c.text, lineHeight: 22 },
 
   section: { gap: 8 },
   sectionTitle: {
-    fontSize: 11, color: '#C9A96E', letterSpacing: 2, fontWeight: '500',
+    fontSize: 11, color: c.accent, letterSpacing: 2, fontWeight: '500',
     textTransform: 'uppercase',
   },
   sectionBody: {
@@ -540,16 +547,16 @@ const styles = StyleSheet.create({
     borderRadius: 4, padding: 14, gap: 10,
   },
   row: { flexDirection: 'row', gap: 10 },
-  rowLabel: { fontSize: 12, color: '#9e9282', width: 90 },
-  rowValue: { fontSize: 14, color: '#F5F0E8', flex: 1, lineHeight: 20 },
+  rowLabel: { fontSize: 12, color: c.textMuted, width: 90 },
+  rowValue: { fontSize: 14, color: c.text, flex: 1, lineHeight: 20 },
 
   contactActions: { flexDirection: 'row', gap: 8, marginTop: 4 },
   actionBtn: {
     flexDirection: 'row', alignItems: 'center', gap: 6,
-    backgroundColor: '#C9A96E', paddingHorizontal: 14, paddingVertical: 9,
+    backgroundColor: c.accent, paddingHorizontal: 14, paddingVertical: 9,
     borderRadius: 4,
   },
-  actionBtnText: { fontSize: 13, color: '#110E0B', fontWeight: '500', letterSpacing: 0.5 },
+  actionBtnText: { fontSize: 13, color: c.bg, fontWeight: '500', letterSpacing: 0.5 },
 
   conversationToggle: {
     flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
@@ -563,44 +570,44 @@ const styles = StyleSheet.create({
   convoBubble: { borderRadius: 4, padding: 10, gap: 4 },
   convoBubbleUser: { backgroundColor: 'rgba(201,169,110,0.12)', alignSelf: 'flex-end', maxWidth: '88%' },
   convoBubbleAssistant: {
-    backgroundColor: 'rgba(201,169,110,0.05)',
-    borderWidth: 0.5, borderColor: 'rgba(201,169,110,0.15)',
+    backgroundColor: c.inputBg,
+    borderWidth: 0.5, borderColor: c.surfaceStrong,
     alignSelf: 'flex-start', maxWidth: '94%',
   },
-  convoRole: { fontSize: 10, color: '#9e9282', letterSpacing: 0.5 },
-  convoText: { fontSize: 13, color: '#F5F0E8', lineHeight: 19 },
-  emptyMini: { fontSize: 13, color: '#9e9282', textAlign: 'center', paddingVertical: 10 },
+  convoRole: { fontSize: 10, color: c.textMuted, letterSpacing: 0.5 },
+  convoText: { fontSize: 13, color: c.text, lineHeight: 19 },
+  emptyMini: { fontSize: 13, color: c.textMuted, textAlign: 'center', paddingVertical: 10 },
 
   statusFlow: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
   statusPill: {
     paddingHorizontal: 12, paddingVertical: 7, borderRadius: 4,
-    borderWidth: 0.5, borderColor: 'rgba(201,169,110,0.25)',
+    borderWidth: 0.5, borderColor: c.border,
   },
-  statusPillText: { fontSize: 12, color: '#9e9282', letterSpacing: 0.5 },
-  statusMeta: { fontSize: 11, color: '#9e9282', marginTop: 2 },
+  statusPillText: { fontSize: 12, color: c.textMuted, letterSpacing: 0.5 },
+  statusMeta: { fontSize: 11, color: c.textMuted, marginTop: 2 },
 
   notesList: { gap: 8, marginBottom: 4 },
   noteItem: {
-    backgroundColor: 'rgba(201,169,110,0.05)',
-    borderLeftWidth: 2, borderLeftColor: 'rgba(201,169,110,0.35)',
+    backgroundColor: c.inputBg,
+    borderLeftWidth: 2, borderLeftColor: c.placeholder,
     paddingHorizontal: 10, paddingVertical: 8, borderRadius: 2, gap: 3,
   },
-  noteText: { fontSize: 13, color: '#F5F0E8', lineHeight: 19 },
-  noteMeta: { fontSize: 10, color: '#9e9282' },
+  noteText: { fontSize: 13, color: c.text, lineHeight: 19 },
+  noteMeta: { fontSize: 10, color: c.textMuted },
   noteInputRow: { flexDirection: 'row', alignItems: 'flex-end', gap: 8, marginTop: 4 },
   noteInput: {
     flex: 1, minHeight: 40, maxHeight: 100,
-    backgroundColor: 'rgba(201,169,110,0.06)',
-    borderWidth: 0.5, borderColor: 'rgba(201,169,110,0.22)',
+    backgroundColor: c.inputBg,
+    borderWidth: 0.5, borderColor: c.border,
     borderRadius: 4, paddingHorizontal: 10, paddingVertical: 8,
-    fontSize: 13, color: '#F5F0E8',
+    fontSize: 13, color: c.text,
   },
   noteAddBtn: {
-    backgroundColor: '#C9A96E', paddingHorizontal: 14, paddingVertical: 10,
+    backgroundColor: c.accent, paddingHorizontal: 14, paddingVertical: 10,
     borderRadius: 4,
   },
-  noteAddBtnDisabled: { backgroundColor: 'rgba(201,169,110,0.35)' },
-  noteAddBtnText: { fontSize: 13, color: '#110E0B', fontWeight: '500', letterSpacing: 0.5 },
+  noteAddBtnDisabled: { backgroundColor: c.placeholder },
+  noteAddBtnText: { fontSize: 13, color: c.bg, fontWeight: '500', letterSpacing: 0.5 },
 
-  emptyTitle: { fontSize: 15, color: '#9e9282', fontWeight: '300' },
+  emptyTitle: { fontSize: 15, color: c.textMuted, fontWeight: '300' },
 });

@@ -17,6 +17,7 @@ import Svg, { Path, Circle as SvgCircle } from 'react-native-svg';
 import { collection, query, where, onSnapshot, addDoc, updateDoc, deleteDoc, doc, serverTimestamp } from 'firebase/firestore';
 import { db } from '../../config/firebase';
 import { useAuth } from '../../hooks/useAuth';
+import { useTheme } from '../../hooks/useTheme';
 
 // ── SVG Icons ──────────────────────────────────────────────
 
@@ -77,6 +78,8 @@ function TrashIcon({ size = 16, color = '#e74c3c' }) {
 // ── Manuscript Decorations ─────────────────────────────────
 
 function StaffLines() {
+  const { colors } = useTheme();
+  const styles = makeStyles(colors);
   return (
     <View style={styles.staffLines} pointerEvents="none">
       {[0, 1, 2, 3, 4].map(i => (
@@ -87,6 +90,8 @@ function StaffLines() {
 }
 
 function ParchmentCorner({ position = 'topLeft' }) {
+  const { colors } = useTheme();
+  const styles = makeStyles(colors);
   const isTop = position.includes('top');
   const isLeft = position.includes('Left');
   return (
@@ -98,7 +103,7 @@ function ParchmentCorner({ position = 'topLeft' }) {
       !isTop && !isLeft && { transform: [{ scaleX: -1 }, { scaleY: -1 }] },
     ]} pointerEvents="none">
       <Svg width={20} height={20} viewBox="0 0 20 20" fill="none">
-        <Path d="M2 2 C2 2 2 8 8 8 C2 8 2 14 2 14" stroke="rgba(201,169,110,0.2)" strokeWidth={0.8} />
+        <Path d="M2 2 C2 2 2 8 8 8 C2 8 2 14 2 14" stroke={colors.border} strokeWidth={0.8} />
       </Svg>
     </View>
   );
@@ -137,6 +142,8 @@ function isOverdue(dueDate, status) {
 // ── Main Component ─────────────────────────────────────────
 
 export default function AssignmentsScreen() {
+  const { colors } = useTheme();
+  const styles = makeStyles(colors);
   const insets = useSafeAreaInsets();
   const router = useRouter();
   const { user } = useAuth();
@@ -434,7 +441,7 @@ export default function AssignmentsScreen() {
           onPress={() => confirmDelete(item.id)}
           activeOpacity={0.6}
         >
-          <TrashIcon size={16} color="#e74c3c" />
+          <TrashIcon size={16} color={colors.danger} />
         </TouchableOpacity>
       </View>
     );
@@ -482,7 +489,7 @@ export default function AssignmentsScreen() {
             value={formTitle}
             onChangeText={setFormTitle}
             placeholder="예: 쇼팽 발라드 1번 - 1~30마디 연습"
-            placeholderTextColor="#9e9282"
+            placeholderTextColor={colors.textMuted}
             returnKeyType="next"
           />
         </View>
@@ -494,7 +501,7 @@ export default function AssignmentsScreen() {
             value={formDescription}
             onChangeText={setFormDescription}
             placeholder="세부 내용을 입력하세요"
-            placeholderTextColor="#9e9282"
+            placeholderTextColor={colors.textMuted}
             multiline
             textAlignVertical="top"
           />
@@ -509,7 +516,7 @@ export default function AssignmentsScreen() {
               onChangeText={setFormDueDate}
               onFocus={() => { if (!formDueDate) setFormDueDate(getNextWeekString()); }}
               placeholder="YYYY-MM-DD"
-              placeholderTextColor="#9e9282"
+              placeholderTextColor={colors.textMuted}
               keyboardType="numbers-and-punctuation"
               maxLength={10}
             />
@@ -541,7 +548,7 @@ export default function AssignmentsScreen() {
             disabled={saving}
           >
             {saving ? (
-              <ActivityIndicator size="small" color="#110E0B" />
+              <ActivityIndicator size="small" color={colors.accentText} />
             ) : (
               <Text style={styles.submitBtnText}>저장</Text>
             )}
@@ -559,7 +566,7 @@ export default function AssignmentsScreen() {
     if (mentorships.length === 0) {
       return (
         <View style={styles.emptyContainer}>
-          <ClipboardIcon size={48} color="rgba(201,169,110,0.3)" />
+          <ClipboardIcon size={48} color={colors.accentMuted} />
           <Text style={styles.emptyTitle}>멘토십이 없습니다</Text>
           <Text style={styles.emptySubtitle}>
             선생님 또는 학생과 멘토십을 연결하면{'\n'}과제를 관리할 수 있습니다.
@@ -571,7 +578,7 @@ export default function AssignmentsScreen() {
     if (assignments.length === 0 && !showForm) {
       return (
         <View style={styles.emptyContainer}>
-          <ClipboardIcon size={48} color="rgba(201,169,110,0.3)" />
+          <ClipboardIcon size={48} color={colors.accentMuted} />
           <Text style={styles.emptyTitle}>등록된 과제가 없습니다</Text>
           <Text style={styles.emptySubtitle}>
             우측 하단의 + 버튼을 눌러{'\n'}새 과제를 추가해보세요.
@@ -603,7 +610,7 @@ export default function AssignmentsScreen() {
       {/* Header */}
       <View style={styles.header}>
         <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
-          <BackIcon />
+          <BackIcon color={colors.text} />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>연습 과제</Text>
         <View style={styles.headerRight} />
@@ -612,7 +619,7 @@ export default function AssignmentsScreen() {
       {/* Content */}
       {loading ? (
         <View style={styles.centered}>
-          <ActivityIndicator size="large" color="#C9A96E" />
+          <ActivityIndicator size="large" color={colors.accent} />
         </View>
       ) : (
         <>
@@ -633,7 +640,7 @@ export default function AssignmentsScreen() {
               onPress={() => setShowForm(true)}
               activeOpacity={0.8}
             >
-              <PlusIcon size={28} color="#110E0B" />
+              <PlusIcon size={28} color={colors.accentText} />
             </TouchableOpacity>
           )}
         </>
@@ -644,10 +651,10 @@ export default function AssignmentsScreen() {
 
 // ── Styles ──────────────────────────────────────────────────
 
-const styles = StyleSheet.create({
+const makeStyles = (c) => StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#110E0B',
+    backgroundColor: c.bg,
   },
   centered: {
     flex: 1,
@@ -663,7 +670,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 14,
     borderBottomWidth: 0.5,
-    borderBottomColor: 'rgba(201,169,110,0.15)',
+    borderBottomColor: c.surfaceStrong,
   },
   backBtn: {
     width: 40,
@@ -674,7 +681,7 @@ const styles = StyleSheet.create({
   headerTitle: {
     fontSize: 18,
     fontWeight: '300',
-    color: '#F5F0E8',
+    color: c.text,
     letterSpacing: 1,
   },
   headerRight: {
@@ -698,13 +705,13 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: 14,
     fontWeight: '400',
-    color: '#C9A96E',
+    color: c.accent,
     letterSpacing: 1.5,
     fontStyle: 'italic',
   },
   sectionBadge: {
     marginLeft: 8,
-    backgroundColor: 'rgba(201,169,110,0.1)',
+    backgroundColor: c.surface,
     borderRadius: 4,
     paddingHorizontal: 8,
     paddingVertical: 2,
@@ -712,7 +719,7 @@ const styles = StyleSheet.create({
   sectionBadgeText: {
     fontSize: 12,
     fontWeight: '400',
-    color: '#9e9282',
+    color: c.textMuted,
   },
 
   // Manuscript decorations
@@ -742,7 +749,7 @@ const styles = StyleSheet.create({
     borderWidth: 0.5,
     borderColor: 'rgba(180,150,100,0.2)',
     borderTopWidth: 1.5,
-    borderTopColor: 'rgba(201,169,110,0.25)',
+    borderTopColor: c.border,
     padding: 14,
     marginBottom: 10,
     position: 'relative',
@@ -760,7 +767,7 @@ const styles = StyleSheet.create({
     height: 24,
     borderRadius: 12,
     borderWidth: 2,
-    borderColor: 'rgba(201,169,110,0.25)',
+    borderColor: c.border,
   },
   checkboxCompleted: {
     width: 24,
@@ -776,28 +783,28 @@ const styles = StyleSheet.create({
   cardTitle: {
     fontSize: 15,
     fontWeight: '400',
-    color: '#F5F0E8',
+    color: c.text,
     marginBottom: 4,
   },
   cardTitleCompleted: {
     textDecorationLine: 'line-through',
-    color: '#9e9282',
+    color: c.textMuted,
   },
   cardDescription: {
     fontSize: 13,
-    color: '#9e9282',
+    color: c.textMuted,
     marginBottom: 4,
   },
   cardTextCompleted: {
-    color: '#9e9282',
+    color: c.textMuted,
   },
   cardDueDate: {
     fontSize: 12,
-    color: '#9e9282',
+    color: c.textMuted,
     marginTop: 2,
   },
   cardDueDateOverdue: {
-    color: '#e74c3c',
+    color: c.danger,
     fontWeight: '600',
   },
   deleteBtn: {
@@ -809,17 +816,17 @@ const styles = StyleSheet.create({
 
   // Form
   formContainer: {
-    backgroundColor: 'rgba(201,169,110,0.07)',
+    backgroundColor: c.surface,
     borderRadius: 4,
     borderWidth: 1,
-    borderColor: 'rgba(201,169,110,0.18)',
+    borderColor: c.border,
     padding: 18,
     marginBottom: 16,
   },
   formTitle: {
     fontSize: 16,
     fontWeight: '300',
-    color: '#C9A96E',
+    color: c.accent,
     marginBottom: 16,
     letterSpacing: 0.5,
   },
@@ -829,19 +836,19 @@ const styles = StyleSheet.create({
   fieldLabel: {
     fontSize: 13,
     fontWeight: '400',
-    color: '#9e9282',
+    color: c.textMuted,
     marginBottom: 8,
     letterSpacing: 0.5,
   },
   input: {
-    backgroundColor: '#110E0B',
+    backgroundColor: c.bg,
     borderWidth: 1,
-    borderColor: 'rgba(201,169,110,0.18)',
+    borderColor: c.border,
     borderRadius: 4,
     paddingHorizontal: 14,
     paddingVertical: 12,
     fontSize: 15,
-    color: '#F5F0E8',
+    color: c.text,
   },
   descriptionInput: {
     height: 80,
@@ -857,13 +864,13 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
     borderRadius: 4,
     borderWidth: 1,
-    borderColor: '#C9A96E',
-    backgroundColor: 'rgba(201,169,110,0.1)',
+    borderColor: c.accent,
+    backgroundColor: c.surface,
   },
   quickBtnText: {
     fontSize: 13,
     fontWeight: '400',
-    color: '#C9A96E',
+    color: c.accent,
   },
   chipRow: {
     flexDirection: 'row',
@@ -874,22 +881,22 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 8,
     borderRadius: 4,
-    backgroundColor: '#110E0B',
+    backgroundColor: c.bg,
     borderWidth: 1,
-    borderColor: 'rgba(201,169,110,0.18)',
+    borderColor: c.border,
     marginRight: 4,
   },
   chipActive: {
-    backgroundColor: 'rgba(201, 169, 110, 0.15)',
-    borderColor: '#C9A96E',
+    backgroundColor: c.surfaceStrong,
+    borderColor: c.accent,
   },
   chipText: {
     fontSize: 14,
-    color: '#9e9282',
+    color: c.textMuted,
     fontWeight: '400',
   },
   chipTextActive: {
-    color: '#C9A96E',
+    color: c.accent,
   },
   formButtons: {
     flexDirection: 'row',
@@ -903,12 +910,12 @@ const styles = StyleSheet.create({
     paddingVertical: 14,
     borderRadius: 4,
     borderWidth: 1,
-    borderColor: 'rgba(201,169,110,0.18)',
+    borderColor: c.border,
   },
   cancelBtnText: {
     fontSize: 15,
     fontWeight: '400',
-    color: '#9e9282',
+    color: c.textMuted,
   },
   submitBtn: {
     flex: 1,
@@ -916,7 +923,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     paddingVertical: 14,
     borderRadius: 4,
-    backgroundColor: '#C9A96E',
+    backgroundColor: c.accent,
   },
   submitBtnDisabled: {
     opacity: 0.6,
@@ -924,7 +931,7 @@ const styles = StyleSheet.create({
   submitBtnText: {
     fontSize: 15,
     fontWeight: '400',
-    color: '#110E0B',
+    color: c.accentText,
   },
 
   // FAB
@@ -934,7 +941,7 @@ const styles = StyleSheet.create({
     width: 56,
     height: 56,
     borderRadius: 28,
-    backgroundColor: '#C9A96E',
+    backgroundColor: c.accent,
     alignItems: 'center',
     justifyContent: 'center',
     elevation: 6,
@@ -953,12 +960,12 @@ const styles = StyleSheet.create({
   emptyTitle: {
     fontSize: 16,
     fontWeight: '300',
-    color: '#9e9282',
+    color: c.textMuted,
     marginTop: 16,
   },
   emptySubtitle: {
     fontSize: 14,
-    color: '#9e9282',
+    color: c.textMuted,
     textAlign: 'center',
     marginTop: 8,
     lineHeight: 20,
