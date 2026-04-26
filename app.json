@@ -28,12 +28,13 @@
     },
     "android": {
       "package": "com.eugeneonmusic.app",
-      "versionCode": 19,
+      "versionCode": 20,
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#FFFFFF"
       },
       "edgeToEdgeEnabled": true,
+      "softwareKeyboardLayoutMode": "resize",
       "permissions": [
         "INTERNET",
         "VIBRATE",

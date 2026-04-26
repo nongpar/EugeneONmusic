@@ -459,9 +459,18 @@ function AIConsultScreenInner() {
 
       {/* 대화 영역 — 키보드 높이만큼 marginBottom 부여해서 위로 올림.
           iOS: modal 환경에서 KeyboardAvoidingView가 부정확해 직접 marginBottom 관리.
-          Android: 시스템 windowSoftInputMode=adjustResize가 이미 컨텐츠를 위로 밀어주므로
-                   추가 마진은 두 번 처리되어 입력창이 키보드 뒤로 숨어버림 → 0으로 둠. */}
-      <View style={{ flex: 1, marginBottom: Platform.OS === 'ios' ? keyboardHeight : 0 }}>
+          Android: edgeToEdgeEnabled=true에서는 adjustResize가 자동으로 밀어주지 않고,
+                   keyboardDidShow.endCoordinates.height가 제스처바(insets.bottom) 영역을
+                   포함하지 않으므로 그만큼 추가 보정. */}
+      <View
+        style={{
+          flex: 1,
+          marginBottom:
+            keyboardHeight > 0 && Platform.OS === 'android'
+              ? keyboardHeight + insets.bottom
+              : keyboardHeight,
+        }}
+      >
         {!started ? (
           // 초대 화면 (대화 시작 전)
           <ScrollView

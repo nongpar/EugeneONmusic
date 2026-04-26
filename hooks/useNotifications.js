@@ -5,12 +5,17 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 
 let Notifications = null;
 let Device = null;
+let isExpoGo = false;
 
 // 네이티브 전용 모듈 로드 (웹에서는 무시)
 if (Platform.OS !== 'web') {
   try {
     Notifications = require('expo-notifications');
     Device = require('expo-device');
+  } catch {}
+  try {
+    const Constants = require('expo-constants').default;
+    isExpoGo = Constants?.executionEnvironment === 'storeClient';
   } catch {}
 }
 
@@ -47,6 +52,11 @@ function isNotificationAllowed(settings, type) {
  */
 export async function registerForPushNotifications() {
   if (Platform.OS === 'web' || !Notifications || !Device) {
+    return null;
+  }
+
+  // Expo Go(SDK 53+)에서는 원격 푸시가 제거됨 — dev build에서만 동작
+  if (isExpoGo) {
     return null;
   }
 
