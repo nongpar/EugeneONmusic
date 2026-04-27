@@ -33,9 +33,83 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { useAudioPlayer } from 'expo-audio';
 import Svg, { Path, Circle } from 'react-native-svg';
 import ChopinAvatar, { ChopinAvatarSmall } from '../components/ChopinAvatar';
+import AnimatedFirstMessage from '../components/AnimatedFirstMessage';
+import ThreePaths from '../components/ThreePaths';
+import TypingIndicator from '../components/TypingIndicator';
+import GlossaryText from '../components/GlossaryText';
+import GlossaryModal from '../components/GlossaryModal';
+import MoodLabel from '../components/MoodLabel';
+import ClosingCard from '../components/ClosingCard';
+import { detectMood } from '../constants/moodDetector';
 import { functions, auth } from '../config/firebase';
 import { useAuth } from '../hooks/useAuth';
 import { useTheme } from '../hooks/useTheme';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+
+// ── 세션 저장(이어가기) ──
+// 진행 중이던 대화를 30분 이내 재진입 시 복원할 수 있도록 AsyncStorage에 캐시.
+// completed(신청서 제출됨) 시점에 자동 삭제.
+const SESSION_KEY = '@eon_ai_consult_last_session';
+const SESSION_MAX_AGE_MS = 30 * 60 * 1000; // 30분
+
+async function saveSession(messages, consultationId) {
+  if (!consultationId || !messages || messages.length === 0) return;
+  // firstAnimated 같은 휘발성 플래그 제거 — 복원 시 재애니메이션 안 되도록
+  const sanitized = messages.map((m) => ({ role: m.role, text: m.text }));
+  try {
+    await AsyncStorage.setItem(
+      SESSION_KEY,
+      JSON.stringify({
+        consultationId,
+        messages: sanitized,
+        timestamp: Date.now(),
+      })
+    );
+  } catch {}
+}
+
+async function loadSession() {
+  try {
+    const raw = await AsyncStorage.getItem(SESSION_KEY);
+    if (!raw) return null;
+    const data = JSON.parse(raw);
+    if (!data?.timestamp || Date.now() - data.timestamp > SESSION_MAX_AGE_MS) {
+      AsyncStorage.removeItem(SESSION_KEY).catch(() => {});
+      return null;
+    }
+    return data;
+  } catch {
+    return null;
+  }
+}
+
+async function clearSession() {
+  try {
+    await AsyncStorage.removeItem(SESSION_KEY);
+  } catch {}
+}
+
+// "방금 전" / "23분 전" / "오후 4:42" 형식
+function formatRelativeTime(ts) {
+  const elapsed = Date.now() - ts;
+  const minutes = Math.floor(elapsed / 60000);
+  if (minutes < 1) return '방금 전';
+  if (minutes < 60) return `${minutes}분 전`;
+  const d = new Date(ts);
+  const h = d.getHours();
+  const m = d.getMinutes();
+  const period = h < 12 ? '오전' : '오후';
+  const displayHour = h === 0 ? 12 : h > 12 ? h - 12 : h;
+  return `${period} ${displayHour}:${String(m).padStart(2, '0')}`;
+}
+
+function getSessionPreview(messages) {
+  // 가장 마지막 user 또는 assistant 메시지 — 사용자가 어디서 멈췄는지 알 수 있게
+  for (let i = messages.length - 1; i >= 0; i--) {
+    if (messages[i]?.text) return messages[i].text;
+  }
+  return '';
+}
 
 let Haptics = null;
 if (Platform.OS !== 'web') {
@@ -185,6 +259,14 @@ function AIConsultScreenInner() {
   const [consultationId, setConsultationId] = useState(null);
   const [completed, setCompleted] = useState(false);
   const [started, setStarted] = useState(false);
+  // 이어가기: 30분 이내 미완료 대화가 있으면 idle 화면에 카드 노출
+  const [resumableSession, setResumableSession] = useState(null);
+  // 음악 용어 정의 모달 — 가온 답변에서 단어 탭 시 활성화
+  const [activeTerm, setActiveTerm] = useState(null);
+  // 결의 흐름 — 사용자 첫 메시지 분석 후 노출되는 분위기 라벨
+  const [mood, setMood] = useState(null);
+  // 마무리 카드 — "오늘의 한 음" 모달 표시 여부
+  const [showClosingCard, setShowClosingCard] = useState(false);
   // Firebase Auth 세션 상태: null=확인중, true=준비완료, false=실패(서비스 준비 중)
   // auth가 null인 경우(env 누락/초기화 실패)도 안전하게 처리
   const [fbAuthReady, setFbAuthReady] = useState(auth?.currentUser ? true : null);
@@ -202,6 +284,42 @@ function AIConsultScreenInner() {
   // 배경음악은 대화 시작(started=true) 후에만 BackgroundMusic 컴포넌트로 마운트.
   // 이유: useAudioPlayer가 native 에러를 던지면 hook 단계에서 앱이 크래시할 수 있어
   //       진입 즉시 호출하지 않고 사용자가 상담을 시작한 시점에만 로드.
+
+  // 진입 시 이전 세션 로드 — 30분 이내 미완료 대화가 있으면 idle에 카드 노출
+  useEffect(() => {
+    let cancelled = false;
+    loadSession().then((s) => {
+      if (cancelled) return;
+      if (s) setResumableSession(s);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  // 메시지·consultationId 갱신 시 세션 저장 (자동 동기화)
+  // completed면 세션 삭제 — 신청 끝난 대화는 복원할 필요 없음
+  useEffect(() => {
+    if (!started) return;
+    if (completed) {
+      clearSession();
+      return;
+    }
+    if (consultationId && messages.length > 0) {
+      saveSession(messages, consultationId);
+    }
+  }, [messages, consultationId, completed, started]);
+
+  // 결의 흐름 감지 — 첫 user 메시지가 있고 아직 mood 미설정이면 분류
+  // (새 대화는 sendMessage 후, 이어가기는 복원 후 messages가 갱신될 때 자동)
+  useEffect(() => {
+    if (!started || mood) return;
+    const firstUserMsg = messages.find((m) => m.role === 'user');
+    if (firstUserMsg?.text) {
+      const detected = detectMood(firstUserMsg.text);
+      if (detected) setMood(detected);
+    }
+  }, [started, messages, mood]);
 
   // Firebase Auth 상태를 구독 — 나중에 세션이 붙으면 자동 반영
   useEffect(() => {
@@ -279,6 +397,23 @@ function AIConsultScreenInner() {
     }
   }, [keyboardHeight]);
 
+  // 이전 대화를 그대로 이어가기 — 메시지·consultationId 모두 복원
+  const resumeConversation = () => {
+    if (!resumableSession) return;
+    Haptics?.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    setMessages(resumableSession.messages || []);
+    setConsultationId(resumableSession.consultationId || null);
+    setStarted(true);
+    setResumableSession(null);
+  };
+
+  // 새 대화 시작하므로 저장된 세션 폐기 — 카드만 사라지고 idle 유지
+  const discardResumableSession = () => {
+    Haptics?.selectionAsync();
+    clearSession();
+    setResumableSession(null);
+  };
+
   const startConversation = async (prefillText = '') => {
     // 시작 순간 강한 햅틱 — 의식적인 진입 느낌 부여
     Haptics?.impactAsync(Haptics.ImpactFeedbackStyle.Heavy);
@@ -288,6 +423,7 @@ function AIConsultScreenInner() {
       {
         role: 'assistant',
         text: getTimeBasedGreeting(),
+        firstAnimated: true, // 호흡 애니메이션 (단어별 페이드 + 골드 마무리)
       },
     ]);
     // 가이드 칩에서 시작한 경우 입력창에 문구 자동 채움
@@ -436,6 +572,21 @@ function AIConsultScreenInner() {
           </View>
         </View>
         <View style={styles.headerActions}>
+          {/* "오늘의 한 음" 받기 — 대화가 충분히 진행됐을 때만 노출 */}
+          {started && !completed && !loading && messages.length >= 4 && (
+            <TouchableOpacity
+              style={styles.summaryBtn}
+              onPress={() => {
+                Haptics?.selectionAsync();
+                setShowClosingCard(true);
+              }}
+              hitSlop={{ top: 10, bottom: 10, left: 6, right: 6 }}
+              accessibilityLabel="오늘의 한 음 받기"
+            >
+              <View style={styles.summaryDiamond} />
+              <Text style={styles.summaryBtnText}>한 음</Text>
+            </TouchableOpacity>
+          )}
           {/* 배경음악 음소거 토글 — 대화 시작 후에만 노출 */}
           {started && !completed && (
             <TouchableOpacity
@@ -490,6 +641,35 @@ function AIConsultScreenInner() {
               당신에게 어울리는 기획을 준비해드립니다.
             </Text>
 
+            {/* 이어가기 카드 — 30분 이내 미완료 대화가 있을 때만 노출 */}
+            {resumableSession && (
+              <View style={styles.resumeCard}>
+                <Text style={styles.resumeLabel}>방금 전 대화를 이어가시겠어요?</Text>
+                <Text style={styles.resumePreview} numberOfLines={2}>
+                  "{getSessionPreview(resumableSession.messages)}"
+                </Text>
+                <Text style={styles.resumeTime}>
+                  {formatRelativeTime(resumableSession.timestamp)}
+                </Text>
+                <View style={styles.resumeActions}>
+                  <TouchableOpacity
+                    style={styles.resumeSecondary}
+                    activeOpacity={0.75}
+                    onPress={discardResumableSession}
+                  >
+                    <Text style={styles.resumeSecondaryText}>새 대화</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    style={styles.resumePrimary}
+                    activeOpacity={0.85}
+                    onPress={resumeConversation}
+                  >
+                    <Text style={styles.resumePrimaryText}>이어가기 →</Text>
+                  </TouchableOpacity>
+                </View>
+              </View>
+            )}
+
             {/* 대화 가이드 칩 — 예시 주제 선택 */}
             <Text style={styles.chipsHeading}>이런 대화를 나눌 수 있어요</Text>
             <View style={styles.chipsWrap}>
@@ -522,46 +702,49 @@ function AIConsultScreenInner() {
             </Text>
           </ScrollView>
         ) : (
-          <ScrollView
-            ref={scrollRef}
-            style={styles.chatScroll}
-            contentContainerStyle={styles.chatContent}
-            showsVerticalScrollIndicator={false}
-            onContentSizeChange={() => scrollToBottom(true)}
-            keyboardShouldPersistTaps="handled"
-          >
-            {messages.map((m, i) => (
-              <MessageBubble key={i} message={m} />
-            ))}
-            {loading && (
-              <View style={styles.typingWrap}>
-                <View style={styles.typingAvatar}>
-                  <ChopinAvatarSmall size={24} />
-                </View>
-                <View style={styles.typingBubble}>
-                  <ActivityIndicator size="small" color={colors.accent} />
-                </View>
-              </View>
+          <>
+            {/* 결의 흐름 라벨 — 첫 user 메시지 분석 후 노출 */}
+            {mood && (
+              <MoodLabel mood={mood} onDismiss={() => setMood(null)} />
             )}
-            {completed && (
-              <TicketReceipt consultationId={consultationId} onClose={() => router.back()} />
-            )}
-          </ScrollView>
+            <ScrollView
+              ref={scrollRef}
+              style={styles.chatScroll}
+              contentContainerStyle={styles.chatContent}
+              showsVerticalScrollIndicator={false}
+              onContentSizeChange={() => scrollToBottom(true)}
+              keyboardShouldPersistTaps="handled"
+            >
+              {messages.map((m, i) => (
+                <MessageBubble key={i} message={m} onTermPress={setActiveTerm} />
+              ))}
+              {loading && <TypingIndicator />}
+              {completed && (
+                <TicketReceipt consultationId={consultationId} onClose={() => router.back()} />
+              )}
+            </ScrollView>
+          </>
         )}
 
         {/* 입력 영역 (대화 시작 후에만) */}
         {started && !completed && (
-          <View style={[styles.inputRow, { paddingBottom: bottomPad }]}>
-            <TextInput
-              style={styles.input}
-              value={input}
-              onChangeText={setInput}
-              placeholder="편안하게 말씀해주세요..."
-              placeholderTextColor={colors.placeholder}
-              multiline
-              maxLength={1000}
-              editable={!loading}
+          <>
+            {/* 세 갈래 길 — 접었다 폈다 가능한 제안 패널 */}
+            <ThreePaths
+              hasInput={input.trim().length > 0}
+              onSelect={(prefill) => setInput(prefill)}
             />
+            <View style={[styles.inputRow, { paddingBottom: bottomPad }]}>
+              <TextInput
+                style={styles.input}
+                value={input}
+                onChangeText={setInput}
+                placeholder="편안하게 말씀해주세요..."
+                placeholderTextColor={colors.placeholder}
+                multiline
+                maxLength={1000}
+                editable={!loading}
+              />
             {/* 지우기 버튼 — 입력이 있을 때만 표시, 가이드 칩으로 채워진 문구도 한 번에 비움 */}
             {input.length > 0 && !loading && (
               <TouchableOpacity
@@ -582,11 +765,30 @@ function AIConsultScreenInner() {
               disabled={!input.trim() || loading}
               activeOpacity={0.8}
             >
-              <QuillIcon size={18} color={!input.trim() || loading ? colors.accentMuted : colors.accentText} />
-            </TouchableOpacity>
-          </View>
+                <QuillIcon size={18} color={!input.trim() || loading ? colors.accentMuted : colors.accentText} />
+              </TouchableOpacity>
+            </View>
+          </>
         )}
       </View>
+
+      {/* 음악 용어 정의 모달 */}
+      <GlossaryModal
+        visible={!!activeTerm}
+        term={activeTerm}
+        onClose={() => setActiveTerm(null)}
+      />
+
+      {/* 오늘의 한 음 — 마무리 카드 */}
+      <ClosingCard
+        visible={showClosingCard}
+        messages={messages}
+        onClose={() => setShowClosingCard(false)}
+        onCloseAndExit={() => {
+          setShowClosingCard(false);
+          router.back();
+        }}
+      />
     </View>
   );
 }
@@ -684,7 +886,7 @@ function TicketReceipt({ consultationId, onClose }) {
 }
 
 // ────────────── 말풍선 컴포넌트 ──────────────
-function MessageBubble({ message }) {
+function MessageBubble({ message, onTermPress }) {
   const { colors } = useTheme();
   const styles = makeStyles(colors);
   if (message.role === 'system') {
@@ -705,14 +907,23 @@ function MessageBubble({ message }) {
     );
   }
 
-  // assistant
+  // assistant — 첫 메시지는 호흡 애니메이션, 이후 답변은 음악 용어 인식 텍스트
+  if (message.firstAnimated) {
+    return <AnimatedFirstMessage text={message.text} />;
+  }
+
   return (
     <View style={styles.assistantWrap}>
       <View style={styles.assistantAvatar}>
         <ChopinAvatarSmall size={28} />
       </View>
       <View style={styles.assistantBubble}>
-        <Text style={styles.assistantText}>{message.text}</Text>
+        <GlossaryText
+          text={message.text}
+          baseStyle={styles.assistantText}
+          accentColor={colors.accent}
+          onTermPress={onTermPress}
+        />
       </View>
     </View>
   );
@@ -1048,6 +1259,95 @@ const makeStyles = (c) => StyleSheet.create({
   },
   ticketActionPrimaryText: {
     color: c.accentText,
+  },
+
+  // 헤더 — "오늘의 한 음" 버튼 (대화가 일정 분량 진행됐을 때만 노출)
+  summaryBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderWidth: 0.5,
+    borderColor: c.accent,
+    borderRadius: 4,
+    marginRight: 4,
+  },
+  summaryDiamond: {
+    width: 4,
+    height: 4,
+    backgroundColor: c.accent,
+    transform: [{ rotate: '45deg' }],
+    opacity: 0.8,
+  },
+  summaryBtnText: {
+    fontSize: 11,
+    color: c.accent,
+    letterSpacing: 1.2,
+  },
+
+  // 이어가기 카드 — idle 화면에서 진행 중이던 대화 복원
+  resumeCard: {
+    width: '100%',
+    maxWidth: 380,
+    backgroundColor: c.surface,
+    borderWidth: 0.5,
+    borderColor: c.accent,
+    borderRadius: 4,
+    padding: 16,
+    marginTop: 24,
+    marginBottom: 4,
+  },
+  resumeLabel: {
+    fontSize: 12,
+    color: c.accent,
+    letterSpacing: 1.4,
+    marginBottom: 12,
+    textAlign: 'center',
+  },
+  resumePreview: {
+    fontSize: 13,
+    color: c.text,
+    lineHeight: 22,
+    fontStyle: 'italic',
+    marginBottom: 8,
+  },
+  resumeTime: {
+    fontSize: 10,
+    color: c.textMuted,
+    letterSpacing: 0.8,
+    textAlign: 'right',
+    marginBottom: 14,
+  },
+  resumeActions: {
+    flexDirection: 'row',
+    gap: 8,
+    justifyContent: 'flex-end',
+  },
+  resumePrimary: {
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderWidth: 0.5,
+    borderColor: c.accent,
+    backgroundColor: c.accent,
+    borderRadius: 4,
+  },
+  resumePrimaryText: {
+    fontSize: 12,
+    color: c.accentText,
+    letterSpacing: 1.2,
+  },
+  resumeSecondary: {
+    paddingHorizontal: 14,
+    paddingVertical: 8,
+    borderWidth: 0.5,
+    borderColor: c.border,
+    borderRadius: 4,
+  },
+  resumeSecondaryText: {
+    fontSize: 12,
+    color: c.textMuted,
+    letterSpacing: 1.2,
   },
 
   // 입력 영역

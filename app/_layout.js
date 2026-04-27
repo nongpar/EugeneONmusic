@@ -286,9 +286,9 @@ function AnimatedSplash({ onFinish }) {
       ]);
     });
 
-    // ── 헤일로 애니메이션 (클라이맥스, ~3.0초 시점) — 단 한 번 부드럽게 퍼짐 ──
+    // ── 헤일로 애니메이션 (클라이맥스, ~3.9초 시점) — 단 한 번 부드럽게 퍼짐 ──
     const haloAnimation = Animated.sequence([
-      Animated.delay(2900),
+      Animated.delay(3900),
       Animated.parallel([
         Animated.timing(haloScale, { toValue: 2.2, duration: 1800, easing: Easing.out(Easing.cubic), useNativeDriver: true }),
         Animated.sequence([
