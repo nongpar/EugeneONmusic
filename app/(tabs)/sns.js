@@ -13,7 +13,9 @@ if (Platform.OS !== 'web') {
   try { Haptics = require('expo-haptics'); } catch {}
 }
 
-const YOUTUBE_API_KEY = process.env.EXPO_PUBLIC_YOUTUBE_API_KEY;
+const YOUTUBE_API_KEY = Platform.OS === 'ios'
+  ? process.env.EXPO_PUBLIC_YOUTUBE_API_KEY_IOS
+  : process.env.EXPO_PUBLIC_YOUTUBE_API_KEY_ANDROID;
 const CHANNEL_ID = 'UCK6jLVvnwAMA5lpuUYShWog';
 
 const SNS_CHANNELS = [
