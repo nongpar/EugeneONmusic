@@ -49,5 +49,9 @@ firebase-debug.log
 firestore-debug.log
 ui-debug.log
 
+# Firebase config files — managed via EAS secrets (do not commit)
+google-services.json
+GoogleService-Info.plist
+
 # 이미지 원본 — 관객 얼굴 식별 가능한 고해상도 원본은 저장소에 포함하지 않음
 assets/images/eon-hall-src.jpg
