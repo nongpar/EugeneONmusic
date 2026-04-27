@@ -1,0 +1,39 @@
+{
+  "project_info": {
+    "project_number": "1065464707619",
+    "project_id": "eugeneonmusic",
+    "storage_bucket": "eugeneonmusic.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:1065464707619:android:709a0d45f71e7fe8114f96",
+        "android_client_info": {
+          "package_name": "com.eugeneonmusic.app"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "1065464707619-pscdiv7cohoi73u1mv4g9t38khp3s8i3.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyA0KRgz1MAOKN1CXHoEau0ucau3trmELfQ"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "1065464707619-pscdiv7cohoi73u1mv4g9t38khp3s8i3.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
