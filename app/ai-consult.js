@@ -218,35 +218,6 @@ function CloseIcon({ size = 22, color = '#F5F0E8' }) {
   );
 }
 
-// 가이드 칩용 아이콘 — 이모지 대신 골드 라인 아트로 통일감 확보
-function MoonIcon({ size = 18, color = '#C9A96E' }) {
-  return (
-    <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
-      <Path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z" stroke={color} strokeWidth={1.4} strokeLinejoin="round" />
-    </Svg>
-  );
-}
-
-function PianoIcon({ size = 18, color = '#C9A96E' }) {
-  return (
-    <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
-      <Path d="M4 7h16v10H4z" stroke={color} strokeWidth={1.3} />
-      <Path d="M9 7v5M15 7v5" stroke={color} strokeWidth={1.3} />
-      <Path d="M7 13v4M11 13v4M13 13v4M17 13v4" stroke={color} strokeWidth={0.9} />
-    </Svg>
-  );
-}
-
-function HallIcon({ size = 18, color = '#C9A96E' }) {
-  return (
-    <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
-      <Path d="M3 9L12 4l9 5" stroke={color} strokeWidth={1.4} strokeLinecap="round" strokeLinejoin="round" />
-      <Path d="M5 9v10M9 9v10M15 9v10M19 9v10" stroke={color} strokeWidth={1.2} />
-      <Path d="M3 19h18" stroke={color} strokeWidth={1.4} strokeLinecap="round" />
-    </Svg>
-  );
-}
-
 // 입력창 지우기 버튼 아이콘 — 반투명 원형 배경 위 X
 function ClearIcon({ size = 18 }) {
   return (
@@ -259,10 +230,6 @@ function ClearIcon({ size = 18 }) {
 
 function ChipIcon({ name, color: chipColor = '#C9A96E' }) {
   switch (name) {
-    case 'moon': return <MoonIcon color={chipColor} />;
-    case 'piano': return <PianoIcon color={chipColor} />;
-    case 'spark': return <SparkIcon size={16} color={chipColor} />;
-    case 'hall': return <HallIcon color={chipColor} />;
     case 'book': return <OpenBookIcon color={chipColor} />;
     case 'spotlight': return <SpotlightStageIcon color={chipColor} />;
     case 'heart': return <HeartIcon color={chipColor} />;
