@@ -151,8 +151,6 @@ function AnimatedSplash({ onFinish }) {
   const logoRotate = useRef(new Animated.Value(-0.02)).current;
   const ringScale = useRef(new Animated.Value(0)).current;
   const ringOpacity = useRef(new Animated.Value(0)).current;
-  const subtitleOpacity = useRef(new Animated.Value(0)).current;
-  const subtitleTranslateY = useRef(new Animated.Value(10)).current;
   const lineWidth = useRef(new Animated.Value(0)).current;
   const lineLeftWidth = useRef(new Animated.Value(0)).current;
   const lineRightWidth = useRef(new Animated.Value(0)).current;
@@ -173,6 +171,15 @@ function AnimatedSplash({ onFinish }) {
     TITLE_CHARS.map(() => ({
       opacity: new Animated.Value(0),
       translateY: new Animated.Value(12),
+    }))
+  ).current;
+
+  // 서브타이틀 글자별 등장 — 'EON International Music'도 타이프라이터처럼 순차 페이드인
+  const SUBTITLE_CHARS = 'EON International Music'.split('');
+  const subtitleCharAnims = useRef(
+    SUBTITLE_CHARS.map(() => ({
+      opacity: new Animated.Value(0),
+      translateY: new Animated.Value(8),
     }))
   ).current;
 
@@ -286,11 +293,11 @@ function AnimatedSplash({ onFinish }) {
       ]);
     });
 
-    // ── 헤일로 애니메이션 (클라이맥스, ~3.9초 시점) — 단 한 번 부드럽게 퍼짐 ──
+    // ── 헤일로 애니메이션 (클라이맥스, ~3.7초 시점) — 단 한 번 부드럽게 퍼짐 ──
     const haloAnimation = Animated.sequence([
-      Animated.delay(3900),
+      Animated.delay(3700),
       Animated.parallel([
-        Animated.timing(haloScale, { toValue: 2.2, duration: 1800, easing: Easing.out(Easing.cubic), useNativeDriver: true }),
+        Animated.timing(haloScale, { toValue: 2.2, duration: 2000, easing: Easing.out(Easing.cubic), useNativeDriver: true }),
         Animated.sequence([
           Animated.timing(haloOpacity, { toValue: 0.22, duration: 600, easing: Easing.out(Easing.quad), useNativeDriver: true }),
           Animated.timing(haloOpacity, { toValue: 0, duration: 1200, easing: Easing.in(Easing.quad), useNativeDriver: true }),
@@ -374,11 +381,17 @@ function AnimatedSplash({ onFinish }) {
             )
           ),
           Animated.sequence([
-            Animated.delay(700), // 마지막 글자 등장 직후
-            Animated.parallel([
-              Animated.timing(subtitleOpacity, { toValue: 1, duration: 400, useNativeDriver: true }),
-              Animated.spring(subtitleTranslateY, { toValue: 0, friction: 8, tension: 40, useNativeDriver: true }),
-            ]),
+            Animated.delay(700), // 마지막 한글 글자 등장 직후
+            // 영문 서브타이틀도 글자별 stagger — 타이프라이터처럼
+            Animated.stagger(
+              45,
+              subtitleCharAnims.map((anim) =>
+                Animated.parallel([
+                  Animated.timing(anim.opacity, { toValue: 1, duration: 320, easing: Easing.out(Easing.cubic), useNativeDriver: true }),
+                  Animated.spring(anim.translateY, { toValue: 0, friction: 9, tension: 55, useNativeDriver: true }),
+                ])
+              )
+            ),
           ]),
         ]),
 
@@ -498,16 +511,31 @@ function AnimatedSplash({ onFinish }) {
           }}
         />
 
-        {/* 로고 링 이펙트 */}
-        <Animated.View
-          style={[
-            splashStyles.logoRing,
-            {
-              opacity: ringOpacity,
-              transform: [{ scale: ringScale }],
-            },
-          ]}
-        />
+        {/* 로고 등장 시 강조 — 오선(5줄)이 로고 중심에서 좌우로 동시에 그려져 나옴.
+            로고가 위에서 가운데를 가려 양 옆으로 오선지가 펼쳐지는 형태.
+            배경의 정적 오선지와 호응하면서 클라이맥스 헤일로(원형 파문)와 시각적으로 구분됨. */}
+        <View
+          pointerEvents="none"
+          style={{
+            ...StyleSheet.absoluteFillObject,
+            alignItems: 'center',
+            justifyContent: 'center',
+          }}
+        >
+          {[0, 1, 2, 3, 4].map((i) => (
+            <Animated.View
+              key={`staff-line-${i}`}
+              style={{
+                width: 200,
+                height: 0.8,
+                backgroundColor: '#C9A96E',
+                opacity: ringOpacity,
+                marginBottom: i < 4 ? 5.5 : 0,
+                transform: [{ scaleX: ringScale }],
+              }}
+            />
+          ))}
+        </View>
 
         {/* 로고 — logoScale(등장)과 logoBreath(호흡 루프)를 곱 transform으로 조합 */}
         <Animated.Image
@@ -551,18 +579,26 @@ function AnimatedSplash({ onFinish }) {
         })}
       </View>
 
-      {/* 서브타이틀 */}
-      <Animated.Text
-        style={[
-          splashStyles.subtitle,
-          {
-            opacity: subtitleOpacity,
-            transform: [{ translateY: subtitleTranslateY }],
-          },
-        ]}
-      >
-        EON International Music
-      </Animated.Text>
+      {/* 서브타이틀 — 영문도 한 글자씩 타이프라이터처럼 등장 */}
+      <View style={splashStyles.subtitleRow}>
+        {SUBTITLE_CHARS.map((ch, i) => {
+          const a = subtitleCharAnims[i];
+          return (
+            <Animated.Text
+              key={`subtitleChar-${i}`}
+              style={[
+                splashStyles.subtitle,
+                {
+                  opacity: a.opacity,
+                  transform: [{ translateY: a.translateY }],
+                },
+              ]}
+            >
+              {ch}
+            </Animated.Text>
+          );
+        })}
+      </View>
     </Animated.View>
   );
 }
@@ -581,14 +617,6 @@ const splashStyles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: 24,
-  },
-  logoRing: {
-    position: 'absolute',
-    width: 140,
-    height: 140,
-    borderRadius: 70,
-    borderWidth: 2,
-    borderColor: '#C9A96E',
   },
   logo: {
     width: 120,
@@ -624,6 +652,9 @@ const splashStyles = StyleSheet.create({
     fontWeight: '300',
     color: '#F5F0E8',
     letterSpacing: 4,
+  },
+  subtitleRow: {
+    flexDirection: 'row',
   },
   subtitle: {
     fontSize: 11,
