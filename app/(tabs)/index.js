@@ -1,7 +1,7 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useMemo } from 'react';
 import {
   View, Text, StyleSheet, ScrollView, Image, TouchableOpacity,
-  ActivityIndicator, Dimensions, Platform,
+  ActivityIndicator, Dimensions, Platform, Animated, Pressable, Easing,
 } from 'react-native';
 import Svg, { Path, Circle, Line } from 'react-native-svg';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -14,13 +14,14 @@ import NewsCard from '../../components/NewsCard';
 import { useAuth } from '../../hooks/useAuth';
 import { usePracticeStats } from '../../hooks/usePracticeStats';
 import { useTheme } from '../../hooks/useTheme';
+import { getTodayCuration, getGreeting } from '../../constants/dailyCuration';
 
 let Haptics = null;
 if (Platform.OS !== 'web') {
   try { Haptics = require('expo-haptics'); } catch {}
 }
 
-const { width: RAW_SCREEN_W } = Dimensions.get('window');
+const { width: RAW_SCREEN_W, height: SCREEN_H } = Dimensions.get('window');
 // iPad/태블릿 등 큰 화면에서 콘텐츠가 과하게 넓어지지 않도록 제한
 const SCREEN_W = Math.min(RAW_SCREEN_W, 540);
 const WP_API = 'https://www.eugeneonmusic.com/wp-json/wp/v2';
@@ -49,6 +50,66 @@ function RefreshIcon({ size = 16, color }) {
     </Svg>
   );
 }
+// 가온 카드 우측 데코용 — 가는 트레블 클레프
+function TrebleClefDeco({ size = 56, color }) {
+  return (
+    <Svg width={size} height={size * 1.55} viewBox="0 0 24 38" fill="none">
+      <Path
+        d="M12 36V8c0-4 3-7 5-7s3 2 3 4c0 3-4 6-8 8-4 2-7 5-7 9 0 5 4 8 7 8 2 0 4-1 5-3"
+        stroke={color} strokeWidth={1} strokeLinecap="round" fill="none"
+      />
+      <Circle cx="12" cy="28" r="2" fill={color} />
+    </Svg>
+  );
+}
+
+// 떠다니는 배경 음표 — 매우 은은하게 (opacity 0.05~0.07)
+function FloatingNoteIcon({ type = 'single', size = 22, color }) {
+  if (type === 'treble') {
+    return (
+      <Svg width={size} height={size * 1.6} viewBox="0 0 24 38" fill="none">
+        <Path d="M12 36V8c0-4 3-7 5-7s3 2 3 4c0 3-4 6-8 8-4 2-7 5-7 9 0 5 4 8 7 8 2 0 4-1 5-3" stroke={color} strokeWidth={1.2} strokeLinecap="round" fill="none" />
+        <Circle cx="12" cy="28" r="2" fill={color} />
+      </Svg>
+    );
+  }
+  if (type === 'double') {
+    return (
+      <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+        <Path d="M9 18V5l12-2v13" stroke={color} strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round" />
+        <Path d="M6 21a3 3 0 100-6 3 3 0 000 6z" fill={color} opacity={0.4} stroke={color} strokeWidth={1} />
+        <Path d="M18 19a3 3 0 100-6 3 3 0 000 6z" fill={color} opacity={0.4} stroke={color} strokeWidth={1} />
+      </Svg>
+    );
+  }
+  return (
+    <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+      <Path d="M12 3v15" stroke={color} strokeWidth={1.5} strokeLinecap="round" />
+      <Path d="M12 3l6-1v5l-6 1V3z" fill={color} opacity={0.35} stroke={color} strokeWidth={1} strokeLinejoin="round" />
+      <Circle cx="9" cy="18" r="3" fill={color} opacity={0.4} stroke={color} strokeWidth={1} />
+    </Svg>
+  );
+}
+
+// 떠다니는 음표 한 개 — 부모 위치에서 천천히 위아래로 ±6px 흔들리는 sin loop
+function FloatingNote({ anim, top, left, type, size, color }) {
+  const translateY = anim.interpolate({ inputRange: [0, 1], outputRange: [-6, 6] });
+  return (
+    <Animated.View
+      pointerEvents="none"
+      style={{
+        position: 'absolute',
+        top,
+        left,
+        opacity: 0.06,
+        transform: [{ translateY }],
+      }}
+    >
+      <FloatingNoteIcon type={type} size={size} color={color} />
+    </Animated.View>
+  );
+}
+
 // 클래식 장식선 (Ornamental Divider)
 function OrnamentDivider({ width = 200, color }) {
   return (
@@ -105,6 +166,43 @@ export default function HomeScreen() {
   const [activeSlide, setActiveSlide] = useState(0);
   const [heroSlides, setHeroSlides] = useState(FALLBACK_SLIDES);
   const scrollRef = useRef(null);
+
+  // 가온의 오늘의 한 곡 — 시간대별 인사 + 날짜 기반 deterministic 큐레이션
+  const greeting = useMemo(() => getGreeting(new Date().getHours()), []);
+  const todayPick = useMemo(() => getTodayCuration(), []);
+  const userName = user?.displayName || '';
+
+  // 외곽 ScrollView 스크롤 위치 — 히어로 paralax용
+  const scrollY = useRef(new Animated.Value(0)).current;
+  const heroParalax = scrollY.interpolate({
+    inputRange: [-200, 0, 400],
+    outputRange: [-40, 0, 80],
+    extrapolate: 'clamp',
+  });
+
+  // 떠다니는 배경 음표 sin loop (각각 다른 주기로 자연스럽게 어긋남)
+  const noteAnim1 = useRef(new Animated.Value(0)).current;
+  const noteAnim2 = useRef(new Animated.Value(0)).current;
+  const noteAnim3 = useRef(new Animated.Value(0)).current;
+  useEffect(() => {
+    const makeLoop = (anim, duration, delay = 0) => {
+      const seq = Animated.sequence([
+        Animated.delay(delay),
+        Animated.loop(
+          Animated.sequence([
+            Animated.timing(anim, { toValue: 1, duration, easing: Easing.inOut(Easing.sin), useNativeDriver: true }),
+            Animated.timing(anim, { toValue: 0, duration, easing: Easing.inOut(Easing.sin), useNativeDriver: true }),
+          ])
+        ),
+      ]);
+      seq.start();
+      return seq;
+    };
+    const a = makeLoop(noteAnim1, 5500, 0);
+    const b = makeLoop(noteAnim2, 7200, 800);
+    const c = makeLoop(noteAnim3, 6300, 1500);
+    return () => { a.stop(); b.stop(); c.stop(); };
+  }, []);
 
   // Firestore에서 배너 데이터 가져오기
   useEffect(() => {
@@ -183,13 +281,18 @@ export default function HomeScreen() {
     <View style={[styles.container, { paddingTop: insets.top }]}>
       <Header />
 
-      <ScrollView
+      <Animated.ScrollView
         style={styles.scrollView}
         showsVerticalScrollIndicator={false}
         contentContainerStyle={styles.scrollContent}
+        onScroll={Animated.event(
+          [{ nativeEvent: { contentOffset: { y: scrollY } } }],
+          { useNativeDriver: true }
+        )}
+        scrollEventThrottle={16}
       >
-        {/* ── 히어로 캐러셀 ── */}
-        <View style={styles.heroSection}>
+        {/* ── 히어로 캐러셀 ── (paralax — 스크롤보다 천천히 따라옴) */}
+        <Animated.View style={[styles.heroSection, { transform: [{ translateY: heroParalax }] }]}>
           <ScrollView
             ref={scrollRef}
             horizontal
@@ -237,16 +340,22 @@ export default function HomeScreen() {
               />
             ))}
           </View>
-        </View>
+        </Animated.View>
 
         {/* ── 장식 디바이더 ── */}
         <View style={{ alignItems: 'center', marginVertical: 4 }}>
           <OrnamentDivider width={SCREEN_W - 80} color={colors.accent} />
         </View>
 
-        {/* ── 퀵 액션 ── */}
+        {/* ── 퀵 액션 — Pressable로 누르는 순간 0.97 scale + opacity 미세 변화로 입체감 ── */}
         <View style={styles.quickRow}>
-          <TouchableOpacity style={styles.quickCard} onPress={() => router.push('/(tabs)/course')} activeOpacity={0.85}>
+          <Pressable
+            style={({ pressed }) => [
+              styles.quickCard,
+              pressed && styles.cardPressed,
+            ]}
+            onPress={() => router.push('/(tabs)/course')}
+          >
             <Image source={{ uri: 'https://eugeneonmusic.com/wp-content/uploads/2026/02/KakaoTalk_20260214_162600793_01.jpg' }} style={styles.quickImage} resizeMode="cover" />
             <LinearGradient
               colors={['transparent', 'rgba(12,10,8,0.85)']}
@@ -254,8 +363,14 @@ export default function HomeScreen() {
             />
             <View style={styles.quickBorder} />
             <Text style={styles.quickLabel}>음악교육</Text>
-          </TouchableOpacity>
-          <TouchableOpacity style={styles.quickCard} onPress={() => router.push('/(tabs)/sns')} activeOpacity={0.85}>
+          </Pressable>
+          <Pressable
+            style={({ pressed }) => [
+              styles.quickCard,
+              pressed && styles.cardPressed,
+            ]}
+            onPress={() => router.push('/(tabs)/sns')}
+          >
             <Image source={{ uri: 'https://eugeneonmusic.com/wp-content/uploads/2025/10/DSC06077.jpg' }} style={styles.quickImage} resizeMode="cover" />
             <LinearGradient
               colors={['transparent', 'rgba(12,10,8,0.85)']}
@@ -263,8 +378,56 @@ export default function HomeScreen() {
             />
             <View style={styles.quickBorder} />
             <Text style={styles.quickLabel}>예술기획</Text>
-          </TouchableOpacity>
+          </Pressable>
         </View>
+
+        {/* ── 가온의 오늘의 한 곡 ──
+            시간대별 인사 + 날짜 기반 클래식 큐레이션 1곡 + 한 줄 코멘트.
+            탭하면 가온 AI 큐레이터(/ai-consult)로 진입. 큐레이션 풀은 constants/dailyCuration.js. */}
+        <Pressable
+          onPress={() => router.push('/ai-consult')}
+          style={({ pressed }) => [
+            styles.gaonCardWrap,
+            pressed && styles.cardPressed,
+          ]}
+        >
+          <LinearGradient
+            colors={[colors.surface, colors.inputBg]}
+            style={styles.gaonCard}
+          >
+            {/* 우측 상단 데코: 가는 트레블 클레프 */}
+            <View style={styles.gaonClefDecor} pointerEvents="none">
+              <TrebleClefDeco color={colors.accent} />
+            </View>
+
+            {/* 인사말 */}
+            <Text style={styles.gaonGreeting}>
+              {greeting}{userName ? `, ${userName}님` : ''}
+            </Text>
+
+            {/* 라벨 */}
+            <View style={styles.gaonLabelRow}>
+              <View style={styles.gaonLabelLine} />
+              <Text style={styles.gaonLabel}>오늘의 한 곡</Text>
+            </View>
+
+            {/* 곡명 + 작곡가 */}
+            <Text style={styles.gaonTitle} numberOfLines={2}>
+              {todayPick.title}
+            </Text>
+            <Text style={styles.gaonComposer}>{todayPick.composer}</Text>
+
+            {/* 가온 코멘트 */}
+            <Text style={styles.gaonComment} numberOfLines={3}>
+              “{todayPick.comment}”
+            </Text>
+
+            {/* CTA */}
+            <View style={styles.gaonCta}>
+              <Text style={styles.gaonCtaText}>가온과 더 이야기하기  →</Text>
+            </View>
+          </LinearGradient>
+        </Pressable>
 
         {/* ── 연습 현황 ── */}
         <View style={styles.practiceSection}>
@@ -360,7 +523,17 @@ export default function HomeScreen() {
         )}
 
         <View style={{ height: 30 }} />
-      </ScrollView>
+      </Animated.ScrollView>
+
+      {/* ── 떠다니는 배경 음표 ──
+          ScrollView 위에 absolute로 떠 있어 스크롤과 무관하게 화면에 머묾.
+          opacity 0.06으로 매우 은은하게, sin loop로 천천히 위아래로 흔들림.
+          pointerEvents=none으로 인터랙션 차단 X. */}
+      <View pointerEvents="none" style={styles.notesOverlay}>
+        <FloatingNote anim={noteAnim1} top={SCREEN_H * 0.18} left={SCREEN_W * 0.82} type="treble" size={26} color={colors.accent} />
+        <FloatingNote anim={noteAnim2} top={SCREEN_H * 0.45} left={SCREEN_W * 0.06} type="single" size={20} color={colors.accent} />
+        <FloatingNote anim={noteAnim3} top={SCREEN_H * 0.72} left={SCREEN_W * 0.78} type="double" size={22} color={colors.accent} />
+      </View>
     </View>
   );
 }
@@ -517,6 +690,103 @@ const makeStyles = (c) => StyleSheet.create({
     textShadowColor: 'rgba(0,0,0,0.7)',
     textShadowOffset: { width: 0, height: 1 },
     textShadowRadius: 4,
+  },
+
+  /* ── 카드 누름 피드백 (퀵 액션 + 가온 카드 공용) ── */
+  cardPressed: {
+    transform: [{ scale: 0.975 }],
+    opacity: 0.92,
+  },
+
+  /* ── 가온 "오늘의 한 곡" 카드 ── */
+  gaonCardWrap: {
+    marginHorizontal: 20,
+    marginTop: 14,
+    marginBottom: 4,
+    borderRadius: 6,
+    overflow: 'hidden',
+  },
+  gaonCard: {
+    paddingHorizontal: 20,
+    paddingVertical: 22,
+    borderRadius: 6,
+    borderWidth: 0.5,
+    borderColor: 'rgba(201,169,110,0.35)',
+    position: 'relative',
+  },
+  gaonClefDecor: {
+    position: 'absolute',
+    top: 14,
+    right: 16,
+    opacity: 0.18,
+  },
+  gaonGreeting: {
+    fontSize: 12,
+    color: c.textMuted,
+    letterSpacing: 0.5,
+    marginBottom: 14,
+  },
+  gaonLabelRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    marginBottom: 10,
+  },
+  gaonLabelLine: {
+    width: 14,
+    height: 0.8,
+    backgroundColor: c.accent,
+  },
+  gaonLabel: {
+    fontSize: 10,
+    color: c.accent,
+    letterSpacing: 2.5,
+    fontWeight: '500',
+    textTransform: 'uppercase',
+  },
+  gaonTitle: {
+    fontSize: 20,
+    fontWeight: '300',
+    color: c.text,
+    letterSpacing: 0.3,
+    lineHeight: 28,
+    marginBottom: 4,
+  },
+  gaonComposer: {
+    fontSize: 12,
+    color: c.textSoft,
+    letterSpacing: 0.5,
+    marginBottom: 14,
+  },
+  gaonComment: {
+    fontSize: 13,
+    fontStyle: 'italic',
+    color: c.textSoft,
+    lineHeight: 21,
+    letterSpacing: 0.2,
+    marginBottom: 16,
+  },
+  gaonCta: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingTop: 12,
+    borderTopWidth: 0.5,
+    borderTopColor: c.borderSoft,
+  },
+  gaonCtaText: {
+    fontSize: 11,
+    color: c.accent,
+    letterSpacing: 1.5,
+    fontWeight: '500',
+  },
+
+  /* ── 떠다니는 배경 음표 오버레이 ── */
+  notesOverlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
   },
 
   /* ── 섹션 공통 ── */
