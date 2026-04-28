@@ -44,6 +44,16 @@ function BackIcon({ size = 24, color = '#F5F0E8' }) {
   );
 }
 
+// 통계 화면 진입 — 막대 그래프 모티프
+function ChartIcon({ size = 22, color = '#F5F0E8' }) {
+  return (
+    <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+      <Path d="M5 21V11M12 21V3M19 21v-7" stroke={color} strokeWidth={1.8} strokeLinecap="round" />
+      <Path d="M3 21h18" stroke={color} strokeWidth={1.4} strokeLinecap="round" />
+    </Svg>
+  );
+}
+
 function formatTime(ts) {
   if (!ts) return '';
   const date = ts.toDate ? ts.toDate() : new Date(ts);
@@ -161,7 +171,16 @@ export default function InquiriesListScreen() {
           <BackIcon color={colors.text} />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>예술 상담 신청서</Text>
-        <View style={{ width: 40 }} />
+        <TouchableOpacity
+          style={styles.backBtn}
+          onPress={() => {
+            Haptics?.selectionAsync();
+            router.push('/admin/consultation-stats');
+          }}
+          accessibilityLabel="가온 상담 통계"
+        >
+          <ChartIcon color={colors.text} />
+        </TouchableOpacity>
       </View>
 
       {/* Filter chips */}

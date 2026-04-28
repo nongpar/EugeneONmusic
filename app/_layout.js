@@ -792,6 +792,7 @@ function ThemedRootContent({ splashDone, onSplashFinish }) {
         <Stack.Screen name="admin/send-notification" />
         <Stack.Screen name="admin/inquiries/index" />
         <Stack.Screen name="admin/inquiries/[id]" />
+        <Stack.Screen name="admin/consultation-stats" />
         <Stack.Screen name="ai-consult" options={{ presentation: 'modal', gestureEnabled: false }} />
         <Stack.Screen name="my-consultations" />
       </Stack>
