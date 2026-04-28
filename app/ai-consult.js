@@ -162,14 +162,14 @@ function getTimeBasedTitle() {
 const MODES = [
   {
     id: 'concierge',
-    iconKey: 'compass',
+    iconKey: 'book',
     label: '유진온뮤직 둘러보기',
     sub: '안내·문의·신청',
     prefill: '유진온뮤직에서 어떤 활동들을 할 수 있는지 알고 싶어요.',
   },
   {
     id: 'curation',
-    iconKey: 'stage',
+    iconKey: 'spotlight',
     label: '공연 큐레이션',
     sub: '기획·프로그램·맞춤 자문',
     prefill: '특별한 자리에 어울릴 음악 기획을 함께 만들어보고 싶어요.',
@@ -263,59 +263,72 @@ function ChipIcon({ name, color: chipColor = '#C9A96E' }) {
     case 'piano': return <PianoIcon color={chipColor} />;
     case 'spark': return <SparkIcon size={16} color={chipColor} />;
     case 'hall': return <HallIcon color={chipColor} />;
-    case 'compass': return <CompassNoteIcon color={chipColor} />;
-    case 'stage': return <StageNoteIcon color={chipColor} />;
-    case 'heart': return <HeartNoteIcon color={chipColor} />;
+    case 'book': return <OpenBookIcon color={chipColor} />;
+    case 'spotlight': return <SpotlightStageIcon color={chipColor} />;
+    case 'heart': return <HeartIcon color={chipColor} />;
     default: return null;
   }
 }
 
-// ── 가온의 3개 모드용 라인 아이콘 (클래식 라인 + 음악 모티프 적당히 섞음) ──
+// ── 가온의 3개 모드용 라인 아이콘 ──
+// 음표 결합을 빼고 각 모드 의미를 직관적으로 전달하는 단일 모티프로.
+// 음악적 결은 가온 캐릭터 자체와 배경 떠다니는 음표가 충분히 담당.
 
-// 둘러보기 모드 — 컴퍼스(안내) 안에 단음 음표
-function CompassNoteIcon({ size = 32, color = '#C9A96E' }) {
+// 둘러보기 모드 — 펼쳐진 책 (안내·가이드 의미 명확)
+function OpenBookIcon({ size = 32, color = '#C9A96E' }) {
   return (
     <Svg width={size} height={size} viewBox="0 0 32 32" fill="none">
-      {/* 컴퍼스 외곽 */}
-      <Circle cx={16} cy={16} r={12} stroke={color} strokeWidth={1.3} />
-      {/* 4방향 마커 (상하좌우 짧은 눈금) */}
-      <Path d="M16 4.5v2.2 M16 25.3v2.2 M4.5 16h2.2 M25.3 16h2.2" stroke={color} strokeWidth={1.1} strokeLinecap="round" />
-      {/* 안에 작은 음표 (stem + notehead) */}
-      <Path d="M18 11v8" stroke={color} strokeWidth={1.2} strokeLinecap="round" />
-      <Circle cx={16.4} cy={19.4} r={1.7} fill={color} />
+      {/* 펼쳐진 책 윤곽 — 가운데가 살짝 들어가고 양 끝이 떨어진 형태 */}
+      <Path
+        d="M4 8.5 L16 7 L28 8.5 L28 25 L16 23.5 L4 25 Z"
+        stroke={color} strokeWidth={1.4} fill="none" strokeLinejoin="round"
+      />
+      {/* 책등 (가운데 세로선) */}
+      <Path d="M16 7 L16 23.5" stroke={color} strokeWidth={1.2} />
+      {/* 왼쪽 페이지 텍스트 라인 (3줄, 옅게) */}
+      <Path
+        d="M7 12.5 L13 12.7 M7 15.5 L13 15.7 M7 18.5 L11 18.7"
+        stroke={color} strokeWidth={0.9} strokeLinecap="round" opacity={0.6}
+      />
+      {/* 오른쪽 페이지 텍스트 라인 (3줄, 옅게) */}
+      <Path
+        d="M19 12.7 L25 12.5 M19 15.7 L25 15.5 M19 18.7 L23 18.5"
+        stroke={color} strokeWidth={0.9} strokeLinecap="round" opacity={0.6}
+      />
     </Svg>
   );
 }
 
-// 공연 큐레이션 모드 — 무대 커튼 + 중앙 음표
-function StageNoteIcon({ size = 32, color = '#C9A96E' }) {
+// 공연 큐레이션 모드 — 위에서 내려오는 스포트라이트 + 무대 (공연 톤 명확)
+function SpotlightStageIcon({ size = 32, color = '#C9A96E' }) {
   return (
     <Svg width={size} height={size} viewBox="0 0 32 32" fill="none">
-      {/* 좌우 커튼 */}
-      <Path d="M5 6v20 M27 6v20" stroke={color} strokeWidth={1.2} strokeLinecap="round" />
-      {/* 위쪽 커튼 라인 — 중앙으로 살짝 늘어진 곡선 */}
-      <Path d="M5 6 Q12 9 16 9 Q20 9 27 6" stroke={color} strokeWidth={1.2} fill="none" />
-      {/* 아래 무대 라인 */}
-      <Path d="M3 26h26" stroke={color} strokeWidth={1.4} strokeLinecap="round" />
-      {/* 중앙 음표 */}
-      <Path d="M17 12v8" stroke={color} strokeWidth={1.3} strokeLinecap="round" />
-      <Circle cx={15.4} cy={20} r={2} fill={color} />
+      {/* 스포트라이트 빔 채움 — 무대 위 빛 영역을 면으로 표현 */}
+      <Path
+        d="M13 5 L7 24 L25 24 L19 5 Z"
+        fill={color} opacity={0.13}
+      />
+      {/* 좌우 빔 라인 (V자 윤곽) */}
+      <Path
+        d="M13 5 L7 24 M19 5 L25 24"
+        stroke={color} strokeWidth={1.3} strokeLinecap="round"
+      />
+      {/* 무대 바닥 라인 */}
+      <Path d="M3 25 L29 25" stroke={color} strokeWidth={1.5} strokeLinecap="round" />
+      {/* 무대 위 빛이 모이는 자국 */}
+      <Circle cx={16} cy={25} r={2.5} fill={color} opacity={0.55} />
     </Svg>
   );
 }
 
-// 마음의 음악 모드 — 라인 하트 안에 단음 음표
-function HeartNoteIcon({ size = 32, color = '#C9A96E' }) {
+// 마음의 음악 모드 — 깔끔한 라인 하트 (음표 제거, 단일 모티프)
+function HeartIcon({ size = 32, color = '#C9A96E' }) {
   return (
     <Svg width={size} height={size} viewBox="0 0 32 32" fill="none">
-      {/* 하트 라인 */}
       <Path
         d="M16 27 C 5.5 19.5, 4.5 11, 10.5 9 C 12.5 8.3, 14.8 9, 16 12 C 17.2 9, 19.5 8.3, 21.5 9 C 27.5 11, 26.5 19.5, 16 27 Z"
-        stroke={color} strokeWidth={1.3} fill="none" strokeLinejoin="round"
+        stroke={color} strokeWidth={1.5} fill="none" strokeLinejoin="round"
       />
-      {/* 안쪽 음표 (stem + notehead) — 살짝 왼쪽으로 기울여 자연스럽게 */}
-      <Path d="M18 13v6" stroke={color} strokeWidth={1.2} strokeLinecap="round" />
-      <Circle cx={16.4} cy={19.4} r={1.6} fill={color} />
     </Svg>
   );
 }
