@@ -48,6 +48,7 @@ exports.listMyConsultations = onCall(
           aiSummary: data.aiSummary || '',       // AI가 요약한 한 줄 요지
           status: data.status || 'pending_review',
           createdAt: data.createdAt ? data.createdAt.toMillis() : null,
+          mode: data.mode || null,               // 가온 모드 (concierge/curation/mind) — 기존 데이터는 null
         };
       });
 

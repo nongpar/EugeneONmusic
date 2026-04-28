@@ -69,6 +69,14 @@ const CATEGORY_LABELS = {
   other: '기타 음악 기획',
 };
 
+// ── 가온 모드 라벨 (ai-consult.js MODES와 일치) ──
+// 모드별로 미세하게 다른 톤의 골드 계열 색을 써서 한눈에 구분, 단 EON 톤은 유지.
+const MODE_LABELS = {
+  concierge: { text: '둘러보기', color: '#B8C9D4' },        // 정보 톤 (soft blue-gray)
+  curation:  { text: '공연 큐레이션', color: '#C9A96E' },   // 메인 골드
+  mind:      { text: '마음의 음악', color: '#D4B5C0' },     // 따뜻한 로즈
+};
+
 // 시각 포맷터 (간결하게: 2026.04.24)
 function formatDate(ms) {
   if (!ms) return '';
@@ -298,6 +306,14 @@ function ConsultationCard({ item, statusInfo, categoryLabel, actionLabel, opened
       }}
     >
       <View style={styles.card}>
+        {/* 가온 모드 배지 — 모드 메타데이터가 있는 경우에만 노출.
+            기존 신청서(mode 없음)는 배지 없이 그대로 표시되어 backward compat. */}
+        {item.mode && MODE_LABELS[item.mode] && (
+          <View style={styles.modeBadge}>
+            <View style={[styles.modeBadgeDot, { backgroundColor: MODE_LABELS[item.mode].color }]} />
+            <Text style={styles.modeBadgeText}>{MODE_LABELS[item.mode].text}</Text>
+          </View>
+        )}
         <View style={styles.cardTop}>
           <Text style={styles.cardDate}>{formatDate(item.createdAt)}</Text>
           <View style={[styles.statusDot, { backgroundColor: statusInfo.color }]} />
@@ -402,6 +418,26 @@ const makeStyles = (c) => StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 16,
   },
+  // 가온 모드 배지 — 카드 상단에 작은 점 + 라벨
+  modeBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    alignSelf: 'flex-start',
+    gap: 6,
+    marginBottom: 10,
+  },
+  modeBadgeDot: {
+    width: 5,
+    height: 5,
+    borderRadius: 2.5,
+  },
+  modeBadgeText: {
+    fontSize: 10,
+    color: c.textMuted,
+    letterSpacing: 1.8,
+    textTransform: 'uppercase',
+  },
+
   cardTop: {
     flexDirection: 'row',
     alignItems: 'center',

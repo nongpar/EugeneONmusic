@@ -215,6 +215,8 @@ exports.aiConsult = onCall(
         status: 'pending_review',
         createdAt: admin.firestore.FieldValue.serverTimestamp(),
         assignedAdminUid: null,
+        // 가온 모드를 함께 저장 — my-consultations 배지 + 메세나 분류·통계용
+        mode: conversationMode,
       });
 
       // 관리자 알림 (기존 notifications 시스템 재사용)
