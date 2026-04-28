@@ -202,19 +202,21 @@ export default function ConsultationStatsScreen() {
           </View>
         </Section>
 
-        {/* 4. 사회 기여 — 메세나 어필 핵심 자료 */}
+        {/* 4. 사회 기여 — 메세나 어필 핵심 자료
+            큰 숫자: 마음의 음악 모드 누적 (위로·선물·관계·복지를 포괄하는 사회 기여 가능 상담)
+            작은 숫자: 그중 명시적 복지·공익 맥락 키워드가 매칭된 건수 (엄격한 서브 지표) */}
         <Section
-          title="사회 기여 성격 상담"
-          subtitle="마음의 음악 모드 + 사회 키워드 매칭"
+          title="사회 기여 가능 상담"
+          subtitle="마음의 음악 모드 누적 — 위로·선물·관계·복지 등"
           styles={styles}
         >
           <View style={styles.socialTopRow}>
-            <Text style={styles.socialNumber}>{socialContribution.total}</Text>
+            <Text style={styles.socialNumber}>{byMode.mind || 0}</Text>
             <Text style={styles.socialUnit}>건</Text>
-            <Text style={styles.socialOf}>
-              / {byMode.mind || 0}건 (마음의 음악 전체)
-            </Text>
           </View>
+          <Text style={styles.socialBreakdown}>
+            그중 {socialContribution.total}건은 명시적 복지·공익 맥락 키워드 포함
+          </Text>
           {topKeywords.length > 0 ? (
             <View style={styles.keywordWrap}>
               {topKeywords.map(([kw, count]) => (
@@ -226,7 +228,7 @@ export default function ConsultationStatsScreen() {
             </View>
           ) : (
             <Text style={styles.emptyHint}>
-              아직 매칭된 키워드가 없습니다.
+              매칭된 키워드 (예: 복지관·어르신·발달장애·도서관)가 아직 없습니다.
             </Text>
           )}
         </Section>
@@ -408,6 +410,14 @@ const makeStyles = (c) => StyleSheet.create({
   socialNumber: { fontSize: 32, color: c.accent, fontWeight: '300', letterSpacing: 0.5 },
   socialUnit: { fontSize: 13, color: c.textMuted, letterSpacing: 0.5 },
   socialOf: { fontSize: 11, color: c.textMuted, marginLeft: 8, letterSpacing: 0.3 },
+  socialBreakdown: {
+    fontSize: 11,
+    color: c.textMuted,
+    letterSpacing: 0.3,
+    lineHeight: 17,
+    marginTop: -2,
+    marginBottom: 4,
+  },
   keywordWrap: { flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginTop: 6 },
   keywordChip: {
     flexDirection: 'row',
