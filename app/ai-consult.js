@@ -132,6 +132,16 @@ function getTimeBasedGreeting() {
   return `안녕하세요, 유진온뮤직 음악 큐레이터 가온입니다.\n${period} 음악을 함께 가늠해보려 합니다.\n\n어떤 마음으로 오셨는지, 편히 들려주세요.`;
 }
 
+// 시간대별 welcome 타이틀 — 채팅 진입 화면 큰 제목.
+// 채팅 시작 후 첫 인사(getTimeBasedGreeting)와 톤을 맞춤.
+function getTimeBasedTitle() {
+  const hour = new Date().getHours();
+  if (hour >= 5 && hour < 12) return '오늘 아침에 닿을 음악을 함께 찾아볼까요?';
+  if (hour >= 12 && hour < 17) return '한낮의 시간에 어울릴 음악을 함께 찾아볼까요?';
+  if (hour >= 17 && hour < 22) return '하루 끝에 닿을 음악을 함께 찾아볼까요?';
+  return '밤의 시간을 함께 가늠해볼까요?';
+}
+
 // 가온의 3가지 역할 모드 — 사용자가 어떤 도움이 필요한지 명확히 선택
 // 탭하면 해당 모드로 상담이 시작되며, 백엔드는 mode 파라미터로 시스템 프롬프트를 분기.
 //
@@ -717,16 +727,18 @@ function AIConsultScreenInner() {
             keyboardShouldPersistTaps="handled"
           >
             <ChopinAvatar size={120} />
-            <Text style={styles.introTitle}>오늘의 예술을 함께 찾아볼까요?</Text>
+            {/* 시간대별 타이틀 — 첫 인사(getTimeBasedGreeting)와 톤 일치, 매번 다른 결의 환영 */}
+            <Text style={styles.introTitle}>{getTimeBasedTitle()}</Text>
             <View style={styles.ornament}>
               <View style={styles.goldLine} />
               <View style={styles.goldDiamond} />
               <View style={styles.goldLine} />
             </View>
+            {/* 설명 — 행정 카탈로그 톤(공연/레슨/대관 나열) 대신 음악 큐레이터 톤으로 */}
             <Text style={styles.introDesc}>
-              공연 감상, 레슨, 행사 대관까지.{'\n'}
-              원하시는 경험을 대화로 편안하게 말씀해주시면{'\n'}
-              당신에게 어울리는 기획을 준비해드립니다.
+              들으러 가는 공연이든, 누군가에게 보내고 싶은 한 곡이든.{'\n'}
+              어떤 음악과 만나고 싶은지 편히 들려주시면,{'\n'}
+              가온이 그 결에 닿을 자리를 함께 찾아드릴게요.
             </Text>
 
             {/* 이어가기 카드 — 30분 이내 미완료 대화가 있을 때만 노출 */}
