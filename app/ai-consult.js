@@ -132,13 +132,42 @@ function getTimeBasedGreeting() {
   return `안녕하세요, 유진온뮤직 음악 큐레이터 가온입니다.\n${period} 음악을 함께 가늠해보려 합니다.\n\n어떤 마음으로 오셨는지, 편히 들려주세요.`;
 }
 
-// 대화 가이드 칩 — 사용자가 어떤 주제로 상담할 수 있는지 보여줌
-// 탭하면 상담이 시작되면서 해당 문구가 입력창에 자동 채워짐 (사용자가 수정 후 전송)
-const GUIDE_CHIPS = [
-  { iconKey: 'moon', label: '오늘의 마음에 어울리는 공연', prefill: '오늘 마음이 조금 지쳐 있어요. 저에게 어울릴 만한 공연을 추천해주시겠어요?' },
-  { iconKey: 'piano', label: '처음 시작하는 피아노 레슨', prefill: '피아노를 처음 배워보고 싶어요. 성인 취미반에 대해 알고 싶습니다.' },
-  { iconKey: 'spark', label: '특별한 날을 위한 음악 기획', prefill: '특별한 날을 기념할 음악 경험을 찾고 있어요. 어떤 기획이 가능한지 궁금합니다.' },
-  { iconKey: 'hall', label: 'EON HALL 발표회·행사 문의', prefill: 'EON HALL에서 발표회(또는 행사)를 열어보고 싶어요. 대관 가능한지 궁금합니다.' },
+// 가온의 3가지 역할 모드 — 사용자가 어떤 도움이 필요한지 명확히 선택
+// 탭하면 해당 모드로 상담이 시작되며, 백엔드는 mode 파라미터로 시스템 프롬프트를 분기.
+//
+// concierge — 유진온뮤직 둘러보기: 안내·문의·신청 (학원/공연/대관 정보)
+// curation  — 공연 큐레이션: 기획·프로그램·맞춤 자문 (B2C·B2B 행사)
+// mind      — 마음의 음악: 위로·선물·일상의 한 곡 (개인·복지·교육 누구나)
+const MODES = [
+  {
+    id: 'concierge',
+    iconKey: 'compass',
+    label: '유진온뮤직 둘러보기',
+    sub: '안내·문의·신청',
+    prefill: '유진온뮤직에서 어떤 활동들을 할 수 있는지 알고 싶어요.',
+  },
+  {
+    id: 'curation',
+    iconKey: 'stage',
+    label: '공연 큐레이션',
+    sub: '기획·프로그램·맞춤 자문',
+    prefill: '특별한 자리에 어울릴 음악 기획을 함께 만들어보고 싶어요.',
+  },
+  {
+    id: 'mind',
+    iconKey: 'heart',
+    label: '마음의 음악',
+    sub: '위로·선물·일상의 한 곡',
+    prefill: '오늘의 마음에 어울리는 음악을 함께 골라주실 수 있을까요?',
+    // 마음의 음악 모드만 — 누구나 쓸 수 있다는 걸 즉시 보여주는 예시 3개.
+    // 사람의 카테고리(연령·진단명·소속)가 아닌 마음의 결과 음악의 다가감을 묘사 —
+    // "이런 분들에게 닿을 음악이 준비되어 있어요" 톤.
+    examples: [
+      '마음이 지친 친구에게',
+      '어르신과 함께 듣는 한 곡',
+      '다정하게 다가갈 한 곡',
+    ],
+  },
 ];
 
 // SVG 아이콘
@@ -213,8 +242,61 @@ function ChipIcon({ name, color: chipColor = '#C9A96E' }) {
     case 'piano': return <PianoIcon color={chipColor} />;
     case 'spark': return <SparkIcon size={16} color={chipColor} />;
     case 'hall': return <HallIcon color={chipColor} />;
+    case 'compass': return <CompassNoteIcon color={chipColor} />;
+    case 'stage': return <StageNoteIcon color={chipColor} />;
+    case 'heart': return <HeartNoteIcon color={chipColor} />;
     default: return null;
   }
+}
+
+// ── 가온의 3개 모드용 라인 아이콘 (클래식 라인 + 음악 모티프 적당히 섞음) ──
+
+// 둘러보기 모드 — 컴퍼스(안내) 안에 단음 음표
+function CompassNoteIcon({ size = 32, color = '#C9A96E' }) {
+  return (
+    <Svg width={size} height={size} viewBox="0 0 32 32" fill="none">
+      {/* 컴퍼스 외곽 */}
+      <Circle cx={16} cy={16} r={12} stroke={color} strokeWidth={1.3} />
+      {/* 4방향 마커 (상하좌우 짧은 눈금) */}
+      <Path d="M16 4.5v2.2 M16 25.3v2.2 M4.5 16h2.2 M25.3 16h2.2" stroke={color} strokeWidth={1.1} strokeLinecap="round" />
+      {/* 안에 작은 음표 (stem + notehead) */}
+      <Path d="M18 11v8" stroke={color} strokeWidth={1.2} strokeLinecap="round" />
+      <Circle cx={16.4} cy={19.4} r={1.7} fill={color} />
+    </Svg>
+  );
+}
+
+// 공연 큐레이션 모드 — 무대 커튼 + 중앙 음표
+function StageNoteIcon({ size = 32, color = '#C9A96E' }) {
+  return (
+    <Svg width={size} height={size} viewBox="0 0 32 32" fill="none">
+      {/* 좌우 커튼 */}
+      <Path d="M5 6v20 M27 6v20" stroke={color} strokeWidth={1.2} strokeLinecap="round" />
+      {/* 위쪽 커튼 라인 — 중앙으로 살짝 늘어진 곡선 */}
+      <Path d="M5 6 Q12 9 16 9 Q20 9 27 6" stroke={color} strokeWidth={1.2} fill="none" />
+      {/* 아래 무대 라인 */}
+      <Path d="M3 26h26" stroke={color} strokeWidth={1.4} strokeLinecap="round" />
+      {/* 중앙 음표 */}
+      <Path d="M17 12v8" stroke={color} strokeWidth={1.3} strokeLinecap="round" />
+      <Circle cx={15.4} cy={20} r={2} fill={color} />
+    </Svg>
+  );
+}
+
+// 마음의 음악 모드 — 라인 하트 안에 단음 음표
+function HeartNoteIcon({ size = 32, color = '#C9A96E' }) {
+  return (
+    <Svg width={size} height={size} viewBox="0 0 32 32" fill="none">
+      {/* 하트 라인 */}
+      <Path
+        d="M16 27 C 5.5 19.5, 4.5 11, 10.5 9 C 12.5 8.3, 14.8 9, 16 12 C 17.2 9, 19.5 8.3, 21.5 9 C 27.5 11, 26.5 19.5, 16 27 Z"
+        stroke={color} strokeWidth={1.3} fill="none" strokeLinejoin="round"
+      />
+      {/* 안쪽 음표 (stem + notehead) — 살짝 왼쪽으로 기울여 자연스럽게 */}
+      <Path d="M18 13v6" stroke={color} strokeWidth={1.2} strokeLinecap="round" />
+      <Circle cx={16.4} cy={19.4} r={1.6} fill={color} />
+    </Svg>
+  );
 }
 
 function QuillIcon({ size = 20, color = '#110E0B' }) {
@@ -259,6 +341,9 @@ function AIConsultScreenInner() {
   const [consultationId, setConsultationId] = useState(null);
   const [completed, setCompleted] = useState(false);
   const [started, setStarted] = useState(false);
+  // 가온 모드 — 'concierge' | 'curation' | 'mind'. 모드 카드 탭 시 세팅.
+  // 백엔드는 이 값으로 시스템 프롬프트를 분기 (Phase B에서 처리, 현재는 pass-through).
+  const [mode, setMode] = useState(null);
   // 이어가기: 30분 이내 미완료 대화가 있으면 idle 화면에 카드 노출
   const [resumableSession, setResumableSession] = useState(null);
   // 음악 용어 정의 모달 — 가온 답변에서 단어 탭 시 활성화
@@ -414,9 +499,11 @@ function AIConsultScreenInner() {
     setResumableSession(null);
   };
 
-  const startConversation = async (prefillText = '') => {
+  const startConversation = async (selectedMode = null, prefillText = '') => {
     // 시작 순간 강한 햅틱 — 의식적인 진입 느낌 부여
     Haptics?.impactAsync(Haptics.ImpactFeedbackStyle.Heavy);
+    // 모드 세팅 (모드 카드에서 시작한 경우. 일반 시작 버튼은 null로 진입 — 백엔드가 기본 톤 사용)
+    if (selectedMode) setMode(selectedMode);
     // 초기 인사 메시지 삽입 (프론트 전용, 백엔드 호출 없음)
     setStarted(true);
     setMessages([
@@ -426,7 +513,7 @@ function AIConsultScreenInner() {
         firstAnimated: true, // 호흡 애니메이션 (단어별 페이드 + 골드 마무리)
       },
     ]);
-    // 가이드 칩에서 시작한 경우 입력창에 문구 자동 채움
+    // 모드 카드에서 시작한 경우 입력창에 문구 자동 채움
     if (prefillText) {
       setInput(prefillText);
     }
@@ -470,6 +557,7 @@ function AIConsultScreenInner() {
       const result = await aiConsult({
         userMessage: text,
         ...(consultationId && { consultationId }),
+        ...(mode && { mode }), // Phase B에서 백엔드가 활용 — 그 전엔 무시되어 기존 동작 유지
       });
       const data = result.data;
 
@@ -670,27 +758,38 @@ function AIConsultScreenInner() {
               </View>
             )}
 
-            {/* 대화 가이드 칩 — 예시 주제 선택 */}
-            <Text style={styles.chipsHeading}>이런 대화를 나눌 수 있어요</Text>
-            <View style={styles.chipsWrap}>
-              {GUIDE_CHIPS.map((chip, i) => (
+            {/* 가온의 3가지 모드 — 어떤 도움이 필요한지 명확히 선택 */}
+            <Text style={styles.chipsHeading}>오늘 어떤 도움이 필요하신가요?</Text>
+            <View style={styles.modesWrap}>
+              {MODES.map((m) => (
                 <TouchableOpacity
-                  key={i}
-                  style={styles.chip}
-                  activeOpacity={0.75}
-                  onPress={() => startConversation(chip.prefill)}
+                  key={m.id}
+                  style={styles.modeCard}
+                  activeOpacity={0.78}
+                  onPress={() => startConversation(m.id, m.prefill)}
                 >
-                  <View style={styles.chipIconWrap}>
-                    <ChipIcon name={chip.iconKey} color={colors.accent} />
+                  <View style={styles.modeCardIconWrap}>
+                    <ChipIcon name={m.iconKey} color={colors.accent} />
                   </View>
-                  <Text style={styles.chipLabel}>{chip.label}</Text>
+                  <View style={styles.modeCardText}>
+                    <Text style={styles.modeCardLabel}>{m.label}</Text>
+                    <Text style={styles.modeCardSub}>{m.sub}</Text>
+                    {/* 마음의 음악 모드만 — "누구나 쓸 수 있어요" 예시 노출 */}
+                    {m.examples && (
+                      <View style={styles.modeCardExamplesWrap}>
+                        {m.examples.map((ex, i) => (
+                          <Text key={i} style={styles.modeCardExample}>· {ex}</Text>
+                        ))}
+                      </View>
+                    )}
+                  </View>
                 </TouchableOpacity>
               ))}
             </View>
 
             <TouchableOpacity style={styles.startBtn} onPress={() => startConversation()} activeOpacity={0.85}>
               <SparkIcon size={14} color={colors.accentText} />
-              <Text style={styles.startBtnText}>상담 시작하기</Text>
+              <Text style={styles.startBtnText}>그냥 자유롭게 대화하기</Text>
             </TouchableOpacity>
 
             <Text style={styles.introHint}>
@@ -1023,6 +1122,59 @@ const makeStyles = (c) => StyleSheet.create({
     color: c.text,
     letterSpacing: 0.3,
     lineHeight: 20,
+  },
+
+  /* ── 가온 3개 모드 카드 ── */
+  modesWrap: {
+    width: '100%',
+    gap: 10,
+  },
+  modeCard: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: 14,
+    paddingHorizontal: 16,
+    paddingVertical: 16,
+    borderRadius: 6,
+    backgroundColor: c.inputBg,
+    borderWidth: 0.5,
+    borderColor: 'rgba(201,169,110,0.4)',
+  },
+  modeCardIconWrap: {
+    width: 40,
+    height: 40,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginTop: 2,
+  },
+  modeCardText: {
+    flex: 1,
+    gap: 3,
+  },
+  modeCardLabel: {
+    fontSize: 15,
+    fontWeight: '500',
+    color: c.text,
+    letterSpacing: 0.5,
+  },
+  modeCardSub: {
+    fontSize: 11,
+    color: c.textMuted,
+    letterSpacing: 0.5,
+  },
+  modeCardExamplesWrap: {
+    marginTop: 8,
+    gap: 3,
+    paddingTop: 8,
+    borderTopWidth: 0.5,
+    borderTopColor: c.borderSoft,
+  },
+  modeCardExample: {
+    fontSize: 11,
+    color: c.textSoft,
+    fontStyle: 'italic',
+    letterSpacing: 0.2,
+    lineHeight: 17,
   },
   introTitle: {
     fontSize: 22,
