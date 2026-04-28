@@ -55,7 +55,31 @@ const PATHS_BY_PERIOD = {
   ],
 };
 
-function getCurrentPaths() {
+// ── 모드별 세 갈래 길 ──
+// 사용자가 가온 모드 카드(concierge/curation/mind)로 진입했을 때는 그 모드 톤에 맞는
+// prompt 3개만 노출 — 톤 일관성 확보. 자유 진입(mode null)일 때만 시간대별 다양성 사용.
+const PATHS_BY_MODE = {
+  concierge: [
+    { label: 'EON HALL이 궁금해요', prefill: 'EON HALL이 어떤 공간인지, 어떤 활동들이 가능한지 알고 싶어요.' },
+    { label: '레슨·취미반 안내', prefill: '음악을 새로 시작해보고 싶어요. 성인 취미반 레슨에 대해 알고 싶습니다.' },
+    { label: '최유진 교수님이 궁금해요', prefill: '최유진 교수님은 어떤 분이신지 들려주세요.' },
+  ],
+  curation: [
+    { label: '특별한 자리를 위한 음악 기획', prefill: '특별한 자리에 어울릴 음악 기획을 함께 만들어보고 싶어요.' },
+    { label: '기업 행사·기념일 음악', prefill: '회사 행사나 기념일에 어울릴 음악 프로그램을 함께 그려보고 싶어요.' },
+    { label: 'EON HALL에 자리를 만들어보고 싶어요', prefill: 'EON HALL에서 발표회나 리사이틀을 열어보고 싶어요. 어떤 결로 가능할까요?' },
+  ],
+  mind: [
+    { label: '오늘 마음에 어울리는 음악 한 곡', prefill: '오늘 제 마음에 어울리는 음악 한 곡을 함께 골라주실 수 있을까요?' },
+    { label: '소중한 분께 보내는 한 곡', prefill: '소중한 분께 보내고 싶은 음악 한 곡을 함께 골라주실 수 있을까요?' },
+    { label: '하루를 정돈해주는 곡', prefill: '하루를 정돈해주는 음악 한 곡을 권해주시겠어요?' },
+  ],
+};
+
+function getCurrentPaths(mode) {
+  // 모드 카드로 진입한 경우 — 그 모드의 prompt만 노출
+  if (mode && PATHS_BY_MODE[mode]) return PATHS_BY_MODE[mode];
+  // 자유 진입(mode null) — 시간대별 다양한 prompt
   const hour = new Date().getHours();
   if (hour >= 5 && hour < 12) return PATHS_BY_PERIOD.morning;
   if (hour >= 12 && hour < 17) return PATHS_BY_PERIOD.noon;
@@ -77,7 +101,7 @@ function ChevronIcon({ open, size = 11, color }) {
   );
 }
 
-export default function ThreePaths({ onSelect, hasInput }) {
+export default function ThreePaths({ onSelect, hasInput, mode = null }) {
   const { colors } = useTheme();
   const styles = makeStyles(colors);
 
@@ -86,7 +110,8 @@ export default function ThreePaths({ onSelect, hasInput }) {
   const pulseAnim = useRef(new Animated.Value(0)).current;
   const idleTimerRef = useRef(null);
 
-  const paths = useMemo(() => getCurrentPaths(), []);
+  // mode가 변경되면 paths도 재계산 — 모드 카드 → 채팅 진입 시 즉시 반영
+  const paths = useMemo(() => getCurrentPaths(mode), [mode]);
 
   // 사용자가 입력 시작 → 자동 접힘
   useEffect(() => {

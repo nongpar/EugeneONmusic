@@ -116,8 +116,19 @@ if (Platform.OS !== 'web') {
   try { Haptics = require('expo-haptics'); } catch {}
 }
 
-// 시간대별 동적 인사말 — 방문한 시각에 맞는 톤으로 첫 메시지 구성
-function getTimeBasedGreeting() {
+// 첫 인사 — 모드와 시간대를 함께 반영해 톤이 즉시 모드와 맞도록 분기.
+//
+// concierge (둘러보기): 짧은 안내자 톤, 시간대 빼서 명료하게
+// curation (공연 큐레이션): 큐레이터 톤, 시간대 빼서 본론으로 빠르게
+// mind / free entry: 기존 시적 톤 + 시간대 변형 (가장 깊은 톤이라 시간대가 어울림)
+function getModeAwareGreeting(mode) {
+  if (mode === 'concierge') {
+    return '안녕하세요, 유진온뮤직 가온입니다.\n무엇이 궁금하신지 편히 말씀해주세요. 함께 둘러볼게요.';
+  }
+  if (mode === 'curation') {
+    return '안녕하세요, 유진온뮤직 가온입니다.\n어떤 자리를 위한 음악을 함께 그려보고 싶으신지 편히 들려주세요.';
+  }
+  // mind 또는 mode null(자유 진입) — 시간대 시적 톤
   const hour = new Date().getHours();
   let period;
   if (hour >= 5 && hour < 12) {
@@ -133,7 +144,7 @@ function getTimeBasedGreeting() {
 }
 
 // 시간대별 welcome 타이틀 — 채팅 진입 화면 큰 제목.
-// 채팅 시작 후 첫 인사(getTimeBasedGreeting)와 톤을 맞춤.
+// 채팅 시작 후 첫 인사(getModeAwareGreeting의 mind/free 분기)와 톤을 맞춤.
 function getTimeBasedTitle() {
   const hour = new Date().getHours();
   if (hour >= 5 && hour < 12) return '오늘 아침에 닿을 음악을 함께 찾아볼까요?';
@@ -514,12 +525,12 @@ function AIConsultScreenInner() {
     Haptics?.impactAsync(Haptics.ImpactFeedbackStyle.Heavy);
     // 모드 세팅 (모드 카드에서 시작한 경우. 일반 시작 버튼은 null로 진입 — 백엔드가 기본 톤 사용)
     if (selectedMode) setMode(selectedMode);
-    // 초기 인사 메시지 삽입 (프론트 전용, 백엔드 호출 없음)
+    // 초기 인사 메시지 삽입 — 모드별로 톤이 즉시 다르게 (concierge/curation/mind)
     setStarted(true);
     setMessages([
       {
         role: 'assistant',
-        text: getTimeBasedGreeting(),
+        text: getModeAwareGreeting(selectedMode),
         firstAnimated: true, // 호흡 애니메이션 (단어별 페이드 + 골드 마무리)
       },
     ]);
@@ -727,7 +738,7 @@ function AIConsultScreenInner() {
             keyboardShouldPersistTaps="handled"
           >
             <ChopinAvatar size={120} />
-            {/* 시간대별 타이틀 — 첫 인사(getTimeBasedGreeting)와 톤 일치, 매번 다른 결의 환영 */}
+            {/* 시간대별 타이틀 — 첫 인사(getModeAwareGreeting의 mind/free 분기)와 톤 일치, 매번 다른 결의 환영 */}
             <Text style={styles.introTitle}>{getTimeBasedTitle()}</Text>
             <View style={styles.ornament}>
               <View style={styles.goldLine} />
@@ -840,10 +851,12 @@ function AIConsultScreenInner() {
         {/* 입력 영역 (대화 시작 후에만) */}
         {started && !completed && (
           <>
-            {/* 세 갈래 길 — 접었다 폈다 가능한 제안 패널 */}
+            {/* 세 갈래 길 — 접었다 폈다 가능한 제안 패널.
+                mode 전달 시 그 모드의 prompt 3개만, mode null이면 시간대별 다양성 prompt. */}
             <ThreePaths
               hasInput={input.trim().length > 0}
               onSelect={(prefill) => setInput(prefill)}
+              mode={mode}
             />
             <View style={[styles.inputRow, { paddingBottom: bottomPad }]}>
               <TextInput
