@@ -16,7 +16,11 @@ const { defineSecret } = require('firebase-functions/params');
 const admin = require('firebase-admin');
 const Anthropic = require('@anthropic-ai/sdk');
 
-const { SYSTEM_PROMPT, SUBMIT_FORM_TOOL } = require('./config/systemPrompt');
+const {
+  SUBMIT_FORM_TOOL,
+  VALID_MODES,
+  buildSystemPromptBlocks,
+} = require('./config/systemPrompt');
 const {
   checkAndIncrementRateLimit,
   decrementRateLimit,
@@ -59,7 +63,7 @@ exports.aiConsult = onCall(
     const uid = request.auth.uid;
 
     // 2. 입력 검증
-    const { consultationId, userMessage } = request.data || {};
+    const { consultationId, userMessage, mode: requestMode } = request.data || {};
     if (!userMessage || typeof userMessage !== 'string') {
       throw new HttpsError('invalid-argument', 'userMessage가 필요합니다.');
     }
@@ -69,6 +73,9 @@ exports.aiConsult = onCall(
         `메시지는 ${MAX_USER_MESSAGE_LENGTH}자 이내로 작성해주세요.`
       );
     }
+    // 모드 검증 — 유효한 값이 아니면 무시(null로 처리). 기본 BASE 톤으로 동작.
+    const requestModeValid =
+      requestMode && VALID_MODES.includes(requestMode) ? requestMode : null;
 
     const db = admin.firestore();
 
@@ -76,6 +83,8 @@ exports.aiConsult = onCall(
     let consultRef;
     let messages = []; // Anthropic API용 messages 배열
     let turnCount = 0;
+    // 대화 전체에 적용될 모드 — 신규는 클라이언트 값, 이어가기는 Firestore 값(클라이언트 값 무시)
+    let conversationMode = null;
 
     if (consultationId) {
       consultRef = db.collection('aiConsultations').doc(consultationId);
@@ -92,6 +101,8 @@ exports.aiConsult = onCall(
       }
       messages = consult.messages || [];
       turnCount = messages.filter((m) => m.role === 'user').length;
+      // 대화의 일관된 톤을 위해 처음 저장된 mode를 그대로 사용
+      conversationMode = consult.mode || null;
 
       if (turnCount >= MAX_CONVERSATION_TURNS) {
         throw new HttpsError(
@@ -111,6 +122,8 @@ exports.aiConsult = onCall(
       }
       consultRef = db.collection('aiConsultations').doc();
       messages = [];
+      // 신규 대화는 클라이언트가 보낸 모드를 채택 (검증된 값만)
+      conversationMode = requestModeValid;
     }
 
     // 4. 사용자 메시지 추가
@@ -130,14 +143,8 @@ exports.aiConsult = onCall(
         model: 'claude-opus-4-7',
         max_tokens: 2048,
         thinking: { type: 'adaptive' },
-        // 시스템 프롬프트에 캐싱 적용 (반복 호출 시 90% 비용 절감)
-        system: [
-          {
-            type: 'text',
-            text: SYSTEM_PROMPT,
-            cache_control: { type: 'ephemeral' },
-          },
-        ],
+        // BASE 프롬프트는 캐싱(반복 호출 시 90% 비용 절감), 모드 addendum은 짧으니 캐싱 X
+        system: buildSystemPromptBlocks(conversationMode),
         tools: [SUBMIT_FORM_TOOL],
         messages,
       });
@@ -190,6 +197,9 @@ exports.aiConsult = onCall(
 
     if (!consultationId) {
       consultationDocUpdate.createdAt = admin.firestore.FieldValue.serverTimestamp();
+      // 신규 대화는 모드를 함께 저장 — 이후 이어가기 호출에서 동일 모드 유지에 사용.
+      // 모드 미선택(null)도 그대로 저장해 두면 이어가기 때 BASE 톤으로 복원됨.
+      consultationDocUpdate.mode = conversationMode;
     }
 
     if (toolUseBlock) {
@@ -243,13 +253,7 @@ exports.aiConsult = onCall(
           model: 'claude-opus-4-7',
           max_tokens: 512,
           thinking: { type: 'adaptive' },
-          system: [
-            {
-              type: 'text',
-              text: SYSTEM_PROMPT,
-              cache_control: { type: 'ephemeral' },
-            },
-          ],
+          system: buildSystemPromptBlocks(conversationMode),
           tools: [SUBMIT_FORM_TOOL],
           messages,
         });
