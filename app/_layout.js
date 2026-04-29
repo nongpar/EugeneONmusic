@@ -293,14 +293,14 @@ function AnimatedSplash({ onFinish }) {
       ]);
     });
 
-    // ── 헤일로 애니메이션 (클라이맥스, ~3.7초 시점) — 단 한 번 부드럽게 퍼짐 ──
+    // ── 헤일로 애니메이션 (클라이맥스, ~3.6초 시점) — 단 한 번 부드럽게 퍼짐 ──
     const haloAnimation = Animated.sequence([
-      Animated.delay(3700),
+      Animated.delay(3600),
       Animated.parallel([
-        Animated.timing(haloScale, { toValue: 2.2, duration: 2000, easing: Easing.out(Easing.cubic), useNativeDriver: true }),
+        Animated.timing(haloScale, { toValue: 2.8, duration: 2400, easing: Easing.out(Easing.cubic), useNativeDriver: true }),
         Animated.sequence([
           Animated.timing(haloOpacity, { toValue: 0.22, duration: 600, easing: Easing.out(Easing.quad), useNativeDriver: true }),
-          Animated.timing(haloOpacity, { toValue: 0, duration: 1200, easing: Easing.in(Easing.quad), useNativeDriver: true }),
+          Animated.timing(haloOpacity, { toValue: 0, duration: 1400, easing: Easing.in(Easing.quad), useNativeDriver: true }),
         ]),
       ]),
     ]);
@@ -355,11 +355,13 @@ function AnimatedSplash({ onFinish }) {
         ]),
 
         // 3단계: 골드 라인 양쪽으로 확장 (1000~1400ms)
+        // scaleX 변환이라 native driver 사용 가능 — JS thread 부담 없이 부드럽게,
+        // 그리고 width를 고정해서 다이아몬드 위치가 한 픽셀도 흔들리지 않게 함
         Animated.parallel([
-          Animated.timing(lineLeftWidth, { toValue: 1, duration: 500, easing: Easing.out(Easing.cubic), useNativeDriver: false }),
+          Animated.timing(lineLeftWidth, { toValue: 1, duration: 500, easing: Easing.out(Easing.cubic), useNativeDriver: true }),
           Animated.sequence([
             Animated.delay(80),
-            Animated.timing(lineRightWidth, { toValue: 1, duration: 500, easing: Easing.out(Easing.cubic), useNativeDriver: false }),
+            Animated.timing(lineRightWidth, { toValue: 1, duration: 500, easing: Easing.out(Easing.cubic), useNativeDriver: true }),
           ]),
           // 건반 장식 등장
           Animated.sequence([
@@ -416,8 +418,6 @@ function AnimatedSplash({ onFinish }) {
   }, [audioLoaded, audioTimedOut]);
 
   // 보간값
-  const animLineLeft = lineLeftWidth.interpolate({ inputRange: [0, 1], outputRange: [0, 40] });
-  const animLineRight = lineRightWidth.interpolate({ inputRange: [0, 1], outputRange: [0, 40] });
   const logoRotateStr = logoRotate.interpolate({ inputRange: [-0.1, 0.1], outputRange: ['-6deg', '6deg'] });
 
   // 음표 아이콘 렌더링
@@ -551,11 +551,33 @@ function AnimatedSplash({ onFinish }) {
         />
       </View>
 
-      {/* 골드 라인 (좌우 대칭 확장) */}
+      {/* 골드 라인 (좌우 대칭 확장) — width 고정 + scaleX 변환으로 다이아몬드 위치 고정.
+          transformOrigin을 다이아몬드 쪽 끝(우/좌)에 두어 라인이 다이아몬드에서
+          바깥쪽으로 자라나오는 것처럼 보이게 함. */}
       <View style={splashStyles.lineRow}>
-        <Animated.View style={[splashStyles.goldLine, { width: animLineLeft, marginRight: 6 }]} />
+        <Animated.View
+          style={[
+            splashStyles.goldLine,
+            {
+              width: 40,
+              marginRight: 6,
+              transformOrigin: 'right',
+              transform: [{ scaleX: lineLeftWidth }],
+            },
+          ]}
+        />
         <View style={splashStyles.goldDiamond} />
-        <Animated.View style={[splashStyles.goldLine, { width: animLineRight, marginLeft: 6 }]} />
+        <Animated.View
+          style={[
+            splashStyles.goldLine,
+            {
+              width: 40,
+              marginLeft: 6,
+              transformOrigin: 'left',
+              transform: [{ scaleX: lineRightWidth }],
+            },
+          ]}
+        />
       </View>
 
       {/* 앱 타이틀 — 글자별로 한 음씩 타건되듯 순차 등장 */}
