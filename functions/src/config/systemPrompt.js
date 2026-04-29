@@ -717,10 +717,28 @@ EON이 어떤 곳인지·어떤 활동을 할 수 있는지 알아보러 오신 
 const VALID_MODES = Object.keys(MODE_ADDENDUMS); // ['concierge', 'curation', 'mind']
 
 /**
+ * 오늘 날짜를 KST 기준으로 포맷합니다 (서버 timezone 무관).
+ * Claude가 학습 시점 기준으로 요일을 잘못 계산하는 문제 방지용.
+ */
+function formatKstToday() {
+  const now = new Date();
+  const kst = new Date(now.getTime() + (9 * 60 + now.getTimezoneOffset()) * 60000);
+  const y = kst.getFullYear();
+  const m = kst.getMonth() + 1;
+  const d = kst.getDate();
+  const dayNames = ['일요일', '월요일', '화요일', '수요일', '목요일', '금요일', '토요일'];
+  return {
+    iso: `${y}-${String(m).padStart(2, '0')}-${String(d).padStart(2, '0')}`,
+    ko: `${y}년 ${m}월 ${d}일 ${dayNames[kst.getDay()]}`,
+  };
+}
+
+/**
  * Anthropic system 메시지용 블록 배열을 생성합니다.
  *
- * - mode가 유효하면: [BASE(캐시) + 모드 addendum] 2개 블록 반환
- * - mode가 없거나 유효하지 않으면: [BASE(캐시)] 1개 블록만 반환 (기존 동작 유지)
+ * - 블록 1: BASE_PROMPT (캐시됨)
+ * - 블록 2: 모드 addendum (mode가 유효한 경우, 캐시 X)
+ * - 블록 3: 현재 시점 (매 요청마다 새로 생성, 캐시 X) — 요일·일정 답변 정확성용
  *
  * @param {string|null|undefined} mode - 'concierge' | 'curation' | 'mind' | null
  * @returns {Array} Anthropic API의 system 파라미터에 그대로 전달 가능한 블록 배열
@@ -739,6 +757,19 @@ function buildSystemPromptBlocks(mode) {
       text: MODE_ADDENDUMS[mode],
     });
   }
+  const today = formatKstToday();
+  blocks.push({
+    type: 'text',
+    text: `━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+【 현재 시점 (한국 표준시 기준) 】
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+오늘은 ${today.ko}입니다 (${today.iso}).
+
+사용자가 일정·요일·날짜를 물어보거나 공연·예약 가능 시점을 안내할 때
+반드시 이 날짜를 기준으로 계산해주세요. "이번 주 토요일", "다음 주말",
+"이번 달 말" 같은 표현도 위 날짜를 기준으로 해석합니다.
+요일 계산은 절대 추정하지 말고 위 날짜에서 정확히 도출해주세요.`,
+  });
   return blocks;
 }
 
