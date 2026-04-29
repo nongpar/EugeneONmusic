@@ -1,8 +1,10 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Platform, Alert, Animated, AppState } from 'react-native';
 import Svg, { Circle, Path, Line } from 'react-native-svg';
+import * as Haptics from 'expo-haptics';
 import { savePracticeSession, loadGoalMinutes } from '../hooks/usePracticeStats';
 import { useTheme } from '../hooks/useTheme';
+import { confirmStartPractice } from './practiceStart';
 
 // 화면 켜짐 유지 (Android/iOS 동일)
 let KeepAwake = null;
@@ -169,7 +171,16 @@ export default function PracticeTimer({ userId, todaySeconds: externalTodaySecon
     if (seconds === 0) setCelebrated(false);
   }, [seconds]);
 
-  const toggle = useCallback(() => setIsRunning((r) => !r), []);
+  const toggle = useCallback(() => {
+    // 새 연습 세션 시작 (정지 + 누적 0초)에만 경고 알림 + 강한 햅틱 (공통 헬퍼).
+    // 일시정지에서 재개하거나 멈출 때는 가벼운 햅틱만 — 방해 최소화.
+    if (!isRunning && seconds === 0) {
+      confirmStartPractice(() => setIsRunning(true));
+      return;
+    }
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium).catch(() => {});
+    setIsRunning((r) => !r);
+  }, [isRunning, seconds]);
 
   const handleSave = useCallback(async () => {
     if (seconds === 0) return;

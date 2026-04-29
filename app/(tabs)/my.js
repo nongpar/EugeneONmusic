@@ -5,6 +5,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAuth } from '../../hooks/useAuth';
 import { usePracticeStats } from '../../hooks/usePracticeStats';
 import { useTheme } from '../../hooks/useTheme';
+import { confirmStartPractice } from '../../components/practiceStart';
 import * as Haptics from 'expo-haptics';
 
 const showAlert = (title, message) => {
@@ -135,9 +136,17 @@ function TodayProgressWidget({ todaySeconds, goalMinutes, todayProgress, todayGo
       onPress={() => {
         if (todayGoalMet) {
           router.push('/settings/practice-stats');
-        } else {
-          router.push({ pathname: '/(tabs)/practice', params: { autoStart: '1' } });
+          return;
         }
+        // 연습 시작 — practice 탭과 동일하게 경고 알림 + 강한 햅틱 후 진입.
+        // autoStart=1 로 넘기면 PracticeTimer는 알림 없이 바로 타이머 가동
+        // (이 시점에 사용자는 이미 여기서 확정함).
+        // router.replace 사용: push는 expo-router v6에서 이미 마운트된 다른 탭으로
+        // 이동할 때 params 전파가 불안정해서 useLocalSearchParams가 autoStart를
+        // 못 받는 경우가 있음. practice-goal.js와 동일한 검증된 패턴으로 통일.
+        confirmStartPractice(() => {
+          router.replace({ pathname: '/(tabs)/practice', params: { autoStart: '1' } });
+        });
       }}
       activeOpacity={0.8}
     >
