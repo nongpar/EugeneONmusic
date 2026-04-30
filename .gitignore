@@ -55,3 +55,6 @@ GoogleService-Info.plist
 
 # 이미지 원본 — 관객 얼굴 식별 가능한 고해상도 원본은 저장소에 포함하지 않음
 assets/images/eon-hall-src.jpg
+
+# 리사이즈 전 원본 백업 (로컬 보관용, 저장소에 포함하지 않음)
+assets/*.original.*
