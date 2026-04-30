@@ -405,15 +405,16 @@ export default function HomeScreen() {
               {greeting}{userName ? `, ${userName}님` : ''}
             </Text>
 
-            {/* 라벨 */}
+            {/* 라벨 — 양쪽 대칭 골드 라인 (콘서트 프로그램 톤) */}
             <View style={styles.gaonLabelRow}>
               <View style={styles.gaonLabelLine} />
               <Text style={styles.gaonLabel}>오늘의 한 곡</Text>
+              <View style={styles.gaonLabelLine} />
             </View>
 
-            {/* 곡명 + 작곡가 */}
+            {/* 곡명 (영문/원어 원제) + 작곡가 (원어) — 콘서트 프로그램 톤 */}
             <Text style={styles.gaonTitle} numberOfLines={2}>
-              {todayPick.title}
+              {todayPick.titleEn}
             </Text>
             <Text style={styles.gaonComposer}>{todayPick.composer}</Text>
 
@@ -733,7 +734,7 @@ const makeStyles = (c) => StyleSheet.create({
     marginBottom: 10,
   },
   gaonLabelLine: {
-    width: 14,
+    width: 22,
     height: 0.8,
     backgroundColor: c.accent,
   },
