@@ -2,7 +2,7 @@
   "expo": {
     "name": "유진온뮤직",
     "slug": "EugeneONmusic",
-    "version": "1.1.3",
+    "version": "1.1.4",
     "orientation": "default",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "automatic",
