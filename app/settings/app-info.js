@@ -89,9 +89,9 @@ export default function AppInfoScreen() {
             />
           </View>
           <Text style={styles.appName}>유진온뮤직</Text>
-          <Text style={styles.appNameEn}>EugeneON Music</Text>
+          <Text style={styles.appNameEn}>EugeneONmusic</Text>
           <View style={styles.versionBadge}>
-            <Text style={styles.versionText}>Version 1.0.0</Text>
+            <Text style={styles.versionText}>Version 1.1.5</Text>
           </View>
         </View>
 
