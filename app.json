@@ -24,11 +24,11 @@
         ],
         "ITSAppUsesNonExemptEncryption": false
       },
-      "buildNumber": "31"
+      "buildNumber": "32"
     },
     "android": {
       "package": "com.eugeneonmusic.app",
-      "versionCode": 26,
+      "versionCode": 27,
       "googleServicesFile": "./google-services.json",
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",

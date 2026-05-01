@@ -713,7 +713,7 @@ function AIConsultScreenInner() {
         {!started ? (
           // 초대 화면 (대화 시작 전)
           <ScrollView
-            contentContainerStyle={styles.introWrap}
+            contentContainerStyle={[styles.introWrap, { paddingBottom: 24 + insets.bottom }]}
             showsVerticalScrollIndicator={false}
             keyboardShouldPersistTaps="handled"
           >

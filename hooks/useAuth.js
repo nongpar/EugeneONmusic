@@ -69,6 +69,7 @@ const AuthContext = createContext({
   user: null,
   loading: true,
   login: async () => {},
+  loginWithToken: async () => {},
   logout: async () => {},
   getToken: () => null,
 });
@@ -207,6 +208,63 @@ export function AuthProvider({ children }) {
     return wpUser;
   }, []);
 
+  // 회원가입 WebView에서 발급받은 WP JWT 토큰으로 세션을 시작한다 (비밀번호 없이).
+  // login()과 동일한 사후 처리: /users/me로 사용자 상세 가져오기 → 저장 → Firebase 교환.
+  const loginWithToken = useCallback(async (newToken) => {
+    if (!newToken) throw new Error('토큰이 없습니다.');
+
+    const isValid = await validateToken(newToken);
+    if (!isValid) throw new Error('유효하지 않은 토큰입니다.');
+
+    const wpUser = {
+      uid: '',
+      email: '',
+      displayName: '',
+      nickname: '',
+      role: 'student',
+    };
+
+    const meRes = await fetch(`${WP_BASE}/wp/v2/users/me?context=edit`, {
+      headers: { 'Authorization': `Bearer ${newToken}` },
+    });
+    if (!meRes.ok) {
+      throw new Error('사용자 정보를 불러오지 못했습니다.');
+    }
+    const meData = await meRes.json();
+    wpUser.uid = String(meData.id);
+    wpUser.email = meData.email || '';
+    wpUser.displayName = meData.name || meData.slug || '';
+    wpUser.nickname = meData.slug || '';
+    const wpRoles = meData.roles || [];
+    if (wpRoles.includes('administrator') || wpRoles.includes('editor') || wpRoles.includes('group_leader')) {
+      wpUser.role = 'teacher';
+    }
+
+    setToken(newToken);
+    setUser(wpUser);
+
+    await AsyncStorage.setItem(
+      AUTH_STORAGE_KEY,
+      JSON.stringify({ token: newToken, user: wpUser })
+    );
+
+    // Firebase Auth 세션 (AI 기능용) — 실패해도 WP 세션은 유지
+    try {
+      const exchange = httpsCallable(functions, 'exchangeWpToken');
+      const result = await exchange({ wpToken: newToken });
+      if (result.data?.customToken) {
+        await signInWithCustomToken(auth, result.data.customToken);
+      }
+    } catch (fbErr) {
+      console.warn('Firebase Auth 연동 실패 (WP 로그인은 정상):', fbErr?.message || fbErr);
+    }
+
+    // 가입 경로에는 평문 비밀번호가 없어서 자격증명은 저장하지 않음.
+    // 다음 정식 로그인 시점에 secureStorage가 채워진다.
+
+    return wpUser;
+  }, []);
+
   const logout = useCallback(async () => {
     // 현재 사용자의 푸시 토큰을 Firestore에서 삭제 (이 기기로 더 이상 푸시 오지 않도록)
     // 같은 기기에서 다른 계정으로 로그인할 때 푸시가 이전 계정으로 가는 문제 방지
@@ -235,7 +293,7 @@ export function AuthProvider({ children }) {
   }, []);
 
   return (
-    <AuthContext.Provider value={{ user, loading, login, logout, getToken, getCredentials }}>
+    <AuthContext.Provider value={{ user, loading, login, loginWithToken, logout, getToken, getCredentials }}>
       {children}
     </AuthContext.Provider>
   );
